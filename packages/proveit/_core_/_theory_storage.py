@@ -2644,6 +2644,7 @@ def def_extension_proof_link(theory, theorem_name):
     return relurl(os.path.join(theory.get_path(), '_theory_nbs_',
                                'def_extension_proofs', theorem_name, 
                                'thm_proof.ipynb'))
+
 class StoredSpecialStmt:
     def __init__(self, theory, name, kind, hash_id=None):
         '''
@@ -3082,6 +3083,24 @@ class StoredTheorem(StoredSpecialStmt):
                     presumptions.add(line.strip())
         return allowances, disallowances
 
+    def get_proof_counts(self):
+        '''
+        Return a tuple with the number of direct @prover calls for generating
+        this proof followed by the number of proof steps that were generated.
+        '''
+        descriptions = ['direct_prover_calls', 'proof_steps']
+        counts = []
+        proof_counts_filename = os.path.join(self.path, 'proof_counts.txt')
+        if not os.path.isfile(proof_counts_filename):
+            return (-1, -1) # default
+        with open(proof_counts_filename, 'r') as _file:
+            for _line, _description in zip(_file, descriptions):
+                description, count = _line.split(' ')
+                assert description == _description
+                count = int(count)
+                counts.append(count)
+        return tuple(counts)
+
     def allow_presumption(self, presumption):
         filename = os.path.join(self.proof_path(), 'allowed_presumptions.txt')
         with open(filename, 'a') as f:
@@ -3145,7 +3164,7 @@ class StoredTheorem(StoredSpecialStmt):
         return presumptions, exclusions
     """
 
-    def _recordProof(self, proof):
+    def _recordProof(self, proof, direct_prover_call_count):
         '''
         Record the given proof as the proof of this stored theorem.
         Updates dependency links (used_axioms.txt, used_theorems.txt, and
@@ -3154,7 +3173,7 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         from proveit._core_ import Proof
         from .theory import Theory, TheoryException
-
+        
         # add a reference to the new proof
         active_folder_storage = \
             TheoryFolderStorage.active_theory_folder_storage
@@ -3169,6 +3188,10 @@ class StoredTheorem(StoredSpecialStmt):
             raise ValueError("Expecting 'proof' to be a Proof object")
         with open(os.path.join(self.path, 'proof.pv_it'), 'w') as proof_file:
             proof_file.write(proof_id)
+        with open(os.path.join(
+                self.path, 'proof_counts.txt'), 'w') as _file:
+            _file.write('direct_prover_calls %d'%direct_prover_call_count +
+                        '\nproof_steps %d'%proof.num_steps())
 
         used_axiom_names = [str(used_axiom)
                             for used_axiom in proof.used_axioms()]
@@ -3312,6 +3335,20 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         # An empty file named "complete" is used to indicate that
         # a proof is complete.
+        # Also, if this is a DefinitionExistence, see if there is a
+        # companion DefinitionExtension that would also need to be proved.
+        if isinstance(self, StoredDefinitionExistence):
+            from .theory import Theory
+            try:
+                def_extension = Theory.get_stored_definition_extension(
+                    self.theory.name+'.'+self.name)
+            except KeyError:
+                def_extension = None
+            if def_extension is not None:
+                if not def_extension.is_complete():
+                    # Only complete if the DefinitionExtension is complete
+                    # as well as the DefinitionExistence.
+                    return False
         return os.path.isfile(os.path.join(self.path, 'complete'))
 
     def _propagateCompletion(self):

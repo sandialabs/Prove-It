@@ -5,31 +5,43 @@ these proofs with a preference to use few direct @prover method calls.
 '''
 
 import sys
+import os
 import proveit
 from proveit import Theory
 
 class GameData:
-    def __init__(self, theory):
-        self.theory = theory
+    def __init__(self, path, theory):
         self.all_theorem_name_and_kind_to_prove = []
         self.all_used_thm_indices = []
         self.all_original_direct_prover_calls = []
         self.all_original_proof_steps = []
         self.name_and_kind_to_idx = dict()
+        self.all_used_by_thm_indices = None
+        self.load_original_proof_info(path)
         
+        self.reproven_theorem_indices = []
+        self.reproven_direct_prover_calls = dict()
+        self.reproven_proof_steps = dict()
+        self.ready_to_prove_indices = []
+        self.update_player_proof_info(theory)
+    
+    def load_original_proof_info(self, path):
         # Load information about the original proofs
-        data_file = open('game_data_file.txt', 'w')
+        data_file = open(os.path.join(path, 'game_data_file.txt'), 'r')
         for line in data_file:
-            split = line.split(' ')
+            split = line.strip('\n').split(' ')
             direct_prover_calls, proof_steps, kind, full_thm_name = split[:4]
             direct_prover_calls = int(direct_prover_calls.strip('(,'))
             proof_steps = int(proof_steps.strip(')'))
-            used_thm_indices = tuple(int(_.strip('[,]')) for _ in split[4:])
+            if split[4:] == ['[]']:
+                used_thm_indices = tuple() # empty
+            else:
+                used_thm_indices = tuple(int(_.strip('[,]')) for _ in split[4:])
             idx = len(self.all_theorem_name_and_kind_to_prove)
             self.all_used_thm_indices.append(set(used_thm_indices))
             self.all_theorem_name_and_kind_to_prove.append((full_thm_name, kind))
             self.all_original_direct_prover_calls.append(direct_prover_calls)
-            self.all_original_proofs_steps.append(proof_steps)
+            self.all_original_proof_steps.append(proof_steps)
             self.name_and_kind_to_idx[(full_thm_name, kind)] = idx
         
         num_theorems_to_prove = len(self.all_theorem_name_and_kind_to_prove)
@@ -37,26 +49,45 @@ class GameData:
         for _user_idx, used_thm_indices in enumerate(self.all_used_thm_indices):
             for _used_idx in used_thm_indices:
                 self.all_used_by_thm_indices[_used_idx].append(_user_idx)
-        
+    
+    def update_player_proof_info(self, theory):
         # Populate information about the player's proofs
         proven_theorem_name_and_kinds = extract_proven_theorem_name_and_kinds(
             theory)
-        ready_to_prove = []
+        self.reproven_theorem_indices = []
         for full_thm_name, kind in proven_theorem_name_and_kinds:
             idx = self.name_and_kind_to_idx[(full_thm_name, kind)]
+            self.reproven_theorem_indices.append(idx)
             for _user_idx in self.all_used_by_thm_indices[idx]:
                 self.all_used_thm_indices[_user_idx].remove(idx)
-                if len(self.all_used_thm_indices) == 0:
-                    # This theorem is ready to prove -- its dependencies
-                    # are proven.
-                    ready_to_prove.append(
-                        self.all_theorem_name_and_kind_to_prove[_user_idx])
             stored_theorem = extract_stored_theorem(theory, full_thm_name, kind)
-            proof_counts = stored_theorem.get_proof_counts()
-        
-        self.reproven_direct_prover_calls = dict()
-        self.reproven_proof_steps = dict()
+            direct_prover_calls, proof_steps = stored_theorem.get_proof_counts()
+            self.reproven_direct_prover_calls[idx] = direct_prover_calls
+            self.reproven_proof_steps[idx] = proof_steps
+        reproven_theorem_indices_set = set(self.reproven_theorem_indices)
+        self.ready_to_prove_indices = [
+            idx for idx in range(len(self.all_used_thm_indices))
+            if len(self.all_used_thm_indices[idx])==0 and (
+                    idx not in reproven_theorem_indices_set)]
 
+    def yield_ready_to_prove_info(self):
+        for idx in self.ready_to_prove_indices:
+            full_thm_name, kind = self.all_theorem_name_and_kind_to_prove[idx]
+            original_direct_prover_calls = self.all_original_direct_prover_calls[idx]
+            original_proof_steps = self.all_original_proof_steps[idx]
+            yield (full_thm_name, kind), (original_direct_prover_calls, 
+                                          original_proof_steps)
+
+    def yield_reproven_info(self):
+        for idx in self.reproven_theorem_indices:
+            full_thm_name, kind = self.all_theorem_name_and_kind_to_prove[idx]
+            original_direct_prover_calls = self.all_original_direct_prover_calls[idx]
+            original_proof_steps = self.all_original_proof_steps[idx]
+            direct_prover_calls = self.reproven_direct_prover_calls[idx]
+            proof_steps = self.reproven_proof_steps[idx]
+            yield ((full_thm_name, kind), 
+                   (original_direct_prover_calls, original_proof_steps),
+                   (direct_prover_calls, proof_steps))
 
 def extract_proven_theorem_name_and_kinds(theory):
     proven_definition_existences = []

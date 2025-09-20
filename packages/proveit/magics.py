@@ -768,6 +768,46 @@ class ProveItMagicCommands:
             self.theory.clean_active_folder()
         self.theory = None
         return proof
+    
+    def play_game(self):
+        import proveit
+        from game_data import GameData
+        proveit_path = os.path.split(proveit.__file__)[0]
+        self.theory = Theory(proveit_path)
+        game_data = GameData(os.path.join(proveit_path, '..', '..'),
+                             self.theory)
+        
+        display(HTML('<h2>Ready-to-prove theorems</h2>'))
+        num_ready_to_prove = 0
+        for name_and_kind, orig_counts in game_data.yield_ready_to_prove_info():
+            name, kind = name_and_kind
+            if kind == 'definition_existence':
+                self.display_special_stmt(Theory.find_definition_existence(name))
+            elif kind == 'definition_extensions':
+                self.display_special_stmt(Theory.find_definition_extension(name))
+            else:
+                self.display_special_stmt(Theory.find_theorem(name))
+            num_ready_to_prove += 1
+        if num_ready_to_prove == 0:
+            display(HTML('<h3>You have proven all available theorems'
+                         ' to prove at this time.  Congratulations!</h3>'))
+            
+        display(HTML('<h2>Proven theorems</h2>'))
+        num_reproven = 0
+        for name_and_kind, orig_counts, player_counts in (
+                game_data.yield_reproven_info()):
+            name, kind = name_and_kind
+            if kind == 'definition_existence':
+                self.display_special_stmt(Theory.find_definition_existence(name))
+            elif kind == 'definition_extensions':
+                self.display_special_stmt(Theory.find_definition_extension(name))
+            else:
+                self.display_special_stmt(Theory.find_theorem(name))
+            num_reproven += 1
+        if num_reproven == 0:
+            display(HTML("<h3>Nothing yet.  You're getting started.  You can"
+                         " do this!</h3>"))
+            
 
     def end(self, folder):
         '''
@@ -1203,6 +1243,10 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         if isinstance(thm_judgment.proof(), DefiningProperty):
             thm_judgment = thm_judgment.proof().required_proofs[0].proven_truth
         ProveItMagicCommands.display_dependencies_latex(self, name, thm_judgment)
+    
+    @line_magic
+    def play_game(self, line):
+        ProveItMagicCommands.play_game(self)
 
 def display_assignments(names, beginning_proof=False,
                         beginning_existence_proof=False,
