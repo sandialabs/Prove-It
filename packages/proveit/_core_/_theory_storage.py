@@ -478,30 +478,33 @@ class TheoryStorage:
                     StoredTheorem(self.theory, name).remove_proof()
                 elif folder == 'definitions':
                     # Remove the proof of the removed definition existence:
-                    from proveit._core_.proof import DefiningProperty
+                    from proveit._core_.proof import (BasicDefinition,
+                                                      DefiningProperty)
                     # Get the associated DefinitionExistence of a 
                     # DefiningProperty.
                     obj = theory_folder_storage.make_judgment_or_proof(hash_id)
-                    assert isinstance(obj, DefiningProperty)
-                    def_existence = obj.required_proofs[0]
-                    name = def_existence.name
-                    if name not in removed_def_existences:
-                        obj_id = def_existence._style_id
-                        _, hash_id = proveit_obj_to_storage[obj_id]
-                        def_existence = StoredDefinitionExistence(self.theory, name,
-                                                                  hash_id=hash_id)
-                        def_existence.remove_proof()
-                        removed_def_existences.add(name)
-                    if len(obj.required_proofs) > 1:
-                        def_extension = obj.required_proofs[1]
-                        name = def_extension.name
-                        if name not in removed_def_extensions:
-                            obj_id = def_extension._style_id
+                    if isinstance(obj, DefiningProperty):
+                        def_existence = obj.required_proofs[0]
+                        name = def_existence.name
+                        if name not in removed_def_existences:
+                            obj_id = def_existence._style_id
                             _, hash_id = proveit_obj_to_storage[obj_id]
-                            def_extension = StoredDefinitionExtension(
+                            def_existence = StoredDefinitionExistence(
                                 self.theory, name, hash_id=hash_id)
-                            def_extension.remove_proof()
-                            removed_def_extensions.add(name)
+                            def_existence.remove_proof()
+                            removed_def_existences.add(name)
+                        if len(obj.required_proofs) > 1:
+                            def_extension = obj.required_proofs[1]
+                            name = def_extension.name
+                            if name not in removed_def_extensions:
+                                obj_id = def_extension._style_id
+                                _, hash_id = proveit_obj_to_storage[obj_id]
+                                def_extension = StoredDefinitionExtension(
+                                    self.theory, name, hash_id=hash_id)
+                                def_extension.remove_proof()
+                                removed_def_extensions.add(name)
+                    else:
+                        assert isinstance(obj, BasicDefinition)
                         
                 # Remove proofs that depended upon the removed theorem.
                 # Note the use of (obj) hash_id instead of expr_id here!
@@ -2631,15 +2634,16 @@ def def_existence_proof_link(theory, theorem_name):
     Return the link to the definition existence proof notebook.
     '''
     return relurl(os.path.join(theory.get_path(), '_theory_nbs_',
-                               'def_existence', theorem_name, 'thm_proof.ipynb'))
+                               'def_existence_proofs', theorem_name, 
+                               'thm_proof.ipynb'))
 
 def def_extension_proof_link(theory, theorem_name):
     '''
     Return the link to the definition extension proof notebook.
     '''
     return relurl(os.path.join(theory.get_path(), '_theory_nbs_',
-                               'def_extension', theorem_name, 'thm_proof.ipynb'))
-
+                               'def_extension_proofs', theorem_name, 
+                               'thm_proof.ipynb'))
 class StoredSpecialStmt:
     def __init__(self, theory, name, kind, hash_id=None):
         '''
