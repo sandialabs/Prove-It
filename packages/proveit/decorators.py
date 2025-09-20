@@ -3,6 +3,28 @@ from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
 from proveit.util import OrderedSet
 
+class DirectProverCallsCounter:
+    '''
+    Context manager used to count the number of @prover calls made directly.
+    '''
+    def __init__(self):
+        self.counter = 0
+        self.nested_level = 0
+    
+    def __enter__(self):
+        if self.nested_level == 0:            
+            self.counter += 1 # top-level @prover call
+        self.nested_level += 1 # one level deeper
+    
+    def __exit__(self, type, value, traceback):
+        self.nested_level -= 1 # one level shallower
+
+_direct_prover_calls_counter = DirectProverCallsCounter()
+
+def get_direct_prover_call_count():
+    # Returns the number of times a @prover method was called directly
+    return _direct_prover_calls_counter.counter
+
 def _make_decorated_prover(func, automatic=False):
     '''
     Use for decorating 'prover' methods 
@@ -158,7 +180,8 @@ def _make_decorated_prover(func, automatic=False):
                 # Make sure we derive assumption side-effects first.
                 Assumption.make_assumptions()
                 # Now call the prover function.
-                proven_truth = checked_truth(func(*args, **internal_kwargs))
+                with _direct_prover_calls_counter:
+                    proven_truth = checked_truth(func(*args, **internal_kwargs))
         else:
             # No defaults reconfiguration.
             internal_kwargs = dict(kwargs)
@@ -166,7 +189,8 @@ def _make_decorated_prover(func, automatic=False):
             # Make sure we derive assumption side-effects first.
             Assumption.make_assumptions()
             # Now call the prover function.
-            proven_truth = checked_truth(func(*args, **internal_kwargs))
+            with _direct_prover_calls_counter:
+                proven_truth = checked_truth(func(*args, **internal_kwargs))
 
         if automatic and not defaults.preserve_all:
             # Temporarily reconfigure defaults

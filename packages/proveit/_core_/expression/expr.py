@@ -1031,11 +1031,17 @@ class Expression(metaclass=ExprType):
         Return True if and only if the expression is known to be true.
         '''
         from proveit import ProofFailure
+        from proveit.decorators import _direct_prover_calls_counter
         try:
+            # don't count this in the 'direct' @prover calls.
+            _direct_prover_calls_counter.nested_level += 1
+            
             self.prove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
+        finally:
+            _direct_prover_calls_counter.nested_level -= 1
 
     def readily_provable(self, assumptions=USE_DEFAULTS, 
                          must_be_direct=False,**kwargs):

@@ -232,6 +232,7 @@ class Judgment:
         complete.
         '''
         from .proof import ProofFailure, UnsatisfiedPrerequisites
+        from proveit.decorators import _direct_prover_calls_counter
         if not defaults.sideeffect_automation:
             return  # automation disabled
         if Judgment.theorem_being_proven == self:
@@ -241,6 +242,8 @@ class Judgment:
             # in_progress_to_deduce_sideeffects
             Judgment.in_progress_to_derive_sideeffects.add(self)
             try:
+                # Don't count these as top-level prover calls
+                _direct_prover_calls_counter.nested_level += 1
                 for side_effect in self.expr.side_effects(self):
                     # Attempt each side-effect derivation, specific to 
                     # thetype of Expression.
@@ -259,6 +262,7 @@ class Judgment:
                                 str(side_effect)) +
                             str(e))
             finally:
+                _direct_prover_calls_counter.nested_level -= 1
                 Judgment.in_progress_to_derive_sideeffects.remove(self)
 
     def order_of_appearance(self, sub_expressions):
@@ -334,6 +338,7 @@ class Judgment:
 
         # can't use itself to prove itself
         theorem._meaning_data._unusable_proof = theorem
+        
         return self.expr
 
     def _qed(self):
@@ -341,6 +346,7 @@ class Judgment:
         Complete a proof that began via `begin_proof`, entering it into
         the certification database.
         '''
+        from proveit.decorators import get_direct_prover_call_count
         if Judgment.theorem_being_proven is None:
             raise Exception('No theorem being proven; cannot call qed method')
         if self.expr != Judgment.theorem_being_proven.proven_truth.expr:
@@ -349,13 +355,15 @@ class Judgment:
             raise Exception(
                 'qed proof should not have any remaining assumptions')
         Judgment.qed_in_progress = True
+        direct_prover_call_count = get_direct_prover_call_count()
         try:
             proven_truth = self.expr.prove(assumptions=[])
             if not proven_truth.is_usable():
                 defaults._proven_truth = proven_truth
                 proven_truth.raise_unusable_proof()
             print("{} is now proven.".format(Judgment.theorem_being_proven))
-            Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
+            Judgment.stored_theorem_being_proven._recordProof(
+                proven_truth.proof(), direct_prover_call_count)
         finally:
             Judgment.qed_in_progress = False
         return proven_truth.proof()
@@ -585,7 +593,11 @@ class Judgment:
         theorem_expr = Judgment.theorem_being_proven.proven_truth.expr
         if theorem_expr.readily_provable():
             if theorem_expr.proven():
-                proven_truth = theorem_expr.prove(automation=False)
+                # Call 'prove', but don't count it as a direct @prover call.
+                from proveit.decorators import _direct_prover_calls_counter
+                with _direct_prover_calls_counter:
+                    proven_truth = theorem_expr.prove(automation=False)
+                _direct_prover_calls_counter.counter -= 1
                 if proven_truth.is_usable():
                     print(
                         '%s has been proven. ' %
@@ -1318,6 +1330,11 @@ class Judgment:
             raise UnusableProof(
                 Judgment.theorem_being_proven, unusuable_proof,
                 'required to prove' + self.string())
+            
+    def is_fully_proven(self):
+        proof = self.proof()
+        if proof is None: return False
+        return all(_thm.is_fully_proven() for _thm in proof.used_theorems())
 
     def string(self):
         '''
@@ -1375,10 +1392,11 @@ class Judgment:
             return None  # No LaTeX display at this time.
         if not self.is_usable():
             self.raise_unusable_proof()
-        html = ''
+        if self.is_fully_proven():
+            html = '&#128522;' # smiley face
+        else:
+            html = ''
         proof = self.proof()
-        if all(_thm.is_fully_proven() for _thm in proof.used_theorems()):
-            html += '&#128522;' # smiley face
         html += '<span style="font-size:20px;">'
         html += ', '.join(assumption._repr_html_() for assumption
                           in self.assumptions)

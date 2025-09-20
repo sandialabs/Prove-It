@@ -244,6 +244,12 @@ class Theory:
         for sub_theory_name in self._storage.get_sub_theory_names():
             yield Theory(os.path.join(self._storage.directory, sub_theory_name))
 
+    def generate_all_contained_theories(self):
+        for sub_theory in self.generate_sub_theories():
+            yield sub_theory
+            for _theory in sub_theory.generate_all_contained_theories():
+                yield _theory
+
     def set_sub_theory_names(self, sub_theory_names):
         return self._storage.set_sub_theory_names(sub_theory_names)
 
