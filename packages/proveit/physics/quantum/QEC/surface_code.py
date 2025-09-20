@@ -186,6 +186,30 @@ class ZErrorChainSiteOps(Function):
                 self, ZErrorChainSiteOps._operator_, (E, S), styles=styles)
 
 
+class SiteOpZErrorCount(Function):
+    '''
+    SiteOpZErrorCount(s, E, S) represents the number of site operator
+    s's data qubits that are experiencing a Z error. This is important
+    because the site operator "flips state" or signals an error when
+    an odd number of its data qubits experience a Z error.
+    '''
+
+    # the literal operator of the SiteOpZErrorCount(s, E, S) operator
+    _operator_ = Literal(
+            string_format='ZErrCount',
+            latex_format=r'\mathrm{ZErrCount}\!',
+            theory=__file__)
+
+    def __init__(self, s, E, S, *, styles=None):
+        '''
+        Denote the number SiteOpZErrorCount(s, E, S) of site operator
+        s's data qubits that experience a Z error.
+        '''
+        Function.__init__(
+                self, SiteOpZErrorCount._operator_, (s, E, S),
+                styles=styles)
+
+
 class SiteSyndrome(Function):
     '''
     Let E be an error, conceptualized as an element of the Pauli group

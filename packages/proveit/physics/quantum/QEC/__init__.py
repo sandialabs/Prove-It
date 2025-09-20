@@ -1,12 +1,12 @@
 from .graph_of import (BoundaryVertices, GraphOf, InteriorVertices,
-        MergedBoundsGraphOfSurfaceCode,
-        MergedBoundsGraphOfZError)#, MergedBoundsGraphOfZErrorChainSiteOp, MergedBoundsGraphOfSiteOp, )
+        MergedBoundsGraphOfSiteOp, MergedBoundsGraphOfSurfaceCode,
+        MergedBoundsGraphOfZError, MergedBoundsGraphOfZErrorChainSiteOp)
 from .graph_of_membership import InteriorVerticesMembership
 from .surface_code import (
         Errors, KitaevPlanarSC, LogicalHadamard,
         ManhattanDistance, RoughBoundaryA, RoughBoundaryB,
-        RoughBoundaries, SiteSyndrome, SmoothBoundaries,
-        SmoothBoundaryA, SmoothBoundaryB, SurfaceCode,
+        RoughBoundaries, SiteOpZErrorCount, SiteSyndrome,
+        SmoothBoundaries, SmoothBoundaryA, SmoothBoundaryB, SurfaceCode,
         SurfaceCodeSiteOps, ZErrorChains, ZErrorChainSiteOps)
 from .stabilizer import Stabilizer
 
