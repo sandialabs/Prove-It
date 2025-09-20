@@ -441,8 +441,8 @@ class Or(Operation):
                         operand.operand for operand in self.operands]
                     negated_operands_conc = [
                         operand.operand for operand in conclusion.operands]
-                    _A = ExprTuple(*negated_operands_self)
-                    _B = ExprTuple(*negated_operands_conc)
+                    _A = ExprTuple(*negated_operands_conc)
+                    _B = ExprTuple(*negated_operands_self)
                     _m = _A.num_elements()
                     return destructive_multi_dilemma.instantiate(
                             {m: _m, A: _A, B: _B})
