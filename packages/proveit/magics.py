@@ -804,7 +804,8 @@ class ProveItMagicCommands:
             for name, obj in self.definitions.items():
                 # remake the expression notebooks using the special expressions
                 # of the theory
-                if folder != 'common': expr = obj.proven_truth.expr
+                if folder == 'common': expr = obj
+                else: expr = obj.proven_truth.expr
                 theory.expression_notebook(expr, name_kind_theory=(
                     name, kind, theory), special_object=obj,
                     complete_special_expr_notebook=True)
