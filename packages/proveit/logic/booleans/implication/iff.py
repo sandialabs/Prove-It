@@ -87,12 +87,12 @@ class Iff(TransitiveRelation):
         if self.A.readily_provable() and self.B.readily_provable():
             # A <=> B because A and B are both true.
             from . import iff_via_both_true
-            if iff_via_both_true.is_usable():
+            if iff_via_both_true.is_fully_proven():
                 return iff_via_both_true.instantiate({A:self.A, B:self.B})
         if  self.A.readily_disprovable() and self.B.readily_disprovable():
             # A <=> B because A and B are both false.
             from . import iff_via_both_false
-            if iff_via_both_false.is_usable():
+            if iff_via_both_false.is_fully_proven():
                 return iff_via_both_false.instantiate({A:self.A, B:self.B})
         # Introduce the Iff via implications each way as a direct 
         # consequence of the definition.
@@ -225,7 +225,7 @@ class Iff(TransitiveRelation):
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
         from . import iff_def_quantified, iff_intro
-        if iff_intro.is_usable():
+        if iff_intro.is_fully_proven():
             return iff_intro.instantiate({A: self.A, B: self.B})
         return (iff_def_quantified.instantiate({A: self.A, B: self.B})
                 .derive_left_via_equality())
@@ -283,10 +283,8 @@ class Iff(TransitiveRelation):
         self.prove()
         # eq_from_mutual_impl may make for a shorter proof; do it both 
         # ways (if both are usable)
-        if not eq_from_iff.is_usable():
+        if not eq_from_iff.is_fully_proven():
             return eq_from_mutual_impl.instantiate(
                 {A: self.A, B: self.B})
-        eq_from_mutual_impl.instantiate(
-            {A: self.A, B: self.B})
         return eq_from_iff.instantiate(
             {A: self.A, B: self.B})
