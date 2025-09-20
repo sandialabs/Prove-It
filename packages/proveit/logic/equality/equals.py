@@ -152,7 +152,7 @@ class Equals(EquivRelation):
                 in_bool(rhs).readily_provable() and
                 Iff(lhs, rhs).readily_provable()):
             from proveit.logic.booleans.implication import eq_from_iff
-            if eq_from_iff.is_fully_proven():
+            if eq_from_iff.is_fully_proven_and_usable():
                 return True
         for eq_expr in Equals.yield_known_equal_expressions(lhs):
             if eq_expr == rhs:
@@ -620,7 +620,7 @@ class Equals(EquivRelation):
             # side.
             return other.apply_transitivity(self)
         other_equality = other
-        if equals_transitivity.is_fully_proven():
+        if equals_transitivity.is_fully_proven_and_usable():
             transitivity = equals_transitivity
         else:
             # If 'equals_transitivity' isn't usable, try the more basic
@@ -863,13 +863,14 @@ class Equals(EquivRelation):
             from proveit.core_expr_types.operations import \
                 operands_substitution, operands_substitution_via_tuple
             _n = lambda_map.parameters.num_elements()
-            if self.proven() and operands_substitution_via_tuple.is_fully_proven():
+            if self.proven() and (
+                    operands_substitution_via_tuple.is_fully_proven_and_usable()):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return operands_substitution_via_tuple.instantiate(
                     {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
                     **extra_kwargs)
-            if operands_substitution.is_fully_proven():
+            if operands_substitution.is_fully_proven_and_usable():
                 # Otherwise, we'll use the axiom in which the prerequisite
                 # is that the individual elements are equal.
                 return operands_substitution.instantiate(
@@ -1037,7 +1038,7 @@ class Equals(EquivRelation):
         except BaseException:
             pass
         
-        if sub_right_side_into.is_fully_proven():
+        if sub_right_side_into.is_fully_proven_and_usable():
             return sub_right_side_into.instantiate(
                 {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
         else:

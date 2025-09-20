@@ -1336,6 +1336,9 @@ class Judgment:
         if proof is None: return False
         return all(_thm.is_fully_proven() for _thm in proof.used_theorems())
 
+    def is_fully_proven_and_usable(self):
+        return self.is_fully_proven() and self.is_usable()
+
     def string(self):
         '''
         Display the turnstile notation to show that the judgment
