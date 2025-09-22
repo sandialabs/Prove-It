@@ -1,5 +1,3 @@
 proveit.logic.equality.sub_right_side_into
-proveit.logic.booleans.true_truth
-proveit.logic.equality.equals_symmetry
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.substitute_in_true

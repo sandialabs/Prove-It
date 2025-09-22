@@ -1,4 +1,2 @@
 proveit.logic.booleans.implication.trivial_deduction
-proveit.logic.booleans.negation.fold_negation
-proveit.logic.booleans.negation.unfold_negation
 proveit.logic.equality.substitution

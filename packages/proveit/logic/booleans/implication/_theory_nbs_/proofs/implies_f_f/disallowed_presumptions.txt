@@ -1,0 +1,3 @@
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim

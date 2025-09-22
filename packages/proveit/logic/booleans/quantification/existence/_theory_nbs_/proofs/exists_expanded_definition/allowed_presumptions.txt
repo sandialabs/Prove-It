@@ -1,0 +1,2 @@
+proveit.logic.booleans.quantification.existence.exists_definition
+proveit.logic.equality.equals_symmetry

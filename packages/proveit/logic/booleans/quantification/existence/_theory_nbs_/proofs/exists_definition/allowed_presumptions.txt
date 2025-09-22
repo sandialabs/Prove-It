@@ -1,2 +1,2 @@
+proveit.logic.equality.substitution
 proveit.logic.equality.equals_symmetry
-proveit.logic.booleans.eq_true_elim
