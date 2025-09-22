@@ -1136,7 +1136,8 @@ class Judgment:
         return self._checkedTruth(Generalization(
             self, forall_var_lists, conditions, antecedent))
 
-    def as_implication(self, hypothesis):
+    @prover
+    def as_implication(self, hypothesis, **defaults_config):
         '''
         Performs a "deduction" derivation step, forming an implication
         statement with the given hypothesis and self.expr
