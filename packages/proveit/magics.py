@@ -773,41 +773,66 @@ class ProveItMagicCommands:
         import proveit
         from game_data import GameData
         proveit_path = os.path.split(proveit.__file__)[0]
-        self.theory = Theory(proveit_path)
-        game_data = GameData(os.path.join(proveit_path, '..', '..'),
-                             self.theory)
+        if not hasattr(self, 'game_data'):
+            self.theory = Theory(proveit_path)
+            self.game_data = GameData()
+        game_data = self.game_data
+        game_data_path =os.path.join(proveit_path, '..', '..')
+        game_data.update_original_proof_info(game_data_path)
+        game_data.update_player_proof_info(self.theory)
         
         display(HTML('<h2>Ready-to-prove theorems</h2>'))
         num_ready_to_prove = 0
         for name_and_kind, orig_counts in game_data.yield_ready_to_prove_info():
             name, kind = name_and_kind
+            suffix = ' - provable with %d @prover calls'%orig_counts[0]
             if kind == 'definition_existence':
-                self.display_special_stmt(Theory.find_definition_existence(name))
+                self.display_special_stmt(Theory.find_definition_existence(name),
+                                          suffix=suffix)
             elif kind == 'definition_extensions':
-                self.display_special_stmt(Theory.find_definition_extension(name))
+                self.display_special_stmt(Theory.find_definition_extension(name),
+                                          suffix=suffix)
             else:
-                self.display_special_stmt(Theory.find_theorem(name))
+                self.display_special_stmt(Theory.find_theorem(name),
+                                          suffix=suffix)
             num_ready_to_prove += 1
         if num_ready_to_prove == 0:
             display(HTML('<h3>You have proven all available theorems'
                          ' to prove at this time.  Congratulations!</h3>'))
             
-        display(HTML('<h2>Proven theorems</h2>'))
+        display(HTML('<h2>You have proven %d theorems</h2>'
+                     %game_data.num_reproven))
         num_reproven = 0
         for name_and_kind, orig_counts, player_counts in (
                 game_data.yield_reproven_info()):
-            name, kind = name_and_kind
-            if kind == 'definition_existence':
-                self.display_special_stmt(Theory.find_definition_existence(name))
-            elif kind == 'definition_extensions':
-                self.display_special_stmt(Theory.find_definition_extension(name))
-            else:
-                self.display_special_stmt(Theory.find_theorem(name))
             num_reproven += 1
+            name, kind = name_and_kind
+            prefix = '%s. '%str(num_reproven)
+            def diff_str(n):
+                if n ==0: return ''
+                elif n > 0: return '<span style="color: #FF0000;">+%d</span>'%n
+                else: return '<span style="color: #00FF00;">-%d</span>'%(-n)
+            diff_calls = diff_str(player_counts[0] - orig_counts[0])
+            diff_steps = diff_str(player_counts[1] - orig_counts[1])
+            suffix = ' - proven with %d%s @prover calls, %d%s formal steps'%(
+                orig_counts[0], diff_calls, orig_counts[1], diff_steps)
+            if kind == 'definition_existence':
+                self.display_special_stmt(Theory.find_definition_existence(name),
+                                          prefix=prefix, suffix=suffix)
+            elif kind == 'definition_extensions':
+                self.display_special_stmt(Theory.find_definition_extension(name),
+                                          prefix=prefix, suffix=suffix)
+            else:
+                self.display_special_stmt(Theory.find_theorem(name),
+                                          prefix=prefix, suffix=suffix)
         if num_reproven == 0:
             display(HTML("<h3>Nothing yet.  You're getting started.  You can"
-                         " do this!</h3>"))
-            
+                         " do this!</h3><p>Hint: if 0 @prover calls are requird "
+                         "just type '%qed' in a cell at the end.</p>"))
+        # else if only orig_counts[0]==0 have been proven, give a hint about
+        # looking at demonstration pages. "navigate to theory 'demonstration'
+        # pages to look for hints on proving statements where there are
+        # smiley faces that indicates a capability that has been unlocked."
 
     def end(self, folder):
         '''
@@ -877,17 +902,28 @@ class ProveItMagicCommands:
         self.kind = None
         self.theory = None
 
-    def display_special_stmt(self, stmt, format_type='html'):
+    def display_special_stmt(self, stmt, format_type='html',
+                             prefix='', suffix=''):
         '''
         Given an Axiom, Theorem, BasicDefinition, or DefiningProperty, 
-        display HTML with a link to the definition.
+        DefinitionExistence, or DefinitionExtension display HTML with a 
+        link to the definition.
         '''
+        from proveit._core_.proof import DefinitionExistence, DefinitionExtension
+        if isinstance(prefix, int): prefix = str(prefix)
         expr = stmt.proven_truth.expr
         if format_type == 'html':
+            if isinstance(stmt, DefinitionExistence):
+                stmt_str = str(stmt) + ' (definition existence)'
+            elif isinstance(stmt, DefinitionExtension):
+                stmt_str = str(stmt) + ' (definition extension)'
+            else:
+                stmt_str = str(stmt)
             display(
                 HTML(
-                    '<dt><a class="ProveItLink" href="%s">%s</a></dt><br><dd>%s</dd>' %
-                    (stmt.get_link(), str(stmt), expr._repr_html_())))
+                    '%s<a class="ProveItLink" href="%s">%s</a>%s<br>%s' %
+                    (prefix, stmt.get_link(), stmt_str, suffix,
+                     expr._repr_html_())))
         elif format_type == 'latex':
             print(r'\item $' + expr.latex() + '$')
         else:

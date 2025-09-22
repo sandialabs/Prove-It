@@ -10,24 +10,30 @@ import proveit
 from proveit import Theory
 
 class GameData:
-    def __init__(self, path, theory):
+    def __init__(self):
+        from proveit.util import OrderedSet
         self.all_theorem_name_and_kind_to_prove = []
         self.all_used_thm_indices = []
         self.all_original_direct_prover_calls = []
         self.all_original_proof_steps = []
         self.name_and_kind_to_idx = dict()
         self.all_used_by_thm_indices = None
-        self.load_original_proof_info(path)
         
-        self.reproven_theorem_indices = []
+        self.reproven_theorem_indices = OrderedSet()
         self.reproven_direct_prover_calls = dict()
         self.reproven_proof_steps = dict()
         self.ready_to_prove_indices = []
-        self.update_player_proof_info(theory)
     
-    def load_original_proof_info(self, path):
+    def update_original_proof_info(self, path):
         # Load information about the original proofs
-        data_file = open(os.path.join(path, 'game_data_file.txt'), 'r')
+        game_data_filepath = os.path.join(path, 'game_data_file.txt')
+        game_data_timestamp = os.path.getmtime(game_data_filepath)
+        if hasattr(self, 'game_data_timestamp') and (game_data_timestamp ==
+                                                     self.game_data_timestamp):
+            # Nothing has been modified since last time.
+            return
+        self.game_data_timestamp = game_data_timestamp
+        data_file = open(game_data_filepath, 'r')
         for line in data_file:
             split = line.strip('\n').split(' ')
             direct_prover_calls, proof_steps, kind, full_thm_name = split[:4]
@@ -54,22 +60,26 @@ class GameData:
         # Populate information about the player's proofs
         proven_theorem_name_and_kinds = extract_proven_theorem_name_and_kinds(
             theory)
-        self.reproven_theorem_indices = []
+        reproven_theorem_indices = self.reproven_theorem_indices
         for full_thm_name, kind in proven_theorem_name_and_kinds:
             idx = self.name_and_kind_to_idx[(full_thm_name, kind)]
-            self.reproven_theorem_indices.append(idx)
-            for _user_idx in self.all_used_by_thm_indices[idx]:
-                self.all_used_thm_indices[_user_idx].remove(idx)
             stored_theorem = extract_stored_theorem(theory, full_thm_name, kind)
             direct_prover_calls, proof_steps = stored_theorem.get_proof_counts()
             self.reproven_direct_prover_calls[idx] = direct_prover_calls
             self.reproven_proof_steps[idx] = proof_steps
-        reproven_theorem_indices_set = set(self.reproven_theorem_indices)
+            if idx not in reproven_theorem_indices:
+                reproven_theorem_indices.add(idx)
+                for _user_idx in self.all_used_by_thm_indices[idx]:
+                    self.all_used_thm_indices[_user_idx].remove(idx)
         self.ready_to_prove_indices = [
             idx for idx in range(len(self.all_used_thm_indices))
             if len(self.all_used_thm_indices[idx])==0 and (
-                    idx not in reproven_theorem_indices_set)]
+                    idx not in reproven_theorem_indices)]
 
+    @property
+    def num_reproven(self):
+        return len(self.reproven_theorem_indices)
+    
     def yield_ready_to_prove_info(self):
         for idx in self.ready_to_prove_indices:
             full_thm_name, kind = self.all_theorem_name_and_kind_to_prove[idx]
@@ -79,7 +89,7 @@ class GameData:
                                           original_proof_steps)
 
     def yield_reproven_info(self):
-        for idx in self.reproven_theorem_indices:
+        for idx in sorted(self.reproven_theorem_indices):
             full_thm_name, kind = self.all_theorem_name_and_kind_to_prove[idx]
             original_direct_prover_calls = self.all_original_direct_prover_calls[idx]
             original_proof_steps = self.all_original_proof_steps[idx]
