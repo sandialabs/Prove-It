@@ -1346,7 +1346,7 @@ def display_assignments(names, beginning_proof=False,
         # DefinitionExistence when multiple DefiningProperties appear in
         # a cell.
         from proveit import Operation
-        from proveit.logic import Implies, And, Forall, Exists
+        from proveit.logic import Implies, And, Forall, Exists, FALSE
         from proveit._core_.proof import (BasicDefinition,
                                           DefinitionExistence,
                                           DefinitionExtension,
@@ -1365,6 +1365,10 @@ def display_assignments(names, beginning_proof=False,
         used_package_literals = set([
             lit for lit in used_literals(combined_right_sides)
             if lit in theory.literals])
+        # Implication is 'defined' via fundamental rules of inference.
+        used_package_literals.discard(Implies._operator_)
+        # FALSE is 'defined' via fundamental axioms.
+        used_package_literals.discard(FALSE)
         if len(used_package_literals)==0:
             raise Exception("Not defining any Literals belonging to this "
                             "theory package")
