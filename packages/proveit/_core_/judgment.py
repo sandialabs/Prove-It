@@ -697,7 +697,7 @@ class Judgment:
         new_style_assumptions = []
         for assumption in assumptions:
             if assumption in self.assumptions:
-                new_style_assumptions.append(assumptions)
+                new_style_assumptions.append(assumption)
         if ((new_style_expr._style_id == self.expr._style_id) and
                 tuple(self.assumptions) == tuple(new_style_assumptions) and
                 all(new_style_assumption._style_id == old_assumption._style_id
