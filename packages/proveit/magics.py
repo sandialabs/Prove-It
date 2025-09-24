@@ -898,9 +898,10 @@ class ProveItMagicCommands:
             self.theory.stash_extraneous_thm_proof_notebooks(
                     definition_existence_proofs=True)            
             self.theory.stash_extraneous_thm_proof_notebooks(
-                    definition_extension_proofs=True)            
-        self.kind = None
-        self.theory = None
+                    definition_extension_proofs=True)
+        
+        # Allow for a continuation.
+        self.theory = Theory(active_folder=folder, owns_active_folder=True)
 
     def display_special_stmt(self, stmt, format_type='html',
                              prefix='', suffix=''):
@@ -1163,7 +1164,6 @@ class ProveItMagic(Magics, ProveItMagicCommands):
     def end(self, line):
         folder = self._extract_folder(line)
         ProveItMagicCommands.end(self, folder)
-        self.theory = None
 
     @line_magic
     def clear(self, line):
