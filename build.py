@@ -239,7 +239,7 @@ class ProveItHTMLPreprocessor(Preprocessor):
 
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
-html_exporter.template_file = 'proveit_html'
+# html_exporter.template_file = os.path.abspath('proveit_html.tpl')
 
 def is_git_diff_empty(notebook_path):
     '''
@@ -285,6 +285,7 @@ class KernelStart_failure(Exception):
 class RecyclingExecutePreprocessor(ExecutePreprocessor):
     def __init__(self, **kwargs):
         ExecutePreprocessor.__init__(self, **kwargs)
+        self.store_history = False
 
     def __enter__(self):
         try:
@@ -303,7 +304,7 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         # proveit.magics.  All other modules will be deleted when
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
-
+        self.nb = nb
         init_modules_source = """
 import sys
 from proveit import *
@@ -419,10 +420,10 @@ len(gc.get_objects()) # used to check for memory leaks
                 pass
                 # execute_processor.km.restart_kernel(newport=True)
         new_nb_str = nbformat.writes(nb)
-        if new_nb_str != nb_str:
-            # Write it out if it has changed.
-            with open(notebook_path, 'wt', encoding='utf8') as f:
-                f.write(new_nb_str)
+        # if new_nb_str != nb_str: # block commented out by wdc 8/5/2021
+        #     # Write it out if it has changed. # see email w/WW same date
+        #     with open(notebook_path, 'wt', encoding='utf8') as f:
+        #         f.write(new_nb_str)
         print("\tFinished %s in %0.2f seconds" %
               (notebook_path, time.time() - start_time))
 
@@ -867,7 +868,9 @@ def mpi_build(
     
     if nranks == 1:
         # The boring single rank case.
-        with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+        execute_processor = RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1)
+        # with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+        with execute_processor.setup_kernel():
             for notebook_path in generate_notebook_paths_with_retries():
                 try:
                     execute_and_maybe_export_notebook(
