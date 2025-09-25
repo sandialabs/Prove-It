@@ -635,7 +635,8 @@ class Judgment:
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
-                    return self.with_matching_styles(new_style_expr, [])
+                    return self.with_matching_styles(
+                        new_style_expr, self.assumptions)
                 return call_method_for_new_style
             sig = signature(attr)
             if ('defaults_config' in sig.parameters and
