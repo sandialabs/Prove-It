@@ -861,56 +861,6 @@ class TheoryStorage:
 
         return obj
 
-    """
-    def get_all_presumed_theorem_names(self, theorem_name):
-        '''
-        Return the set of full names of presumed theorems that are
-        directly or indirectly presumed by the theorem of the given name
-        in this theory.
-        '''
-        presumed_theorems = set()
-        full_theorem_name = self.name + '.' + theorem_name
-        self._allPresumedTheoremNames(theorem_name, presumed_theorems, [full_theorem_name])
-        return presumed_theorems
-
-    def _allPresumedTheoremNames(self, theorem_name, presumed_theorem_names, presumption_chain):
-        '''
-        Pass back the presumed_theorem_names, a set of full
-        names of theorems, that are directly or indirectly presumed
-        by the theorem of the given name in this theory.
-        The presumption_chain lists the stack of recursively
-        presumed theorems to check for circular logic.
-        '''
-        from .theory import Theory
-        from .proof import CircularLogicLoop
-        if self._theorem_dependency_order is None:
-            # The theorem dependency order is stale -- needs to be updated.
-            self._updateTheoremDependencyOrder(self.get_theorem_names()) # update the dependency order first
-        idx = self._theorem_dependency_order.index(theorem_name)
-        # new presumptions in an external theory as the full theorem name (with theory prefix)
-        new_external_presumptions = []
-
-        for presumption_name in self._theorem_dependency_order[:idx]:
-            if '.' in presumption_name:
-                # external presumption
-                new_external_presumptions.append(presumption_name)
-            else:
-                presumed_theorem_names.add(self.name + '.' + presumption_name) # use full name
-
-        for presumption_name in new_external_presumptions:
-            theory_name, theorem_name = presumption_name.rsplit('.', 1)
-            theory = Theory.get_theory(theory_name)
-            if theorem_name not in theory.get_theorem_names():
-                raise KeyError("Theorem %s not found in theory %s"%(theorem_name, theory.name))
-            if presumption_name in presumption_chain:
-                chain_index = presumption_chain.index(presumption_name)
-                presumption = theory.get_theorem(theorem_name)
-                raise CircularLogicLoop(presumption_chain[chain_index:]+[presumption_name], presumption)
-            if presumption_name not in presumed_theorem_names:
-                presumed_theorem_names.add(presumption_name)
-                theory._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
-    """
-
     def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0,
                            definition_existence_proof=False,
                            definition_extension_proof=False):
@@ -2946,115 +2896,6 @@ class StoredTheorem(StoredSpecialStmt):
                     yield line
         except IOError:
             pass  # no contribution if the file doesn't exist
-
-    """
-    def record_presumed_theories(self, presumed_theory_names):
-        '''
-        Record information about what other theories are
-        presumed in the proof of this theorem.
-        '''
-        from .theory import Theory
-        for presumed_theory in presumed_theory_names:
-            # raises an exception if the theory is not known
-            Theory.get_theory(presumed_theory)
-        presuming_str = '\n'.join(presumed_theory_names) + '\n'
-        presuming_file = os.path.join(self.path, 'presumed_theories.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                if presuming_str == f.read():
-                    return # unchanged; don't need to record anything
-        with open(presuming_file, 'w') as f:
-            f.write(presuming_str)
-
-    def presumed_theories(self):
-        '''
-        Return the list of presumed theories.
-        '''
-        # first read in the presuming info
-        presumptions = []
-        presuming_file = os.path.join(self.path, 'presumed_theories.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                for presumption in f.readlines():
-                    presumption = presumption.strip()
-                    if presumption == '': continue
-                    presumptions.append(presumption)
-        return presumptions
-
-    def record_presumed_theorems(self, explicitly_presumed_theorem_names):
-        '''
-        Record information about what other theorems are
-        explicitly presumed in the proof of this theorem.
-        '''
-        presuming_str = '\n'.join(explicitly_presumed_theorem_names) + '\n'
-        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                if presuming_str == f.read():
-                    return # unchanged; don't need to record anything
-        with open(presuming_file, 'w') as f:
-            f.write(presuming_str)
-
-        # The theory's theorem dependency order is now stale
-        # and needs to be updated:
-        self.theory._storage.invalidate_theorem_dependency_order()
-
-    def explicitly_presumed_theorem_names(self):
-        '''
-        Return the list of names of explicitly presumed theorems
-        (indicated after 'presuming' in the proof notebook).
-        '''
-        presumptions = []
-        presuming_file = os.path.join(self.path, 'presumed_theorems.txt')
-        if os.path.isfile(presuming_file):
-            with open(presuming_file, 'r') as f:
-                for presumption in f.readlines():
-                    presumption = presumption.strip()
-                    if presumption == '': continue
-                    presumptions.append(presumption)
-        return presumptions
-    """
-
-    """
-    def get_recursively_presumed_theorems(self, presumed_theorems, presumption_chain=None):
-        '''
-        Append presumed theorem objects to 'presumed_theorems'.
-        For each theorem, do this recursively.
-        presumption_chain is used internally to detect and reveal
-        circular dependencies.
-        '''
-        from .theory import Theory
-        from .proof import CircularLogicLoop
-        # first get the directly presumed theorems
-        presumptions = self.directly_presumed_theorems()
-        if presumption_chain is None:
-            presumption_chain = [str(self)]
-        else:
-            presumption_chain.append(str(self))
-        # Iterate through each presuming string and add it as
-        # a theory name or a theorem.  For theorem's, recursively
-        # add the presuming information.
-        for presumption in presumptions:
-            if not isinstance(presumption, str):
-                raise ValueError("'presumptions' should be a collection of strings for theory names and/or full theorem names")
-            theory_name, theorem_name = presumption.rsplit('.', 1)
-            thm = Theory.get_theory(theory_name).get_theorem(theorem_name)
-            if str(thm) in presumption_chain:
-                index = presumption_chain.index(str(thm))
-                raise CircularLogicLoop(presumption_chain[index:]+[str(thm)], thm)
-            # add the theorem and anything presumed by that theorem to the set of presumed theorems/theories
-            if thm not in presumed_theorems:
-                presumed_theorems.add(thm)
-                thm._stored_theorem().get_recursively_presumed_theorems(presumed_theorems, list(presumption_chain))
-    """
-    """
-    def get_all_presumed_theorem_names(self):
-        '''
-        Return the set of full names of theorems that are presumed
-        directly or indirectly by this one.
-        '''
-        return self.theory._storage.get_all_presumed_theorem_names(self.name)
-    """
     
     def proof_path(self):
         return os.path.join(self.theory.get_path(), '_theory_nbs_',
@@ -3105,6 +2946,19 @@ class StoredTheorem(StoredSpecialStmt):
         filename = os.path.join(self.proof_path(), 'allowed_presumptions.txt')
         with open(filename, 'a') as f:
             f.write(presumption + '\n')
+
+    def remove_allowed_presumption(self, must_not_allow):
+        filename = os.path.join(self.proof_path(), 'allowed_presumptions.txt')
+        allowances = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                allowance = line.strip()
+                if allowance != must_not_allow:
+                    allowances.append(allowance)
+        filename = os.path.join(self.proof_path(), 'allowed_presumptions.txt')
+        with open(filename, 'w') as f:
+            for presumption in allowances:
+                f.write(presumption + '\n')
 
     def disallow_presumption(self, presumption):
         filename = os.path.join(self.proof_path(), 'disallowed_presumptions.txt')

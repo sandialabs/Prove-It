@@ -1387,12 +1387,20 @@ class Theorem(Proof):
                 presumed_theorems_and_dependencies)
             if theorem_being_proven_str in presumed_theorems_and_dependencies:
                 # Theorem-specific presumption or dependency is
-                # mutual.  Raise a CircularLogic error.
+                # mutual.  Query if it should be disallowed instead and
+                # raise an Exception.
                 specifically_presumed = (str(self) in 
                                      allowed_theorems_and_theories)
-                raise CircularLogic(
-                    Judgment.theorem_being_proven, self,
-                    implicitly_presumed = not specifically_presumed)
+                if specifically_presumed:
+                    status = 'had been explicitly presumed WRONGLY'
+                else:
+                    status = 'had been implicitly presumed WRONGLY'
+                if not self._query_allowance(force_query=True, status=status):
+                    Judgment.stored_theorem_being_proven.remove_allowed_presumption(
+                        str(self))
+                    raise Exception("Restart this proof to use the revised "
+                                    "presumptions.")
+                raise Exception("This proof cannot continue")
         else:
             # It is neither allowed nor disallowed.  Record this
             # in the 'non_allowances'.
@@ -1410,44 +1418,50 @@ class Theorem(Proof):
                 processed.add(dep_proof)
                 to_process.update(dep_proof._meaning_data._dependents)
 
-    def _query_allowance(self):
+    def _query_allowance(self, force_query=False,
+                         status='has neither been allowed nor disallowed'):
         '''
         If the Theorem is neither explicitly allowed nor disallowed,
         force the user to make a choice.
         '''
-        name_and_containing_theories = list(
-            self.theorem_name_and_containing_theories())
-        if self._meaning_data._unusable_proof is not None or (
-                not Judgment.disallowed_theorems_and_theories.isdisjoint(
-                    name_and_containing_theories)):
-            return False # explicitly disallowed
-        if self._meaning_data._non_allowances is None or (
-                not Judgment.allowed_theorems_and_theories.isdisjoint(
+        if not force_query:
+            name_and_containing_theories = list(
+                self.theorem_name_and_containing_theories())
+            if self._meaning_data._unusable_proof is not None or (
+                    not Judgment.disallowed_theorems_and_theories.isdisjoint(
                         name_and_containing_theories)):
-            return True # explicitly allowed
-        assert (len(self._meaning_data._non_allowances)==1 and
-                self in self._meaning_data._non_allowances)
+                return False # explicitly disallowed
+            if self._meaning_data._non_allowances is None or (
+                    not Judgment.allowed_theorems_and_theories.isdisjoint(
+                            name_and_containing_theories)):
+                return True # explicitly allowed
+            assert (len(self._meaning_data._non_allowances)==1 and
+                    self in self._meaning_data._non_allowances)
         
         hint = ''
         used_theorem_names = self.all_used_or_presumed_theorem_names()
-        if Judgment.theorem_being_proven_str in used_theorem_names:   
-            hint = ("\nHint: %s based upon current proofs, this must be"
-                    "\nDISALLOWED to prevent circular logic."%str(self))
+        if Judgment.theorem_being_proven_str in used_theorem_names:
+            if force_query:
+                hint = ("\nBased upon current proofs, this must be"
+                        " DISALLOWED to prevent circular logic.")
+                
+            else:
+                hint = ("\nHint: based upon current proofs, this must be"
+                        " DISALLOWED to prevent circular logic.")
         elif self.is_fully_proven():
             hint = ("\nHint: %s is fully proven and based upon current "
-                    "proofs, \nit is safe to ALLOW."%str(self))
+                    "proofs, \nit is safe to ALLOW.")
         
         # If running build.py, just raise an exception since there
         # is no user interactivity.
         if defaults._executing_auto_build:
             raise Exception(
-                    "Attempting to use %s which has neither been allowed "
-                    "nor disallowed for use in the proof of %s."
-                    %(str(self), Judgment.theorem_being_proven_str))
+                    "Attempting to use %s\nwhich %s for use in the proof of %s."
+                    %(str(self), status, Judgment.theorem_being_proven_str))
         
         cur_level = str(self)
-        print("Attempting to use %s which has neither been\n allowed nor "
-              "disallowed for use in this proof.%s"%(str(self), hint))
+        print("Attempting to use %s\nwhich %s for use in this proof.%s"%(
+            str(self), status, hint))
         sys.stdout.flush()
         while True:
             # Query whether to allow, disallow, go up a level, 
@@ -3056,36 +3070,3 @@ class UnusableProof(ProofFailure):
                 str(self.proving_theorem) + ' (it is not allowed)' + self.extra_msg
         else:
             return 'Cannot use disabled proof for ' + self.unusable_item_str
-
-
-class CircularLogic(Exception):
-    def __init__(self, proving_theorem, presumed_theorem, implicitly_presumed=False):
-        self.proving_theorem = proving_theorem
-        self.presumed_theorem = presumed_theorem
-        self.implicitly_presumed = implicitly_presumed
-
-    def __str__(self):
-        if self.implicitly_presumed:
-            return str(self.presumed_theorem) + ' cannot be implicitly presumed while proving ' + \
-                str(self.proving_theorem) + ' due to a circular dependence/presumptions; it must be excluded.'
-        else:
-            return str(self.presumed_theorem) + ' cannot be explicitly presumed while proving ' + \
-                str(self.proving_theorem) + ' due to a circular dependence/presumptions.'
-
-
-"""
-class CircularLogicLoop(ProofFailure):
-    def __init__(self, presumption_loop, presumed_theorem):
-        assert presumption_loop[0] == presumption_loop[-1], "expecting a loop"
-        assert str(
-            presumed_theorem) == presumption_loop[0], "expecting presumed_theorem to match the ends of the presumption_loop"
-        CircularLogic.__init__(
-            self,
-            Judgment.theorem_being_proven,
-            presumed_theorem)
-        self.presumption_loop = presumption_loop
-
-    def __str__(self):
-        return "Circular presumption dependency detected: %s" % str(
-            self.presumption_loop)
-"""

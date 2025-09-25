@@ -294,9 +294,8 @@ class Judgment:
         Begin a proof for a theorem.  Only use other theorems that
         are explicitly allowed as presumptions for this theorem.
         Query the user when attempting to use a theorem that is neither
-        allowed or disallowed.  If there exists any allowed presumed 
-        theorem that has a direct or indirect dependence upon this 
-        theorem then a CircularLogic exception is raised.
+        allowed or disallowed.  Circular dependencies are disallowed and
+        there will be an opportunity to revise presumptions when this occurs.
         '''
         from .proof import Theorem
         if Judgment.theorem_being_proven is not None:
@@ -314,10 +313,7 @@ class Judgment:
         allowed, disallowed = theorem.get_allowed_and_disallowed_presumptions()
 
         self_str = str(self)
-        if self_str in allowed:
-            # A theorem may not presume itself!
-            from .proof import CircularLogic
-            raise CircularLogic(theorem, theorem)
+        assert self_str not in allowed, "Self-presumption not allowed"
         if self_str not in disallowed:
             # It goes without saying that we cannot presume the
             # theorem we are trying to prove.
