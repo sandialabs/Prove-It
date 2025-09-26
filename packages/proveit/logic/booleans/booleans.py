@@ -292,6 +292,11 @@ class TrueLiteral(Literal, IrreducibleValue):
         return true_axiom
 
     @prover
+    def definition(self, **defaults_config):
+        from . import true_def
+        return true_def
+    
+    @prover
     def eval_equality(self, other, **defaults_config):
         from . import true_eq_true, true_not_false
         from . import TRUE, FALSE

@@ -38,6 +38,13 @@ class Not(Operation):
                     judgment):
                 yield neg_side_effect
 
+    def negation_side_effects(self, judgment):
+        """
+        Side-effect derivations to attempt automatically for a double
+        negation.
+        """
+        yield self.negate_via_double_negation
+    
     """
     def in_bool_side_effects(self, judgment):
         '''
@@ -273,7 +280,8 @@ class Not(Operation):
     def derive_via_double_negation(self, **defaults_config):
         r'''
         From not(not(A)), derive and return A.
-        Note, see Equals.derive_via_boolean_equality for the reverse process.
+        See Not.conclude_via_double_negation for the reverse process.
+        Also see Not.negate_via_double_negation.
         '''
         from . import double_negation_elim
         if isinstance(self.operand, Not):
@@ -288,13 +296,25 @@ class Not(Operation):
     def conclude_via_double_negation(self, **defaults_config):
         r'''
         Prove and return self of the form not(not(A)) assuming A.
+        See Not.derive_via_double_negation for the reverse process.
         Also see version in NotEquals for A != FALSE.
+        Also see Not.negate_via_double_negation.
         '''
         from . import double_negation_intro
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
             return double_negation_intro.instantiate({A: stmt})
 
+    @prover
+    def negate_via_double_negation(self, **defaults_config):
+        """
+        Derive and return A from not(not(A)) where self=not(A).
+        Also see Not.derive_via_double_negation and
+        Not.conclude_via_double_negation.
+        """
+        from . import double_negation_elim
+        return double_negation_elim.instantiate({A: self.operand})
+    
     @prover
     def conclude_via_falsified_negation(self, **defaults_config):
         r'''

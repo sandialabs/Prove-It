@@ -226,6 +226,43 @@ class Or(Operation):
             demorgan_and = And(*[operand.operand for operand in self.operands])
             yield demorgan_and.conclude_via_demorgans
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        """
+        Equates this conjunction with its defined form.  For example,
+        (A and B) = Not(A => Not(B))
+        (A_1 and A_2 ... and ... A_n) = exists_{k in 1..n} A_k
+        """
+        from proveit.logic.booleans.disjunction import binary_disjunction_def
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return binary_disjunction_def.instantiate({A: _A, B: _B})
+        raise NotImplementedError('Or.definition only implemented for the binary case at this time.')
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        """
+        Conclude (A or B) from (Not(A) => B).
+        Conclude (A_1 or A_2 or ... or A_n) from exists_{k in {1 .. n} A_k}.
+        """
+        from . import fold_or
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return fold_or.instantiate({A: _A, B: _B})
+        raise NotImplementedError()
+
+    @prover
+    def unfold(self, **defaults_config):
+        """
+        From (A or B) derive (Not(A) => B).
+        From (A_1 or A_2 or ... or A_n) derive exists_{k in {1 .. n} A_k}.
+        """
+        from . import unfold_or
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return unfold_or.instantiate({A: _A, B: _B})
+        raise NotImplementedError()
+    
     """
     def in_bool_side_effects(self, judgment):
         '''
@@ -317,32 +354,6 @@ class Or(Operation):
         impl =  disjunction_from_quantification.instantiate(
             {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
         return impl.derive_consequent()
-
-    @prover
-    def conclude_as_folded(self, **defaults_config):
-        '''
-        Conclude (A or B) from (Not(A) => B).
-        Conclude (A_1 or A_2 or ... or A_n) from exists_{k in {1 .. n} A_k}.
-        '''
-        from . import fold_or
-        if self.operands.is_double():
-            _A, _B = self.operands
-            return fold_or.instantiate({A:_A, B:_B})
-        else:
-            raise NotImplementedError()
-
-    @prover
-    def unfold(self, **defaults_config):
-        '''
-        From (A or B) derive (Not(A) => B).
-        From (A_1 or A_2 or ... or A_n) derive exists_{k in {1 .. n} A_k}.
-        '''
-        from . import unfold_or
-        if self.operands.is_double():
-            _A, _B = self.operands
-            return unfold_or.instantiate({A:_A, B:_B})
-        else:
-            raise NotImplementedError()
 
     def _build_canonical_form(self):
         '''

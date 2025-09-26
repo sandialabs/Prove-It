@@ -87,7 +87,6 @@ class Exists(OperationOverInstances):
                     self.instance_expr.instance_params) and 
                 self.instance_param not in free_vars(
                     self.instance_expr.instance_expr.rhs)):
-            # Existential for a conservatively defined operation.
             from . import existence_by_basic_example
             exist_by_example_relabeled = (
                 existence_by_basic_example.
@@ -98,7 +97,6 @@ class Exists(OperationOverInstances):
                  self.instance_param:Lambda(
                      self.instance_expr.instance_expr.lhs.operands,
                      self.instance_expr.instance_expr.rhs)})
-            
         if (self.has_domain() and self.instance_params.is_single()
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
@@ -311,8 +309,14 @@ class Exists(OperationOverInstances):
         from P(y_1, ..., y_n) and Q(y_1, ..., y_n)
         where y_1, ..., y_n is the given example_instance.
         '''
-        from . import existence_by_example
+        from . import existence_by_basic_example, existence_by_example
         from . import existence_by_example_with_conditions
+        if self.instance_params.is_single() and (not hasattr(self, 'condition')):
+            _x = example_instance
+            _y = self.instance_params[0]
+            _P = Lambda(_y, self.instance_expr)
+            return existence_by_basic_example.instantiate(
+                {P: Lambda(_y, self.instance_expr), x: _x, y: _y})
         _x = self.instance_params
         _n = _x.num_elements()
         _P = Lambda(_x, self.instance_expr)
@@ -320,9 +324,8 @@ class Exists(OperationOverInstances):
         if hasattr(self, 'condition'):
             _Q = Lambda(_x, self.condition)
             return existence_by_example_with_conditions.instantiate(
-                {n:_n, x:_x, y:_y, P:_P, Q:_Q})
-        return existence_by_example.instantiate(
-                {n:_n, x:_x, y:_y, P:_P})
+                {n: _n, x: _x, y: _y, P: _P, Q: _Q})
+        return existence_by_example.instantiate({n: _n, x: _x, y: _y, P: _P})
 
     @prover
     def conclude_via_domain_inclusion(self, subset_domain,

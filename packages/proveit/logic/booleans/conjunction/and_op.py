@@ -314,6 +314,43 @@ class And(Operation):
         equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        """
+        Equates this conjunction with its defined form.  For example,
+        (A and B) = Not(A => Not(B))
+        (A_1 and A_2 ... and ... A_n) = forall_{k in 1..n} A_k
+        """
+        from proveit.logic.booleans.conjunction import binary_conjunction_def
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return binary_conjunction_def.instantiate({A: _A, B: _B})
+        raise NotImplementedError('And.definition only implemented for the binary case at this time.')
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        """
+        Conclude (A and B) from Not(A => Not(B)).
+        Conclude (A_1 and A_2 and ... and A_n) from forall_{k in {1 .. n} A_k}.
+        """
+        from . import fold_and
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return fold_and.instantiate({A: _A, B: _B})
+        raise NotImplementedError()
+
+    @prover
+    def unfold(self, **defaults_config):
+        """
+        From (A and B) derive Not(A => Not(B)).
+        From (A_1 and A_2 and ... and A_n) derive forall_{k in {1 .. n} A_k}.
+        """
+        from . import unfold_and
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return unfold_and.instantiate({A: _A, B: _B})
+        raise NotImplementedError()
+    
     @prover
     def derive_any(self, index_or_expr, **defaults_config):
         r'''
@@ -612,28 +649,6 @@ class And(Operation):
         impl =  conjunction_from_quantification.instantiate(
             {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
         return impl.derive_consequent()
-
-    @prover
-    def conclude_as_folded(self, **defaults_config):
-        '''
-        Conclude (A and B) from Not(A => Not(B))
-        Conclude (A_1 or A_2 and ... or A_n) from forall_{k in {1 .. n} A_k}.
-        '''
-        from . import fold_and
-        if self.operands.is_double():
-            _A, _B = self.operands
-            return fold_and.instantiate({A:_A, B:_B})
-
-    @prover
-    def unfold(self, **defaults_config):
-        '''
-        From (A or B) derive Not(A => Not(B)).
-        From (A_1 or A_2 and ... or A_n) derive forall_{k in {1 .. n} A_k}.
-        '''
-        from . import unfold_and
-        if self.operands.is_double():
-            _A, _B = self.operands
-            return unfold_and.instantiate({A:_A, B:_B})
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
