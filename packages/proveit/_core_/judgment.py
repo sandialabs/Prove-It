@@ -373,6 +373,14 @@ class Judgment:
         should have the same meaning as the original proven expression
         but with a new style to be used.
         '''
+        if new_style_expr is None or (
+                new_style_expr._style_id == self._style_id):
+            if len(assumptions) == len(self.assumptions) and all(
+                    _orig_assump._style_id==_new_assump._style_id
+                    for _orig_assump, _new_assump in
+                    zip(self.assumptions, assumptions)):
+                # No change.  No need to reprove.
+                return self
         proof = self.proof().regenerate_proof_under_new_assumptions(
             assumptions=assumptions, new_style_expr=new_style_expr)
         return proof.proven_truth

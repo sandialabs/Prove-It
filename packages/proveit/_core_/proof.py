@@ -290,7 +290,9 @@ class Proof:
         meaning as the original proven expression but with a new style to 
         be used.
         '''
-        proven_expr = self.proven_truth.expr
+        from proveit._core_.expression.expr import free_vars
+        proven_truth = self.proven_truth
+        proven_expr = proven_truth.expr
         if isinstance(self, Assumption):
             # For an Assumption proof, prove it under the new assumptions 
             # which are supposed to be provable under these new ones.
@@ -298,13 +300,23 @@ class Proof:
         if isinstance(self, Deduction):
             # It's requirement gets to add the antecedent of the proven
             # implication as an assumption.
-            requirement_assumptions = [*assumptions, 
-                                       self.proven_truth.expr.antecedent]
-        elif isinstance(self, Generalization) and hasattr(proven_expr, 'condition'):
+            requirement_assumptions = OrderedSet([*assumptions, 
+                                       self.proven_truth.expr.antecedent])
+        elif isinstance(self, Generalization):
+            # Any assumption involving one of the quantified
+            # variables here would be masked for the requirement.
+            # Consider some A(x) |- forall_{x} P(x).  It could not
+            # derive from A(x) |- P(x).
+            _forall_vars = proven_expr.instance_params
+            requirement_assumptions = OrderedSet([
+                _assumption for _assumption in assumptions
+                if free_vars(_assumption).isdisjoint(_forall_vars)])
             # It's requirement gets to add the condition of the proven
             # generalization as an assumption.
-            condition = proven_expr.condition
-            requirement_assumptions = [*assumptions, condition]
+            _generalized_literals = self.generalized_literals
+            requirement_assumptions.update([_cond.variables_as_literals(
+                *_generalized_literals) for _cond in proven_expr.all_conditions()])
+                                       
         else:
             requirement_assumptions = assumptions
         if new_style_expr is not None:
@@ -316,8 +328,25 @@ class Proof:
         all_requirements = []
         used_assumptions = set()
         for required_truth in self.required_truths:
+            required_assumptions = requirement_assumptions
+            for _assumption in required_truth.assumptions:
+                if _assumption not in proven_truth.assumptions:
+                    # The only way it should be possible for a judgment
+                    # to have assumptions unused by required truths in
+                    # its proof is for it to be absorbed via
+                    # Deduction or Generalization (in which case it
+                    # should be in the required assumptions) ...
+                    if _assumption not in required_assumptions:
+                        # or this is an "equality replacement
+                        # requirement", in which case we should
+                        # add the assumption.
+                        assert isinstance(self, Instantiation)
+                        if required_assumptions is requirement_assumptions:
+                            required_assumptions = OrderedSet(
+                                required_assumptions) # make a copy
+                        required_assumptions.add(_assumption)
             required_truth = required_truth.reprove(
-                assumptions=requirement_assumptions)
+                assumptions=required_assumptions)
             used_assumptions.update(required_truth.assumptions)
             all_requirements.append(required_truth)
         assumptions = [assumption for assumption in assumptions 
