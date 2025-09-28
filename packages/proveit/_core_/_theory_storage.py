@@ -1079,7 +1079,8 @@ class TheoryFolderStorage:
                   "is installed. To deduce the problem, try generating a "
                   "tmp.tex file with the following content:\n\n%s"%
                   '\n'.join(genelatex(latex, wrap=True)),
-                  "\n\nAnd execute the following command in a command prompt:\n"
+                  "\n\nAnd execute the following commands in a command prompt:\n"
+                  "latex tmp.tex\n"
                   "dvipng -T tight -D 150 -z 9 -bg Transparent -o tmp.png "
                   "tmp.dvi -fg %s"%color)
             raise Exception(
