@@ -290,6 +290,7 @@ import sys
 from proveit import *
 from proveit import defaults
 defaults.display_latex=%s
+defaults._executing_auto_build=True
 import proveit.magics
 __init_modules = list(sys.modules.keys())
 __init_modules # avoid Prove-It magic assignment
