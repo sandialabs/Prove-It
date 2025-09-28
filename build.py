@@ -142,26 +142,6 @@ class ProveItHTMLPreprocessor(Preprocessor):
         p = re.compile(r'<.*?>')
         return p.sub('', text)
 
-    """
-    def _process_latex(self, text):
-        '''
-        Search the markdown for '$...$' indicating LaTeX.  Generate a png in place of the LaTeX.
-        '''
-        revised_text = ''
-        cur_pos = 0
-        latex_start = text.find('$')
-        while latex_start >= 0:
-            latex_end = text.find('$', latex_start+1)
-            latex = text[latex_start+1:latex_end]
-            png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some theories)
-            revised_text += text[cur_pos:latex_start]
-            revised_text += '<img style="vertical-align:text-bottom; display:inline;" src="data:image/png;base64,%s"/>'%base64.b64encode(png)
-            cur_pos = latex_end+1
-            latex_start = text.find('$', cur_pos)
-        revised_text += text[cur_pos:]
-        return revised_text
-    """
-
     def _inline_images(self, text):
         '''
         Convert imported images to inline pngs.
@@ -389,7 +369,8 @@ len(gc.get_objects()) # used to check for memory leaks
             #print('num gc objects', cell['outputs'][0]['data']['text/plain'])
         return nb, resources
 
-    def execute_notebook(self, notebook_path, no_latex=False, git_clear=True):
+    def execute_notebook(self, notebook_path, no_latex=False, git_clear=True,
+                         save_notebook=False):
         '''
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
@@ -420,10 +401,10 @@ len(gc.get_objects()) # used to check for memory leaks
                 pass
                 # execute_processor.km.restart_kernel(newport=True)
         new_nb_str = nbformat.writes(nb)
-        # if new_nb_str != nb_str: # block commented out by wdc 8/5/2021
-        #     # Write it out if it has changed. # see email w/WW same date
-        #     with open(notebook_path, 'wt', encoding='utf8') as f:
-        #         f.write(new_nb_str)
+        if save_notebook and new_nb_str != nb_str:
+            # Write it out if it has changed.
+            with open(notebook_path, 'wt', encoding='utf8') as f:
+                f.write(new_nb_str)
         print("\tFinished %s in %0.2f seconds" %
               (notebook_path, time.time() - start_time))
 
@@ -487,6 +468,7 @@ def export_notebook_to_html(
 def execute_and_export_notebook(
         execute_processor,
         notebook_path,
+        save_notebook=False,
         no_execute=False,
         no_latex=False,
         git_clear=True):
@@ -498,14 +480,15 @@ def execute_and_export_notebook(
         export_notebook_to_html(notebook_path)
     else:
         nb = execute_processor.execute_notebook(notebook_path,
+                                                save_notebook=save_notebook,
                                                 no_latex=no_latex,
                                                 git_clear=git_clear)
         export_notebook_to_html(notebook_path, nb)
 
 
 def execute_and_maybe_export_notebook(
-        execute_processor, notebook_path, no_execute=False, no_latex=False,
-        git_clear=True, export_to_html=True):
+        execute_processor, notebook_path, save_notebook=False,
+        no_execute=False, no_latex=False, git_clear=True, export_to_html=True):
     '''
     Read, execute, and rewrite a notebook and also export it
     to HTML.
@@ -520,11 +503,13 @@ def execute_and_maybe_export_notebook(
             f.write('interactive\n')
     if export_to_html:
         execute_and_export_notebook(execute_processor, notebook_path,
+                                    save_notebook=save_notebook,
                                     no_latex=no_latex, no_execute=no_execute,
                                     git_clear=git_clear)
     elif not no_execute:
         execute_processor.execute_notebook(
-            notebook_path, no_latex=no_latex, git_clear=git_clear)
+            notebook_path, save_notebook=save_notebook,
+            no_latex=no_latex, git_clear=git_clear)
 
 
 """
@@ -874,7 +859,8 @@ def mpi_build(
             for notebook_path in generate_notebook_paths_with_retries():
                 try:
                     execute_and_maybe_export_notebook(
-                        execute_processor, notebook_path, no_latex=no_latex,
+                        execute_processor, notebook_path,
+                        save_notebook=save_notebooks, no_latex=no_latex,
                         no_execute=no_execute, git_clear=git_clear,
                         export_to_html=export_to_html)
                     successful_execution_notification(notebook_path)
@@ -885,7 +871,9 @@ def mpi_build(
     elif rank > 0:
         # These ranks will request assignments from rank 0
         try:
-            with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+            #with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+            execute_processor = RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1)
+            with execute_processor.setup_kernel():
                 comm.send(rank, dest=0)
                 while True:
                     notebook_path = comm.recv(source=0)
@@ -893,7 +881,8 @@ def mpi_build(
                         break  # empty path is "done" signal
                     try:
                         execute_and_maybe_export_notebook(
-                            execute_processor, notebook_path, no_latex=no_latex,
+                            execute_processor, notebook_path,
+                            save_notebook=save_notebooks, no_latex=no_latex,
                             no_execute=no_execute, git_clear=False,
                             export_to_html=export_to_html)
                         comm.send(rank, dest=0)
@@ -1058,6 +1047,13 @@ if __name__ == '__main__':
         help=("extract (with the same limitations as with --download) "
               "from the specified tar file"))
     parser.add_argument(
+        '--save_notebooks',
+        dest='save_notebooks',
+        action='store_const',
+        const=True,
+        default=False,
+        help='save the executed notebooks with their output cells')
+    parser.add_argument(
         '--essential',
         dest='build_essential',
         action='store_const',
@@ -1168,6 +1164,7 @@ if __name__ == '__main__':
         ' '.join(default_paths))
     args = parser.parse_args()
     paths = args.path
+    save_notebooks = args.save_notebooks
 
     # Get all the theories of the given top-level paths
     # in the order indicated in _sub_theory_.txt files.
