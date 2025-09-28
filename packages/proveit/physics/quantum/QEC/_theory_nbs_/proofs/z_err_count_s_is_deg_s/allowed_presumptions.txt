@@ -1,0 +1,3 @@
+proveit.physics.quantum.QEC.z_err_count_s_eqs_deg_of_graph_s
+proveit.physics.quantum.QEC.graph_of_site_op_is_site_op
+proveit.logic.equality.sub_right_side_into
