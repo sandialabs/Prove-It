@@ -1429,6 +1429,8 @@ class Theorem(Proof):
         # If running build.py, just return False to allow proofs to
         # go through without intervention if they can.
         if defaults._executing_auto_build:
+            Judgment.disallowed_theorems_and_theories.add(str(self))
+            self._mark_usability()
             return False
         
         cur_level = str(self)
