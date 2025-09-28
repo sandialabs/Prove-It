@@ -1426,13 +1426,10 @@ class Theorem(Proof):
             hint = ("\nHint: %s is fully proven and based upon current "
                     "proofs, \nit is safe to ALLOW."%str(self))
         
-        # If running build.py, just raise an exception since there
-        # is no user interactivity.
+        # If running build.py, just return False to allow proofs to
+        # go through without intervention if they can.
         if defaults._executing_auto_build:
-            raise Exception(
-                    "Attempting to use %s which has neither been allowed "
-                    "nor disallowed for use in the proof of %s."
-                    %(str(self), Judgment.theorem_being_proven_str))
+            return False
         
         cur_level = str(self)
         print("Attempting to use %s which has neither been\n allowed nor "
