@@ -5,10 +5,10 @@ from proveit.util import OrderedSet
 
 def _make_decorated_prover(func, automatic=False):
     '''
-    Use for decorating 'prover' methods 
+    Use for decorating 'prover' methods
     (@prover, @relation_prover, or @equality_prover).
     This allows for extra keyword arguments for temporarily altering
-    any attributes of the Prove-It 'defaults' (e.g., 
+    any attributes of the Prove-It 'defaults' (e.g.,
     defaults.assumptions) before calling the decorated method.
     It will then check to see if the return type is a Judgment that is
     valid under "active" assumptions.
@@ -22,40 +22,46 @@ def _make_decorated_prover(func, automatic=False):
                         "keyword arguments for temporarily re-configuring "
                         "attributes of proveit.defaults "
                         "('assumptions', 'styles', etc.)"%func)
-    
+
     is_conclude_method = func.__name__.startswith('conclude')
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment, InnerExpr, ProofFailure
         from proveit._core_.proof import Assumption
         from proveit.logic import Equals
-        if (kwargs.get('preserve_all', False) and 
+        if (kwargs.get('preserve_all', False) and
                 len(kwargs.get('replacements', tuple())) > 0):
             raise ValueError(
                     "Adding 'replacements' and setting 'preserve_all' "
                     "to True are incompatible settings.")
         preserve_lhs = kwargs.pop('preserve_lhs', False)
         preserve_expr = kwargs.pop('preserve_expr', None)
+        append_assumptions = kwargs.pop('append_assumptions', None)
+        prepend_assumptions = kwargs.pop('prepend_assumptions', None)
+        assumptions = kwargs.get('assumptions', None)
+        if assumptions is None:
+            assumptions = defaults.assumptions
         if len(args) > 0:
             _self = args[0]
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
-                _assumptions = kwargs.get('assumptions', None)
-                if _assumptions is None:
-                    _assumptions = defaults.assumptions
-                if not _self.assumptions.issubset(_assumptions):
-                    _assumptions = OrderedSet(_assumptions, mutable=False)
-                    kwargs['assumptions'] = _assumptions + _self.assumptions
+                if not _self.assumptions.issubset(assumptions):
+                    assumptions = OrderedSet(assumptions, mutable=False)
+                    assumptions += _self.assumptions
+                    kwargs['assumptions'] = assumptions
             if is_conclude_method:
                 # If the method starts with conclude 'conclude', we must
                 # preserve _self.
-                if (not isinstance(_self, Expression) 
+                if (not isinstance(_self, Expression)
                         and hasattr(_self, 'expr')):
                     # preserve_expr = _self.expr
                     kwargs['preserved_exprs'] = {_self.expr}
                 else:
-                    # preserve_expr = _self
-                    kwargs['preserved_exprs'] = {_self}
+                    preserve_expr = _self
+        if append_assumptions is not None:
+            kwargs['assumptions'] = tuple(assumptions) + tuple(append_assumptions)
+        if prepend_assumptions is not None:
+            kwargs['assumptions'] = tuple(prepend_assumptions) + tuple(assumptions)
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         if 'automation' in kwargs.keys():
@@ -74,7 +80,7 @@ def _make_decorated_prover(func, automatic=False):
         def public_attributes_dict(obj):
             # Return a dictionary of public attributes and values of
             # an object.
-            return {key:val for key, val in obj.__dict__.items() 
+            return {key:val for key, val in obj.__dict__.items()
                     if key[0] != '_'}
 
         exprs_to_replace = set()
@@ -127,7 +133,7 @@ def _make_decorated_prover(func, automatic=False):
                 raise TypeError("@prover method %s returned a Judgment, "
                                 "%s, that is not proven under the active "
                                 "assumptions: %s"
-                                %(func, proven_truth, defaults.assumptions)) 
+                                %(func, proven_truth, defaults.assumptions))
             return proven_truth
 
         if (automatic and not defaults.preserve_all) or (
@@ -136,7 +142,7 @@ def _make_decorated_prover(func, automatic=False):
             with defaults.temporary() as temp_defaults:
                 if 'assumptions' in defaults_to_change:
                     # Set 'assumptions' first (before turning off
-                    # 'automation', for example, so that the 
+                    # 'automation', for example, so that the
                     # side-effects will be processed).
                     key = 'assumptions'
                     setattr(temp_defaults, key, kwargs[key])
@@ -207,7 +213,7 @@ def _make_decorated_prover(func, automatic=False):
                 raise TypeError(
                         "The @prover method %s beginning with 'conclude' "
                         "expected to be a method for an Expression type "
-                        "or the object must have an 'expr' attribute."%func)                
+                        "or the object must have an 'expr' attribute."%func)
             if proven_truth is None:
                 raise NotImplementedError("@prover method %s is not implemented "
                                  "for %s."
@@ -221,7 +227,7 @@ def _make_decorated_prover(func, automatic=False):
                             defaults.assumptions,
                             "@prover method %s whose name starts with "
                             "'conclude_negation' must prove %s "
-                            "but got %s."%(func, not_expr, proven_truth))   
+                            "but got %s."%(func, not_expr, proven_truth))
                 # Match the style of not_self.
                 return proven_truth.with_matching_style(not_expr)
             else:
@@ -235,29 +241,29 @@ def _make_decorated_prover(func, automatic=False):
                 # Match the style of self.
                 return proven_truth.with_matching_style(expr)
         return proven_truth
-    return decorated_prover    
+    return decorated_prover
 
 def _make_decorated_relation_prover(func, automatic=False):
     '''
-    Use for decorating 'relation_prover' methods 
+    Use for decorating 'relation_prover' methods
     (@relation_prover or @equality_prover).  In addition
     to the @prover capabilities, temporarily altering 'defaults' and
     checking that a Judgment is returned check that the
-    Judgment is for a Relation.  Furthermore, unless alter_lhs=True 
+    Judgment is for a Relation.  Furthermore, unless alter_lhs=True
     is set in the keyword arguments when the method is called,
     automatically 'preserve' the 'self' expression and make sure it
     is on the left side of the returned Relation Judgment.
     '''
 
-    decorated_prover = _make_decorated_prover(func, 
+    decorated_prover = _make_decorated_prover(func,
                                               automatic=automatic)
-    
+
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
         from proveit._core_.expression.composite import ExprRange, ExprTuple
-        from proveit.relation import Relation  
-        
-        # 'preserve' the 'self' or 'self.expr' expression so it will 
+        from proveit.relation import Relation
+
+        # 'preserve' the 'self' or 'self.expr' expression so it will
         # be on the left side without simplification.
         _self = args[0]
         if isinstance(_self, Expression):
@@ -283,10 +289,10 @@ def _make_decorated_relation_prover(func, automatic=False):
                             defaults.preserved_exprs.union([expr]))
                 else:
                     kwargs['preserve_expr'] = expr
-        
+
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
-        
+
         # Check that the result is of the expected form.
         proven_expr = proven_truth.expr
         if not isinstance(proven_expr, Relation):
@@ -350,12 +356,12 @@ def auto_prover(func):
 
 def relation_prover(func):
     '''
-    @relation_prover is a decorator for methods that are to return a 
+    @relation_prover is a decorator for methods that are to return a
     proven judgment valid under "active" (default) assumptions, is a
     Relation type Expression, and has the original expression (self
     or self.expr) on the left hand side.  This "original expression"
     will automatically be "preserved" (not automatically simplified).
-    The style of the original expression will be used on the left side.  
+    The style of the original expression will be used on the left side.
     As with @prover methods, defaults may be temporarily set.
     '''
     return _wraps(func, _make_decorated_relation_prover(func))
@@ -364,7 +370,7 @@ def auto_relation_prover(func):
     '''
 
     '''
-    return _wraps(func, _make_decorated_relation_prover(func, 
+    return _wraps(func, _make_decorated_relation_prover(func,
                                                         automatic=True))
 
 # Keep track of equivalence provers so we may register them during
@@ -378,13 +384,13 @@ def equality_prover(past_tense, present_tense, automatic=False):
     except that it also registers the "equality method" in
     InnerExpr with the past tense and present tense names.  The method
     name itself should be a noun form and return the proven equality
-    with 'self' of the method on the left-hand side.  Calling the 
+    with 'self' of the method on the left-hand side.  Calling the
     past-tense version will return the right-hand side as equal
     to 'self'.  The present-tense version can be called on an
     InnerExpr of a Judgment to return a Judgment where inner expression
     is replaced according to the equality.
-    '''    
-    
+    '''
+
     def wrapper_maker(func):
         '''
         Make the wrapper for the equality_prover decorator.
@@ -397,7 +403,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
                 _equality_prover_name_to_tenses[name])
             current_tenses = (past_tense, present_tense)
             if (previous_tenses != current_tenses):
-                raise InconsistentTenseNames(func, previous_tenses, 
+                raise InconsistentTenseNames(func, previous_tenses,
                                              current_tenses)
         else:
             _equality_prover_name_to_tenses[name] = (
@@ -408,12 +414,12 @@ def equality_prover(past_tense, present_tense, automatic=False):
         decorated_relation_prover = _make_decorated_relation_prover(
             func, automatic=automatic)
 
-        def wrapper(*args, **kwargs):   
+        def wrapper(*args, **kwargs):
             '''
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
-            from proveit._core_.proof import (Assumption, 
+            from proveit._core_.proof import (Assumption,
                                               UnsatisfiedPrerequisites)
             from proveit.logic import Equals, EvaluationError
             # Obtain the original Expression to be on the left side
@@ -426,7 +432,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
             else:
                 raise TypeError("@equality_prover, %s, expected to be a "
                                 "method for an Expression type or it must "
-                                "have an 'expr' attribute."%func)            
+                                "have an 'expr' attribute."%func)
             proven_truth = None
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import is_irreducible_value
@@ -442,7 +448,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
             _no_eval_check = kwargs.pop('_no_eval_check', False)
             if (not _no_eval_check and (
                     is_evaluation_method or
-                    (defaults.simplify_with_known_evaluations 
+                    (defaults.simplify_with_known_evaluations
                      and is_simplification_method))):
                 from proveit.logic import evaluate_truth
                 # See if there is a known evaluation (directly or
@@ -461,7 +467,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
                         if eq_cf.proven():
                             proven_truth = eq_cf.prove()
                         else:
-                            # Note: If the canonical form is 
+                            # Note: If the canonical form is
                             # irreducible, don't divert from calling
                             # the appropriate method to perform the
                             # evaluation.
@@ -499,7 +505,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
         '%s' returns the right-hand side of '%s'.
         '%s', called on an InnerExpr of a Judgment,
         substitutes the right-hand side of '%s' for
-        the inner expression.            
+        the inner expression.
         """%(past_tense, name, present_tense, name)
         return _wraps(func, wrapper, extra_doc=extra_doc)
 
@@ -515,28 +521,28 @@ def equality_prover(past_tense, present_tense):
     except that it also registers the "equivalence method" in
     InnerExpr with the past tense and present tense names.  The method
     name itself should be a noun form and return the proven equivalence
-    with 'self' of the method on the left-hand side.  Calling the 
+    with 'self' of the method on the left-hand side.  Calling the
     past-tense version will return the right-hand side as equivalent
     to 'self'.  The present-tense version can be called on an
     InnerExpr of a Judgment to return a Judgment where inner expression
     is replaced according to the equivalence.
-    
+
     To ensure that the left-hand side of the equivalence is not altered
     via automatic simplification, we temporarily 'preserve' the 'self'
     expression in the defaults before the equivalence method is called.
-    '''    
+    '''
     class EquivalenceProverDecorator:
         def __init__(self, func):
             functools.update_wrapper(self, func)
             self.func = func
-        
+
         def __set_name__(self, owner, name):
-            # Solution for obtaining the method class (owner) seen at: 
+            # Solution for obtaining the method class (owner) seen at:
             # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
             # Register the equivalence method:
             _register_equivalence_method(
-                owner, name, past_tense, present_tense)        
+                owner, name, past_tense, present_tense)
 
         def __call__(self, *args, **kwargs):
             from proveit.relation import TransitiveRelation
@@ -553,7 +559,7 @@ def equality_prover(past_tense, present_tense):
                                 "specifically, the EquivalenceClass type of "
                                 "relation), not %s of type %s"
                                 %(proven_expr, proven_expr.__class__))
-            if not isinstance(proven_expr, 
+            if not isinstance(proven_expr,
                               proven_expr.__class__.EquivalenceClass()):
                 raise TypeError("@equality_prover expected to prove a "
                                 "TranstiveRelation of the EquivalenceClass, "
@@ -565,7 +571,7 @@ def equality_prover(past_tense, present_tense):
                                 "its left side ('lhs').  %s does not satisfy "
                                 "this requirement"%(self, proven_expr))
             return proven_truth
-    
+
     return EquivalenceProverDecorator
 """
 
@@ -574,9 +580,29 @@ class InconsistentTenseNames(Exception):
         self.func = func
         self.previous_tenses = previous_tenses
         self.current_tenses = current_tenses
-    
+
     def __str__(self):
         return ("Past and present tenses for %s are inconsistent "
                 "with another occurrence: %s vs %s.  It may be a typo."
-                %(self.func, self.previous_tenses, 
+                %(self.func, self.previous_tenses,
                   self.current_tenses))
+
+def display_provers(obj):
+    '''
+    Prints the @prover methods of a given object.
+    '''
+    # Currently, these are determined by having **defaults_config keyword
+    # arguments.  Maybe in the future we could implement @prover via classes
+    # and determine whether the method is an instance of that class; not
+    # worth the effort at the moment.
+    from inspect import signature, Parameter
+    for attr in dir(obj):
+        attr_obj = getattr(obj, attr)
+        if callable(attr_obj):
+            try:
+                sig = signature(attr_obj)
+                if ('defaults_config' in sig.parameters and
+                    sig.parameters['defaults_config'].kind == Parameter.VAR_KEYWORD):
+                    print(attr)
+            except:
+                pass # If we can't get the signature, skip it.

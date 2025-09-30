@@ -11,7 +11,7 @@ import re
 import urllib.request
 import urllib.parse
 import urllib.error
-import imp
+import importlib
 import bisect
 from collections import deque
 
@@ -1066,18 +1066,28 @@ class TheoryFolderStorage:
         Generate the png image for the given latex using the given latex
         configuration function.
         '''
-        from IPython.lib.latextools import latex_to_png, LaTeXTool
+        from IPython.lib.latextools import latex_to_png, LaTeXTool, genelatex
         LaTeXTool.clear_instance()
         lt = LaTeXTool.instance()
         config_latex_tool_fn(lt)
         lt.use_breqn = False
         # the 'matplotlib' backend can do some BAD rendering in my
         # experience (like \lnot rendering as lnot in some theories)
-        png = latex_to_png(latex, backend='dvipng', wrap=True)
+        color = 'Black'
+        png = latex_to_png(latex, backend='dvipng', color=color, wrap=True)
         if png is None:
+            print("The LaTeX failed to complile. Make sure a LaTeX distribution "
+                  "is installed. To deduce the problem, try generating a "
+                  "tmp.tex file with the following content:\n\n%s"%
+                  '\n'.join(genelatex(latex, wrap=True)),
+                  "\n\nAnd execute the following commands in a command prompt:\n"
+                  "latex tmp.tex\n"
+                  "dvipng -T tight -D 150 -z 9 -bg Transparent -o tmp.png "
+                  "tmp.dvi -fg %s"%color)
             raise Exception(
-                "Unable to use 'dvipng' backend to compile LaTeX.\n"
-                "Be sure a LaTeX distribution is installed.")
+                "Unable to use 'dvipng' backend to compile LaTeX. "
+                "See the printed tip to help deduce the problem."
+                )
         return png
 
     def _prove_it_storage_id(self, prove_it_object_or_id):
@@ -1868,7 +1878,7 @@ class TheoryFolderStorage:
                     parent_module,
                     obj_name):
                 # reload the parent module and try again
-                imp.reload(parent_module)
+                importlib.reload(parent_module)
                 if (getattr(cur_module, obj_name) !=
                         getattr(parent_module, obj_name)):
                     break

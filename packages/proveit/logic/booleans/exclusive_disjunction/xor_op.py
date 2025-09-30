@@ -1,6 +1,6 @@
 from proveit import (m, n, A, B, C, D,
         defaults, Expression, equality_prover, Judgment, Literal,
-        Operation, ProofFailure, prover, relation_prover,
+        Operation, ExprRange, ProofFailure, prover, relation_prover,
         SimplificationDirectives, TransRelUpdater)
 from proveit.logic.booleans import in_bool, Or
 from proveit.abstract_algebra.generic_methods import (
