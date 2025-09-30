@@ -234,6 +234,8 @@ class Judgment:
         from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.sideeffect_automation:
             return  # automation disabled
+        if Judgment.theorem_being_proven == self:
+            return # No need to derive side-effects now.
         if self not in Judgment.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using
             # in_progress_to_deduce_sideeffects
@@ -353,7 +355,7 @@ class Judgment:
                 defaults._proven_truth = proven_truth
                 proven_truth.raise_unusable_proof()
             print("{} has been proven.".format(Judgment.theorem_being_proven))
-            Judgment.theorem_being_proven._recordProof(proven_truth.proof())
+            Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
         return proven_truth.proof()
@@ -363,6 +365,25 @@ class Judgment:
         Returns the most up-to-date proof of this Judgment.
         '''
         return self._meaning_data._proof
+    
+    def reprove(self, *, assumptions, new_style_expr=None):
+        '''
+        Reprove under new assumptions.  The original assumptions should be
+        provable by these assumptions.  If provided, the new_style_expr
+        should have the same meaning as the original proven expression
+        but with a new style to be used.
+        '''
+        if new_style_expr is None or (
+                new_style_expr._style_id == self._style_id):
+            if len(assumptions) == len(self.assumptions) and all(
+                    _orig_assump._style_id==_new_assump._style_id
+                    for _orig_assump, _new_assump in
+                    zip(self.assumptions, assumptions)):
+                # No change.  No need to reprove.
+                return self
+        proof = self.proof().regenerate_proof_under_new_assumptions(
+            assumptions=assumptions, new_style_expr=new_style_expr)
+        return proof.proven_truth
 
     def is_possibly_usable(self):
         '''
@@ -622,7 +643,8 @@ class Judgment:
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
-                    return self.with_matching_styles(new_style_expr, [])
+                    return self.with_matching_styles(
+                        new_style_expr, self.assumptions)
                 return call_method_for_new_style
             sig = signature(attr)
             if ('defaults_config' in sig.parameters and
@@ -679,63 +701,72 @@ class Judgment:
             raise ValueError(
                 "Cannot match styles when expressions are do "
                 "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        
         new_style_expr = expr
-        # storing the assumptions in a trivial dictionary will be useful
-        # for popping them out.
-        assumptions_dict = {
-            assumption: assumption for assumption in assumptions}
         new_style_assumptions = []
-        for assumption in self.assumptions:
-            if assumption in assumptions_dict:
-                new_style_assumptions.append(
-                        assumptions_dict.pop(assumption))
-            else:
+        for assumption in assumptions:
+            if assumption in self.assumptions:
                 new_style_assumptions.append(assumption)
         if ((new_style_expr._style_id == self.expr._style_id) and
+                tuple(self.assumptions) == tuple(new_style_assumptions) and
                 all(new_style_assumption._style_id == old_assumption._style_id
                     for new_style_assumption, old_assumption in zip(
                             new_style_assumptions, self.assumptions))):
             # Nothing has changed.
             return self
         
-        new_style_judgment = \
-            Judgment(new_style_expr, new_style_assumptions,
-                     num_lit_gen=self.num_lit_gen)
-        proof = new_style_judgment.proof()
-        if proof is not None and proof.proven_truth==self:
-            # Update the style for the proof if there is one
-            # corresponding to this Judgment (as opposed to one
-            # that has more assumptions than necessary).
-            new_style_proof = copy(proof)
-            new_style_proof.proven_truth = self
-            self._meaning_data._expr_proofs.insert(
-                    new_style_proof)
-            new_style_judgment._meaning_data._proof = \
-                new_style_proof
-        return new_style_judgment
+        if self.proof() is not None:
+            return self.reprove(assumptions=assumptions, new_style_expr=expr)
+        
+        return Judgment(new_style_expr, new_style_assumptions,
+                        num_lit_gen=self.num_lit_gen)
 
     @staticmethod
-    def find_judgment(expression, assumptions):
+    def find_judgment(expression, assumptions, *,
+                      allow_indirect_proven_assumptions=False,
+                      allow_indirect_provable_assumptions=False):
         '''
         Try to find a Judgment for this expression that applies to
-        the given set of assumptions (its assumptions are a subset
-        of the given assumptions).  Return None if there is no match.
+        the given set of assumptions.  The Judgment applies to the given
+        assumptions if its assumptions are a subset of the given assumptions
+        or, if allow_indirect_proven_assumptions=True, it's assumptions are 
+        proven under the given assumptions or, if
+        allow_indirect_provable_assumptions is True, it's assumptions are 
+        provable under the given assumptions.
+        Return None if there is no match.
         '''
         if expression not in Judgment.expr_to_judgments:
             return None
         truths = Judgment.expr_to_judgments[expression]
         suitable_truths = []
+        
         for truth in truths:
+            if len(truth.assumptions)==1 and  (
+                    next(iter(truth.assumptions)) == truth.expr):
+                # Must be a simple Assumption proof.
+                continue # Avoids infinite recursion.
             proof = truth.proof()
-            if (proof is not None and proof.is_possibly_usable() and
-                    truth.assumptions.issubset(assumptions)):
-                suitable_truths.append(truth)
+            if proof is not None and proof.is_possibly_usable():
+                if truth.assumptions.issubset(assumptions):
+                    suitable_truths.append(truth)
+                elif allow_indirect_proven_assumptions and all(
+                        _assumption.proven(assumptions=assumptions) for
+                        _assumption in truth.assumptions):
+                    suitable_truths.append(truth)
+                elif allow_indirect_provable_assumptions and all(
+                        _assumption.readily_provable(assumptions=assumptions)
+                        for _assumption in truth.assumptions):
+                    suitable_truths.append(truth)                    
         if len(suitable_truths) == 0:
             return None  # no suitable truth
-        # return one wih the shortest proof, and among those the fewest
+        # return one with the shortest proof, and among those the fewest
         # assumptions
         best_judgment = max(suitable_truths,
                             key=lambda truth: truth.proof()._goodness())
+        '''
+        Is this necessary?  with_matching_styles is used in
+        Expression.prove and seems like it's handling this job in any case.
+        
         # Make sure we get the desired style (and labels) for the
         # assumptions and 'truth'.
         # Although this looks vacuous, it will map an assumption of
@@ -749,6 +780,7 @@ class Judgment:
                            best_judgment.assumptions]
             return best_judgment.with_matching_styles(expression,
                                                       assumptions)
+        '''
         return best_judgment
 
     @staticmethod

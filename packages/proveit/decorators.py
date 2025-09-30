@@ -36,16 +36,19 @@ def _make_decorated_prover(func, automatic=False):
                     "to True are incompatible settings.")
         preserve_lhs = kwargs.pop('preserve_lhs', False)
         preserve_expr = kwargs.pop('preserve_expr', None)
+        append_assumptions = kwargs.pop('append_assumptions', None)
+        prepend_assumptions = kwargs.pop('prepend_assumptions', None)
+        assumptions = kwargs.get('assumptions', None)
+        if assumptions is None:
+            assumptions = defaults.assumptions
         if len(args) > 0:
             _self = args[0]
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
-                _assumptions = kwargs.get('assumptions', None)
-                if _assumptions is None:
-                    _assumptions = defaults.assumptions
-                if not _self.assumptions.issubset(_assumptions):
-                    _assumptions = OrderedSet(_assumptions, mutable=False)
-                    kwargs['assumptions'] = _assumptions + _self.assumptions
+                if not _self.assumptions.issubset(assumptions):
+                    assumptions = OrderedSet(assumptions, mutable=False)
+                    assumptions += _self.assumptions
+                    kwargs['assumptions'] = assumptions
             if is_conclude_method:
                 # If the method starts with conclude 'conclude', we must
                 # preserve _self.
@@ -54,6 +57,10 @@ def _make_decorated_prover(func, automatic=False):
                     preserve_expr = _self.expr
                 else:
                     preserve_expr = _self
+        if append_assumptions is not None:
+            kwargs['assumptions'] = tuple(assumptions) + tuple(append_assumptions)
+        if prepend_assumptions is not None:
+            kwargs['assumptions'] = tuple(prepend_assumptions) + tuple(assumptions)
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         if 'automation' in kwargs.keys():
@@ -186,7 +193,7 @@ def _make_decorated_prover(func, automatic=False):
                     simplify_only_where_marked = False
                     marker_and_Marked_expr = None
                 new_proven_truth = (
-                    proven_truth.proof().regenerate_proof_object(
+                    proven_truth.proof().regenerate_proof_with_replacements(
                         simplify_only_where_marked, markers_and_marked_expr)
                     .proven_truth)
                 proven_truth = (new_proven_truth.inner_expr()
@@ -573,3 +580,24 @@ class InconsistentTenseNames(Exception):
                 "with another occurrence: %s vs %s.  It may be a typo."
                 %(self.func, self.previous_tenses, 
                   self.current_tenses))
+
+def display_provers(obj):
+    '''
+    Prints the @prover methods of a given object.
+    '''
+    # Currently, these are determined by having **defaults_config keyword
+    # arguments.  Maybe in the future we could implement @prover via classes
+    # and determine whether the method is an instance of that class; not
+    # worth the effort at the moment.
+    from inspect import signature, Parameter
+    for attr in dir(obj):
+        attr_obj = getattr(obj, attr)
+        if callable(attr_obj):
+            try:
+                sig = signature(attr_obj)
+                if ('defaults_config' in sig.parameters and 
+                    sig.parameters['defaults_config'].kind == Parameter.VAR_KEYWORD):
+                    print(attr)
+            except:
+                pass # If we can't get the signature, skip it.
+        

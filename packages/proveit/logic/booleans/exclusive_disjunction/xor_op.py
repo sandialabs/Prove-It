@@ -1,8 +1,8 @@
 from proveit import (m, n, A, B, C, D,
         defaults, Expression, equality_prover, Judgment, Literal,
-        Operation, ProofFailure, prover, relation_prover,
+        Operation, ExprRange, ProofFailure, prover, relation_prover,
         SimplificationDirectives, TransRelUpdater)
-from proveit.logic.booleans import in_bool
+from proveit.logic.booleans import in_bool, Or
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, deduce_equality_via_commutation,
@@ -455,8 +455,8 @@ class XOr(Operation):
                         operand.operand for operand in self.operands]
                     negated_operands_conc = [
                         operand.operand for operand in conclusion.operands]
-                    _A = ExprTuple(*negated_operands_self)
-                    _B = ExprTuple(*negated_operands_conc)
+                    _A = ExprTuple(*negated_operands_conc)
+                    _B = ExprTuple(*negated_operands_self)
                     _m = _A.num_elements()
                     return destructive_multi_dilemma.instantiate(
                             {m: _m, A: _A, B: _B})
@@ -478,11 +478,11 @@ class XOr(Operation):
     @prover
     def derive_via_dilemma(self, conclusion, **defaults_config):
         '''
-        If the conclusion is also an XOr operation with the same number
+        If the conclusion is an Or operation with the same number
         of operands as self, try derive_via_multi_dilemma.  Otherwise,
         or if that fails, try derive_via_singular_dilemma.
         '''
-        if (isinstance(conclusion, XOr) and
+        if (isinstance(conclusion, Or) and
                 (conclusion.operands.num_entries() ==
                  self.operands.num_entries())):
             try:
