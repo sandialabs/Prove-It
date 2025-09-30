@@ -385,15 +385,6 @@ class Judgment:
             assumptions=assumptions, new_style_expr=new_style_expr)
         return proof.proven_truth
 
-    def reprove(self, *, assumptions):
-        '''
-        Reprove under new assumptions.  The original assumptions should be
-        provable by these assumptions.
-        '''
-        proof = self.proof().regenerate_proof_under_new_assumptions(
-            assumptions=assumptions)
-        return proof.proven_truth
-
     def is_possibly_usable(self):
         '''
         Returns True iff this Judgment has a proof that is "possibly
