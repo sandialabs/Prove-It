@@ -91,10 +91,9 @@ class Len(Operation):
                 # 1.  For example,
                 # |(a, b, c)| = 3
                 # |(a, b, c)| = |(1, .., 3)|
-                import proveit.numbers.numerals.decimals
+                import proveit.numbers.numerals.decimals as deci
                 _n = len(entries)
-                len_thm = proveit.numbers.numerals.decimals\
-                    .__getattr__('tuple_len_%d' % _n)
+                len_thm = deci.__getattr__('tuple_len_%d' % _n)
                 repl_map = dict()
                 for param, entry in zip(len_thm.explicit_instance_params(),
                                         entries):
@@ -312,10 +311,9 @@ class Len(Operation):
                 # Get a "typical equality" for the case when there
                 # are no ExprRange's.  For example,
                 # |(a, b, c)| = |(1, .., 3)|
-                import proveit.numbers.numerals.decimals
+                import proveit.numbers.numerals.decimals as deci
                 n = len(entries)
-                eq_thm = proveit.numbers.numerals.decimals\
-                                .__getattr__('tuple_len_%d_typical_eq' % n)
+                eq_thm = deci.__getattr__('tuple_len_%d_typical_eq' % n)
                 repl_map = dict()
                 for param, entry in zip(eq_thm.explicit_instance_params(),
                                         entries):
