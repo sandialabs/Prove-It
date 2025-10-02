@@ -1,7 +1,8 @@
 from proveit import prover
 from proveit import b
+from proveit.numbers.number_sets.natural_numbers import zero
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
-from proveit.numbers.numerals import zero, one
+from proveit.numbers.numerals import one
 BITS = [zero, one]
 
 class BitSet(NumberSet):

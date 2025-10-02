@@ -1,6 +1,7 @@
 from .interval import (IntervalCC, IntervalCO, IntervalOC, IntervalOO,
                        RealInterval)
-
+from .real_add import RealAdd
+from .real_mult import RealMult
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

@@ -13,6 +13,5 @@ exponentiation
 logarithms
 summation
 product
-differentiation
 integration
 functions

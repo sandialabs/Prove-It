@@ -1,5 +1,5 @@
 from .interval import Interval
-
+from .int_add import IntAdd
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

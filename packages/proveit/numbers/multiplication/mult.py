@@ -527,11 +527,11 @@ class Mult(NumberOperation):
         '''
         from proveit.numbers import Exp, Div, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
-        from . import empty_mult
+        from . import empty_mult_def
 
         if self.operands.num_entries() == 0:
              # Multiplication with no operands is equal to 1.
-            return empty_mult
+            return empty_mult_def
 
         # First check for any zero factors
         # -- quickest way to do an evaluation.
@@ -1217,7 +1217,7 @@ class Mult(NumberOperation):
         derive and return the equivalence of this multiplication
         to a repeated addition; for example, 3*c = c + c + c.
         '''
-        from . import mult_def
+        from . import mult_to_repeated_addition
         if hasattr(self.operands[0], 'as_int'):
             reps = self.operands[0].as_int()
         else:
@@ -1236,8 +1236,8 @@ class Mult(NumberOperation):
                     preserve_expr=self.operands[0]))
         _x = self.operands[1]
         _n = num(reps)
-        eq.update(mult_def.instantiate({n: _n, x: _x},
-                                        auto_simplify=False))
+        eq.update(mult_to_repeated_addition.instantiate(
+            {n: _n, x: _x}, auto_simplify=False))
         return eq.relation
 
     def index(self, the_factor, also_return_num=False):
@@ -1709,7 +1709,7 @@ class Mult(NumberOperation):
         from proveit.numbers.number_operation import union_number_set
         import proveit.numbers.exponentiation as exp_pkg
         from proveit.numbers import Exp
-        from . import empty_mult
+        from . import empty_mult_def
 
         # If the start_idx and/or end_idx has been specified
         if start_idx is not None or end_idx is not None:
@@ -1746,7 +1746,7 @@ class Mult(NumberOperation):
         
         if self.factors.num_entries()==0:
             # [*]() = 1
-            return empty_mult
+            return empty_mult_def
         
         if self.factors.num_entries()==1 and (
                 isinstance(self.factors[0], ExprRange) and 

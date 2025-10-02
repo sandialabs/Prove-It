@@ -1,3 +1,5 @@
+from .complex_add import ComplexAdd
+from .complex_mult import ComplexMult
 from .complex_polar_form import (
         complex_polar_coordinates, 
         unit_length_complex_polar_angle)

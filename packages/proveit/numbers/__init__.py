@@ -11,7 +11,7 @@ from .number_sets import (
     unit_length_complex_polar_angle)
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
-from .number_sets import e, pi, i, infinity
+from .number_sets import zero, e, pi, i, infinity
 from .number_operation import (NumberOperation, readily_factorable,
                                deduce_in_number_set,
                                quick_simplified_index,
@@ -36,7 +36,7 @@ from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        less_eq_numeric_rationals,
                        not_equal_numeric_rationals,
                        deduce_not_equal_numeric_rationals)
-from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
+from .numerals import one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
@@ -60,7 +60,7 @@ import proveit
 if proveit.defaults.running_theory_notebook is None:
     # Import some fundamental theorems without quantifiers when not 
     # running an common/axioms/theorems theory notebook.
-    from .number_sets.natural_numbers import zero_in_nats
+    #from .number_sets.natural_numbers import zero_in_nats
     from .number_sets.integers import zero_is_int, zero_is_nonpos_int
     from .number_sets.rational_numbers import (
             zero_is_rational, zero_is_nonneg_rational, 

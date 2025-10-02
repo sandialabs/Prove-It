@@ -3,9 +3,10 @@ from proveit import (Literal, Operation, ExprRange, defaults,
                      prover, relation_prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
 from proveit.logic import is_irreducible_value
+from proveit.numbers.number_sets.natural_numbers import zero
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
-from proveit.numbers.numerals import zero, one, two, three, four, five, six, seven, eight, nine
+from proveit.numbers.numerals import one, two, three, four, five, six, seven, eight, nine
 DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 

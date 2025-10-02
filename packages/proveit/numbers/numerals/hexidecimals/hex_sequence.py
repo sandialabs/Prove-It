@@ -1,7 +1,8 @@
 from proveit import (Literal, ExprRange, equality_prover)
 from proveit.logic import is_irreducible_value
+from proveit.numbers.number_sets.natural_numbers import zero
 from proveit.numbers.numerals.numeral import NumeralSequence
-from proveit.numbers.numerals import zero, one, two, three, four, five, six, seven, eight, nine, a, b, c, d, e, f
+from proveit.numbers.numerals import one, two, three, four, five, six, seven, eight, nine, a, b, c, d, e, f
 HEXDIGITS = [zero, one, two, three, four, five, six, seven, eight, nine, a, b, c, d, e, f]
 
 class HexSequence(NumeralSequence):

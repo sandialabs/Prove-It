@@ -18,8 +18,7 @@ class Numeral(Literal, IrreducibleValue):
         if string_format is None:
             string_format = str(n)
         Literal.__init__(
-            self, string_format, extra_core_info=[str(n)],
-            theory=__file__, styles=styles)
+            self, string_format, extra_core_info=[str(n)], styles=styles)
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
@@ -83,9 +82,9 @@ class Numeral(Literal, IrreducibleValue):
         Make the DigitLiteral that matches the core information.
         '''
         from proveit import Theory
-        assert theory == Theory(__file__), (
-            "Expecting a different Theory for a DigitLiteral: "
-            "%s vs %s" % (theory.name, Theory(__file__).name))
+        #assert theory == Theory(__file__), (
+        #    "Expecting a different Theory for a DigitLiteral: "
+        #    "%s vs %s" % (theory.name, Theory(__file__).name))
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format, styles=styles)
 
