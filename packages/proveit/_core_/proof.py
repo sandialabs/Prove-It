@@ -33,7 +33,7 @@ class Proof:
         the Proof jurisdiction.
         '''
         Proof.sideeffect_processed.clear()
-        Assumption.all_assumptions.clear()
+        Assumption.all_assumptions_by_style.clear()
         Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
         Instantiation.instantiations.clear()
@@ -302,7 +302,9 @@ class Proof:
         meaning as the original proven expression but with a new style to 
         be used.
         '''
-        proven_expr = self.proven_truth.expr
+        from proveit._core_.expression.expr import free_vars
+        proven_truth = self.proven_truth
+        proven_expr = proven_truth.expr
         if isinstance(self, Assumption):
             # For an Assumption proof, prove it under the new assumptions 
             # which are supposed to be provable under these new ones.
@@ -310,13 +312,22 @@ class Proof:
         if isinstance(self, Deduction):
             # It's requirement gets to add the antecedent of the proven
             # implication as an assumption.
-            requirement_assumptions = [*assumptions, 
-                                       self.proven_truth.expr.antecedent]
-        elif isinstance(self, Generalization) and hasattr(proven_expr, 'condition'):
+            requirement_assumptions = OrderedSet([*assumptions, 
+                                       self.proven_truth.expr.antecedent])
+        elif isinstance(self, Generalization):
+            # Any assumption involving one of the quantified
+            # variables here would be masked for the requirement.
+            # Consider some A(x) |- forall_{x} P(x).  It could not
+            # derive from A(x) |- P(x).
+            _forall_vars = proven_expr.instance_params
+            requirement_assumptions = OrderedSet([
+                _assumption for _assumption in assumptions
+                if free_vars(_assumption).isdisjoint(_forall_vars)])
             # It's requirement gets to add the condition of the proven
             # generalization as an assumption.
-            condition = proven_expr.condition
-            requirement_assumptions = [*assumptions, condition]
+            _generalized_literals = self.generalized_literals
+            requirement_assumptions.update([_cond.variables_as_literals(
+                *_generalized_literals) for _cond in proven_expr.all_conditions()])
         else:
             requirement_assumptions = assumptions
         if new_style_expr is not None:
@@ -328,8 +339,25 @@ class Proof:
         all_requirements = []
         used_assumptions = set()
         for required_truth in self.required_truths:
+            required_assumptions = requirement_assumptions
+            for _assumption in required_truth.assumptions:
+                if _assumption not in proven_truth.assumptions:
+                    # The only way it should be possible for a judgment
+                    # to have assumptions unused by required truths in
+                    # its proof is for it to be absorbed via
+                    # Deduction or Generalization (in which case it
+                    # should be in the required assumptions) ...
+                    if _assumption not in required_assumptions:
+                        # or this is an "equality replacement
+                        # requirement", in which case we should
+                        # add the assumption.
+                        assert isinstance(self, Instantiation)
+                        if required_assumptions is requirement_assumptions:
+                            required_assumptions = OrderedSet(
+                                required_assumptions) # make a copy
+                        required_assumptions.add(_assumption)
             required_truth = required_truth.reprove(
-                assumptions=requirement_assumptions)
+                assumptions=required_assumptions)
             used_assumptions.update(required_truth.assumptions)
             all_requirements.append(required_truth)
         assumptions = [assumption for assumption in assumptions 
@@ -967,7 +995,7 @@ class _ProofReference:
 
 class Assumption(Proof):
     # Map expressions to corresponding assumption objects.
-    all_assumptions = dict()
+    all_assumptions_by_style = dict()
     considered_assumption_sets = set()    
 
     def __init__(self, expr, assumptions=None, *,
@@ -979,7 +1007,7 @@ class Assumption(Proof):
             Proof.__init__(self, _proven_truth, _requirements,
                            _marked_req_indices)
             return
-        assert expr not in Assumption.all_assumptions, \
+        assert expr._style_id not in Assumption.all_assumptions_by_style, \
             ("Do not create an Assumption object directly; "
              "use Assumption.make_assumption instead.")
         assumptions = defaults.checked_assumptions(assumptions)
@@ -1002,7 +1030,7 @@ class Assumption(Proof):
         finally:
             # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
-        Assumption.all_assumptions[expr] = self
+        Assumption.all_assumptions_by_style[expr._style_id] = self
 
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices=None):
@@ -1017,8 +1045,9 @@ class Assumption(Proof):
         already exist.  assumptions must already be 'checked' and in
         tuple form.
         '''
-        if expr in Assumption.all_assumptions:
-            preexisting = Assumption.all_assumptions[expr]
+        if expr._style_id in Assumption.all_assumptions_by_style:
+            preexisting = Assumption.all_assumptions_by_style[
+                expr._style_id]
             # The Assumption object exists already, but it's
             # side-effects may not have been derived yet under the
             # given assumptions.
@@ -1452,12 +1481,12 @@ class Theorem(Proof):
             hint = ("\nHint: %s is fully proven and based upon current "
                     "proofs, \nit is safe to ALLOW.")
         
-        # If running build.py, just raise an exception since there
-        # is no user interactivity.
+        # If running build.py, just return False to allow proofs to
+        # go through without intervention if they can.
         if defaults._executing_auto_build:
-            raise Exception(
-                    "Attempting to use %s\nwhich %s for use in the proof of %s."
-                    %(str(self), status, Judgment.theorem_being_proven_str))
+            Judgment.disallowed_theorems_and_theories.add(str(self))
+            self._mark_usability()
+            return False
         
         cur_level = str(self)
         print("Attempting to use %s\nwhich %s for use in this proof.%s"%(
@@ -2505,8 +2534,8 @@ class Generalization(Proof):
     def __init__(
             self, instance_truth, new_forall_param_lists,
             new_conditions=tuple(), new_antecedent=None, *, 
-            _proven_truth=None, _requirements=None, 
-            _generalized_literals=None, _marked_req_indices=None):
+            _proven_truth=None, _orig_generalization=None,
+            _requirements=None, _marked_req_indices=None):
         '''
         A Generalization step wraps a Judgment (instance_truth) in one 
         or more Forall operations.  The number of Forall operations
@@ -2548,7 +2577,10 @@ class Generalization(Proof):
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
             self.instance_truth = _requirements[0]
-            self.generalized_literals = _generalized_literals
+            self.generalized_literals = (
+                _orig_generalization.generalized_literals)
+            self.new_forall_vars = _orig_generalization.new_forall_vars
+            self.new_conditions = _orig_generalization.new_conditions
             Proof.__init__(self, _proven_truth, _requirements,
                            _marked_req_indices)
             return
@@ -2721,11 +2753,10 @@ class Generalization(Proof):
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices=None):
         gen = Generalization(
-            None, None, _proven_truth=proven_truth, _requirements=requirements,
-            _generalized_literals=self.generalized_literals,
+            None, None, _proven_truth=proven_truth, 
+            _orig_generalization=self,
+            _requirements=requirements,
             _marked_req_indices=marked_req_indices)
-        gen.new_forall_vars = self.new_forall_vars
-        gen.new_conditions = self.new_conditions
         if len(self.generalized_literals) > 0:
             gen._eliminated_proof_steps = self._eliminated_proof_steps
             gen._eliminated_axioms = self._eliminated_axioms

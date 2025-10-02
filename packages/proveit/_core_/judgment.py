@@ -377,6 +377,14 @@ class Judgment:
         should have the same meaning as the original proven expression
         but with a new style to be used.
         '''
+        if new_style_expr is None or (
+                new_style_expr._style_id == self._style_id):
+            if len(assumptions) == len(self.assumptions) and all(
+                    _orig_assump._style_id==_new_assump._style_id
+                    for _orig_assump, _new_assump in
+                    zip(self.assumptions, assumptions)):
+                # No change.  No need to reprove.
+                return self
         proof = self.proof().regenerate_proof_under_new_assumptions(
             assumptions=assumptions, new_style_expr=new_style_expr)
         return proof.proven_truth
@@ -642,7 +650,8 @@ class Judgment:
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
-                    return self.with_matching_styles(new_style_expr, [])
+                    return self.with_matching_styles(
+                        new_style_expr, self.assumptions)
                 return call_method_for_new_style
             sig = signature(attr)
             if ('defaults_config' in sig.parameters and
@@ -704,7 +713,7 @@ class Judgment:
         new_style_assumptions = []
         for assumption in assumptions:
             if assumption in self.assumptions:
-                new_style_assumptions.append(assumptions)
+                new_style_assumptions.append(assumption)
         if ((new_style_expr._style_id == self.expr._style_id) and
                 tuple(self.assumptions) == tuple(new_style_assumptions) and
                 all(new_style_assumption._style_id == old_assumption._style_id

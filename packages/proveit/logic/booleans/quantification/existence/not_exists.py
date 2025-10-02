@@ -72,21 +72,32 @@ class NotExists(OperationOverInstances):
         or from forall_{x | Q(x)} (P(x) != TRUE)
         respectively.
         '''
+        exists_conditions = True
+        if len(self.conditions) == 0:
+            exists_conditions = False
         from . import forall_implies_not_exists_not, not_exists_via_forall
-        from proveit.logic.equality.eq_ops import NotEquals
-        from bool_ops import Not
-        from bool_set import TRUE
+        from . import forall_implies_not_exists_not_no_conditions
+        from . import not_exists_via_forall_no_conditions
+        from proveit.logic import Not, NotEquals, TRUE
         _x = _y = self.instance_params
         _n = _x.num_elements()
         _Q = Lambda(_x, self.conditions)
         if isinstance(self.instance_expr, Not):
             _P = Lambda(_x, self.instance_expr.operand)
-            return forall_implies_not_exists_not.instantiate(
-                {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+            if exists_conditions:
+                return forall_implies_not_exists_not.instantiate(
+                    {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+            else:
+                return forall_implies_not_exists_not_no_conditions.instantiate(
+                    {x: _x, y: _y, n: _n, P: _P}).derive_consequent()
         else:
-            _P = Lambda(_x, self.instance_expr.operand)
-            return not_exists_via_forall.instantiate(
-                {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+            _P = Lambda(_x, self.instance_expr)
+            if exists_conditions:
+                return not_exists_via_forall.instantiate(
+                    {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+            else:
+                return not_exists_via_forall_no_conditions.instantiate(
+                    {x: _x, y: _y, n: _n, P: _P}).derive_consequent()
 
     def readily_in_bool(self):
         '''

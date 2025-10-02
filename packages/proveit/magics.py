@@ -453,11 +453,6 @@ class ProveItMagicCommands:
             open('__init__.py', 'w').close()  # create an empty __init__.py
         theory = Theory()
 
-        # create the _sub_theories_.txt file if it does not already exist
-        sub_theories_path = os.path.join(theory.get_path(), '_sub_theories_.txt')
-        if not os.path.isfile(sub_theories_path):
-            open(sub_theories_path, 'wt').close()
-        
         proveit_path = os.path.split(proveit.__file__)[0]
         display(HTML('<h3>Local content of this theory</h3>'))
         special_notebook_types = (

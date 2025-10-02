@@ -12,9 +12,6 @@ class LinMap(Function):
                          latex_format=r'\mathcal{L}',
                          theory=__file__)
 
-    # Map elements to their known memberships as linear maps.
-    known_memberships = dict()
-
     def __init__(self, from_vspace, to_vspace, *, styles=None):
         '''
         Denote the set of linear maps that map from and to the given
@@ -51,12 +48,6 @@ class LinMapMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
-        
-    def side_effects(self, judgment):
-        LinMap.known_memberships.setdefault(
-                self.element, set()).add(judgment)
-        return # generator yielding nothing
-        yield
 
         
 class LinMapAdd(Operation):

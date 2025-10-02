@@ -142,26 +142,6 @@ class ProveItHTMLPreprocessor(Preprocessor):
         p = re.compile(r'<.*?>')
         return p.sub('', text)
 
-    """
-    def _process_latex(self, text):
-        '''
-        Search the markdown for '$...$' indicating LaTeX.  Generate a png in place of the LaTeX.
-        '''
-        revised_text = ''
-        cur_pos = 0
-        latex_start = text.find('$')
-        while latex_start >= 0:
-            latex_end = text.find('$', latex_start+1)
-            latex = text[latex_start+1:latex_end]
-            png = latex_to_png(latex, backend='dvipng', wrap=True) # the 'matplotlib' backend can do some BAD rendering in my experience (like \lnot rendering as lnot in some theories)
-            revised_text += text[cur_pos:latex_start]
-            revised_text += '<img style="vertical-align:text-bottom; display:inline;" src="data:image/png;base64,%s"/>'%base64.b64encode(png)
-            cur_pos = latex_end+1
-            latex_start = text.find('$', cur_pos)
-        revised_text += text[cur_pos:]
-        return revised_text
-    """
-
     def _inline_images(self, text):
         '''
         Convert imported images to inline pngs.
@@ -239,7 +219,7 @@ class ProveItHTMLPreprocessor(Preprocessor):
 
 
 html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
-html_exporter.template_file = 'proveit_html'
+# html_exporter.template_file = os.path.abspath('proveit_html.tpl')
 
 def is_git_diff_empty(notebook_path):
     '''
@@ -285,6 +265,7 @@ class KernelStart_failure(Exception):
 class RecyclingExecutePreprocessor(ExecutePreprocessor):
     def __init__(self, **kwargs):
         ExecutePreprocessor.__init__(self, **kwargs)
+        self.store_history = False
 
     def __enter__(self):
         try:
@@ -303,12 +284,13 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         # proveit.magics.  All other modules will be deleted when
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
-
-        init_modules_source = """
+        self.nb = nb
+        init_modules_source = """# BUILD COMMAND
 import sys
 from proveit import *
 from proveit import defaults
 defaults.display_latex=%s
+defaults._executing_auto_build=True
 import proveit.magics
 __init_modules = list(sys.modules.keys())
 __init_modules # avoid Prove-It magic assignment
@@ -319,7 +301,7 @@ __init_modules # avoid Prove-It magic assignment
         self.preprocess_cell(init_modules_cell, resources, 0)
 
         # change the working directory
-        cd_source = 'import os\nos.chdir(r\"' + path + '")'
+        cd_source = '# BUILD COMMAND\nimport os\nos.chdir(r\"' + path + '")'
         cd_cell = nbformat.NotebookNode(
             cell_type='code', source=cd_source, metadata=dict())
         self.preprocess_cell(cd_cell, resources, 0)
@@ -354,7 +336,7 @@ __init_modules # avoid Prove-It magic assignment
             # Delete all modules except those that were initially loaded.
             # Also, %reset local variables and history.
             # We are preparing the Kernel to be recycled.
-            reset_source = """
+            reset_source = """# BUILD COMMAND
 import sys
 import proveit
 proveit.reset()
@@ -376,7 +358,8 @@ for m in list(sys.modules.keys()):
             cell, _ = self.preprocess_cell(reset_cell, resources, 0)
 
             # Garbage collect.
-            garbage_collect_source = """import sys
+            garbage_collect_source = """# BUILD COMMAND
+import sys
 import gc
 gc.collect()
 len(gc.get_objects()) # used to check for memory leaks
@@ -388,7 +371,8 @@ len(gc.get_objects()) # used to check for memory leaks
             #print('num gc objects', cell['outputs'][0]['data']['text/plain'])
         return nb, resources
 
-    def execute_notebook(self, notebook_path, no_latex=False, git_clear=True):
+    def execute_notebook(self, notebook_path, no_latex=False, git_clear=True,
+                         save_notebook=False):
         '''
         Read, execute, and write out the notebook at the given path.
         Return the notebook object.
@@ -419,7 +403,7 @@ len(gc.get_objects()) # used to check for memory leaks
                 pass
                 # execute_processor.km.restart_kernel(newport=True)
         new_nb_str = nbformat.writes(nb)
-        if new_nb_str != nb_str:
+        if save_notebook and new_nb_str != nb_str:
             # Write it out if it has changed.
             with open(notebook_path, 'wt', encoding='utf8') as f:
                 f.write(new_nb_str)
@@ -486,6 +470,7 @@ def export_notebook_to_html(
 def execute_and_export_notebook(
         execute_processor,
         notebook_path,
+        save_notebook=False,
         no_execute=False,
         no_latex=False,
         git_clear=True):
@@ -497,14 +482,15 @@ def execute_and_export_notebook(
         export_notebook_to_html(notebook_path)
     else:
         nb = execute_processor.execute_notebook(notebook_path,
+                                                save_notebook=save_notebook,
                                                 no_latex=no_latex,
                                                 git_clear=git_clear)
         export_notebook_to_html(notebook_path, nb)
 
 
 def execute_and_maybe_export_notebook(
-        execute_processor, notebook_path, no_execute=False, no_latex=False,
-        git_clear=True, export_to_html=True):
+        execute_processor, notebook_path, save_notebook=False,
+        no_execute=False, no_latex=False, git_clear=True, export_to_html=True):
     '''
     Read, execute, and rewrite a notebook and also export it
     to HTML.
@@ -519,11 +505,13 @@ def execute_and_maybe_export_notebook(
             f.write('interactive\n')
     if export_to_html:
         execute_and_export_notebook(execute_processor, notebook_path,
+                                    save_notebook=save_notebook,
                                     no_latex=no_latex, no_execute=no_execute,
                                     git_clear=git_clear)
     elif not no_execute:
         execute_processor.execute_notebook(
-            notebook_path, no_latex=no_latex, git_clear=git_clear)
+            notebook_path, save_notebook=save_notebook,
+            no_latex=no_latex, git_clear=git_clear)
 
 
 """
@@ -867,11 +855,14 @@ def mpi_build(
     
     if nranks == 1:
         # The boring single rank case.
-        with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+        execute_processor = RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1)
+        # with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+        with execute_processor.setup_kernel():
             for notebook_path in generate_notebook_paths_with_retries():
                 try:
                     execute_and_maybe_export_notebook(
-                        execute_processor, notebook_path, no_latex=no_latex,
+                        execute_processor, notebook_path,
+                        save_notebook=save_notebooks, no_latex=no_latex,
                         no_execute=no_execute, git_clear=git_clear,
                         export_to_html=export_to_html)
                     successful_execution_notification(notebook_path)
@@ -882,7 +873,9 @@ def mpi_build(
     elif rank > 0:
         # These ranks will request assignments from rank 0
         try:
-            with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+            #with RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1) as execute_processor:
+            execute_processor = RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1)
+            with execute_processor.setup_kernel():
                 comm.send(rank, dest=0)
                 while True:
                     notebook_path = comm.recv(source=0)
@@ -890,7 +883,8 @@ def mpi_build(
                         break  # empty path is "done" signal
                     try:
                         execute_and_maybe_export_notebook(
-                            execute_processor, notebook_path, no_latex=no_latex,
+                            execute_processor, notebook_path,
+                            save_notebook=save_notebooks, no_latex=no_latex,
                             no_execute=no_execute, git_clear=False,
                             export_to_html=export_to_html)
                         comm.send(rank, dest=0)
@@ -970,6 +964,13 @@ def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
         for theory_path in find_theory_paths(path):
             theory = Theory(theory_path)
+            for name in theory.get_defining_property_names():
+                name = theory.get_definition_existence(name).name
+                if name in def_existence_names:
+                    continue
+                def_existence_names.add(name)
+                yield os.path.join(theory._storage.directory, '_theory_nbs_',
+                                   'def_existence_proofs', name, 'thm_proof.ipynb')
             for theorem_name in theory.get_theorem_names():
                 yield os.path.join(theory._storage.directory, '_theory_nbs_',
                                    'proofs', theorem_name, 'thm_proof.ipynb')
@@ -1055,6 +1056,13 @@ if __name__ == '__main__':
         help=("extract (with the same limitations as with --download) "
               "from the specified tar file"))
     parser.add_argument(
+        '--save_notebooks',
+        dest='save_notebooks',
+        action='store_const',
+        const=True,
+        default=False,
+        help='save the executed notebooks with their output cells')
+    parser.add_argument(
         '--essential',
         dest='build_essential',
         action='store_const',
@@ -1094,6 +1102,14 @@ if __name__ == '__main__':
         const=True,
         default=False,
         help=("build the 'axioms' notebooks defining theory axioms "
+              "(also update 'theory' notebooks, --essential is disabled)"))
+    parser.add_argument(
+        '--definitions',
+        dest='build_definitions',
+        action='store_const',
+        const=True,
+        default=False,
+        help=("build the 'definitions' notebooks defining theory Literals "
               "(also update 'theory' notebooks, --essential is disabled)"))
     parser.add_argument(
         '--theorems',
@@ -1165,6 +1181,7 @@ if __name__ == '__main__':
         ' '.join(default_paths))
     args = parser.parse_args()
     paths = args.path
+    save_notebooks = args.save_notebooks
 
     # Get all the theories of the given top-level paths
     # in the order indicated in _sub_theory_.txt files.
@@ -1211,9 +1228,11 @@ if __name__ == '__main__':
                     os.remove(sub_path)
             '''
     elif not args.download and args.tar == '':
-        if (args.build_commons or args.build_axioms or args.build_theorems or 
-                args.build_theories or args.build_demos or args.build_theorem_proofs or
-                args.build_dependencies or args.build_expr_and_proofs):
+        if args.build_commons or args.build_axioms or (
+                args.build_definitions or args.build_theorems or 
+                args.build_theories or args.build_demos or 
+                args.build_theorem_proofs or args.build_dependencies 
+                or args.build_expr_and_proofs):
             # Disable --essential if anything more specific is requested.
             args.build_essential = False
         if args.build_commons or args.build_all or args.build_essential:
@@ -1236,12 +1255,17 @@ if __name__ == '__main__':
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/axioms.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
+        if args.build_definitions or args.build_all or args.build_essential:
+            mpi_build(notebook_path_generator(paths, '_theory_nbs_/definitions.ipynb'),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
         if args.build_theorems or args.build_all or args.build_essential:
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/theorems.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
-        if (args.build_theories or args.build_axioms or args.build_theorems
-                or args.build_all or args.build_essential):
+        if args.build_theories or args.build_axioms or (
+                args.build_definitions or args.build_theorems or 
+                args.build_all or args.build_essential):
             # Update the theory after updating axioms/theorems so all the
             # theory information is up-to-date.  Also include index.ipynb
             # (which should update with updates to theories) and guide.ipynb
@@ -1302,7 +1326,8 @@ if __name__ == '__main__':
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
         if args.build_expr_and_proofs or args.build_all:
-            filebases = ('expr', 'common_expr', 'axiom_expr', 'theorem_expr', 'proof')
+            filebases = ('expr', 'common_expr', 'axiom_expr', 
+                         'definition_property_expr', 'theorem_expr', 'proof')
             mpi_build(database_notebook_path_generator(paths, filebases),
                       no_latex=args.nolatex, git_clear=False,
                       no_execute=args.noexecute, export_to_html=True)
