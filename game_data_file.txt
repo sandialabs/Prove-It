@@ -5,7 +5,7 @@
 (0, 2) theorem proveit.logic.booleans.true_eq_true []
 (0, 2) theorem proveit.logic.booleans.false_eq_false []
 (2, 4) theorem proveit.logic.booleans.implication.trivial_deduction []
-(2, 10) theorem proveit.logic.booleans.implication.split_deduction []
+(7, 10) theorem proveit.logic.booleans.implication.split_deduction []
 (2, 3) theorem proveit.logic.booleans.implication.self_implication []
 (6, 14) theorem proveit.logic.booleans.implication.false_antecedent_implication [6]
 (5, 10) theorem proveit.logic.booleans.implication.falsified_antecedent_implication [9, 25]
