@@ -152,7 +152,7 @@ class Equals(EquivRelation):
                 in_bool(rhs).readily_provable() and
                 Iff(lhs, rhs).readily_provable()):
             from proveit.logic.booleans.implication import eq_from_iff
-            if eq_from_iff.is_fully_proven_and_usable():
+            if eq_from_iff.is_usable():
                 return True
         for eq_expr in Equals.yield_known_equal_expressions(lhs):
             if eq_expr == rhs:

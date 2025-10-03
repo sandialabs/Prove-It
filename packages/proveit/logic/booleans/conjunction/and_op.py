@@ -119,7 +119,7 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from proveit.logic.booleans.conjunction import conjunction_intro
-        if not conjunction_intro.is_fully_proven_and_usable():
+        if not conjunction_intro.is_usable():
             return False
         univ_quant = self._as_quantification()
         if univ_quant is not None:
@@ -766,7 +766,7 @@ class And(Operation):
         if isinstance(self, And):
             from . import closure
             if not self.operands.is_double() and (
-                    not closure.is_fully_proven_and_usable()):
+                    not closure.is_usable()):
                 return False
         return And(*self.operands.map_elements(in_bool)).readily_provable()
 

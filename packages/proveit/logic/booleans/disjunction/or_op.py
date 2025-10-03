@@ -65,9 +65,9 @@ class Or(Operation):
             _A, _B = operands
             provableA = _A.readily_provable()
             provableB = _B.readily_provable()
-            if provableA and or_if_left.is_fully_proven_and_usable():
+            if provableA and or_if_left.is_usable():
                 return True
-            if provableB and or_if_right.is_fully_proven_and_usable():
+            if provableB and or_if_right.is_usable():
                 return True
             return False
         existential_quant = self._as_quantification()
@@ -697,7 +697,7 @@ class Or(Operation):
         '''
         from . import closure
         from proveit.logic import And
-        if not self.operands.is_double() and not closure.is_fully_proven_and_usable():
+        if not self.operands.is_double() and not closure.is_usable():
             return False
         # The requirement for a conjunction is the same for a 
         # disjunction -- all operands must be provably boolean.
