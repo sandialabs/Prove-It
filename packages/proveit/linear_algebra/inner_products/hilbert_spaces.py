@@ -17,11 +17,6 @@ class HilbertSpacesLiteral(Literal):
             latex_format=r'\textrm{HilbertSpaces}',
             styles=styles)
     
-    # Map Hilbert spaces to their known membership(s) within 
-    # HilbertSpaces.  Such a membership relation is the 
-    # indication that it is a Hilbert space.
-    known_spaces_memberships = dict() 
-        
     def membership_object(self, element):
         return HilbertSpacesMembership(element, self)
 
@@ -39,9 +34,10 @@ class HilbertSpacesLiteral(Literal):
         Given a vector expression, vec, yield any Hilbert spaces
         known to contain vec.
         '''
+        from . import HilbertSpaces
         from proveit.linear_algebra import VecSpaces
         for vec_space in VecSpaces.yield_known_vec_spaces(vec, field=Complex):
-            if vec_space in HilbertSpacesLiteral.known_spaces_memberships:
+            if InClass(vec_space, HilbertSpaces).proven():
                 # This vector space is already known to be an inner
                 # product space.
                 yield vec_space
@@ -100,8 +96,6 @@ class HilbertSpacesMembership(ClassMembership):
         Prove InnerProdSpaces and VecSpaces memberships as side-effects
         and also remember known HilbertSpaces memberships.
         '''
-        HilbertSpacesLiteral.known_spaces_memberships.setdefault(
-                self.element, set()).add(judgment)
         yield self.derive_inner_prod_spaces_membership
         yield self.derive_vec_spaces_membership
     

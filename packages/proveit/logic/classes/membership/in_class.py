@@ -1,4 +1,5 @@
-from proveit import (Expression, Judgment, Literal, defaults, USE_DEFAULTS,
+from proveit import (Expression, Judgment, Literal, Operation,
+                     defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
@@ -28,11 +29,15 @@ class InClass(Relation):
             latex_format=r'\underset{{\scriptscriptstyle c}}{\in}',
             theory=__file__)
 
-    # maps elements to their known InClass Judgments.
+    # maps members to their known InClass Judgments.
     known_memberships = dict()
+    # maps domain types and members to their known InClass Judgements.
+    # A domain type is specified as an operator of a domain Operation.
+    known_type_specific_memberships =  dict()
     # maps canonical forms of elements to InClass Judgments.
     # For example, map x to (1*x in S) if (1*x in S) is a Judgment.
     known_memberships_by_canonical_form = dict()
+    known_type_specific_memberships_by_canonical_form =  dict()
     
     # map (element, domain) pairs to corresponding InClass expressions
     inclass_expressions = dict()
@@ -101,10 +106,19 @@ class InClass(Relation):
         in known_canonical_memberships.
         '''
         Relation._record_as_proven(self, judgment)
+        element, domain = self.element, self.domain
+        canonical_element = element.canonical_form()
         InClass.known_memberships.setdefault(
-                self.element, OrderedSet()).add(judgment)
+                element, OrderedSet()).add(judgment)
         InClass.known_memberships_by_canonical_form.setdefault(
-                self.element.canonical_form(), OrderedSet()).add(judgment)
+                canonical_element, OrderedSet()).add(judgment)
+        if isinstance(domain, Operation) and isinstance(
+                domain.operator, Literal):
+            domain_type = domain.operator
+            InClass.known_type_specific_memberships.setdefault(
+                (domain_type, element), OrderedSet()).add(judgment)
+            InClass.known_type_specific_memberships_by_canonical_form.setdefault(
+                (domain_type, canonical_element), OrderedSet()).add(judgment)
         
     def side_effects(self, judgment):
         '''
@@ -160,11 +174,16 @@ class InClass(Relation):
         however.
         '''
         from proveit.logic import Equals, is_irreducible_value
+        # check if this is readily provable from the domain side
         if hasattr(self, 'membership_object'):
             if self.membership_object._readily_provable():
                 return True
         element = self.element
         domain = self.domain
+        # check if this is readily provable from the element side
+        if hasattr(element, 'readily_provable_membership'):
+            if element.readily_provable_membership(domain):
+                return True
         
         # Try a known evaluation.
         if not is_irreducible_value(element):
@@ -202,16 +221,23 @@ class InClass(Relation):
         '''
         from proveit.logic import Equals, is_irreducible_value
         
+        # check if this is readily provable from the domain side
         if hasattr(self, 'membership_object') and (
                 self.membership_object._readily_provable()):
             # Don't bother with a fancy, indirect approach if
             # we can readily conclude membership via the membership
             # object.
             return self.membership_object.conclude()
-
-        # Try a known evaluation of the element.
         element = self.element
         domain = self.domain
+
+        # check if this is readily provable from the element side;
+        # if so, call 'deduce_membership' on the element.
+        if hasattr(element, 'readily_provable_membership'):
+            if element.readily_provable_membership(domain):
+                return element.deduce_membership(domain)
+
+        # Try a known evaluation of the element.
         if not is_irreducible_value(element):
             try:
                 evaluation = Equals.get_known_evaluation(element)
@@ -267,11 +293,12 @@ class InClass(Relation):
         return nonmembership.prove().unfold_not_in()
 
     @staticmethod
-    def yield_known_memberships(element, *, include_canonical_forms=True,
-                                 assumptions=USE_DEFAULTS):
+    def yield_known_memberships(element, *, domain_type=None,
+                                include_canonical_forms=True,
+                                assumptions=USE_DEFAULTS):
         '''
         Yield the known memberships of the given element applicable
-        under the given assumptions.  In 'include_canonical_forms' is
+        under the given assumptions.  If 'include_canonical_forms' is
         True, then we can treat elements of the same canonical form
         as the same for this purpose.
         '''
@@ -285,14 +312,36 @@ class InClass(Relation):
             # Make sure we derive assumption side-effects first.
             Assumption.make_assumptions()
     
-            if include_canonical_forms: 
+            if include_canonical_forms:
                 key = element.canonical_form()
+                known_memberships = InClass.known_memberships_by_canonical_form
+                known_type_specific_memberships = (
+                    InClass.known_type_specific_memberships_by_canonical_form)
             else:
                 key = element
+                known_memberships = InClass.known_memberships
+                known_type_specific_memberships = (
+                    InClass.known_type_specific_memberships)
+            if domain_type is not None:
+                key = (domain_type, key)
+                known_memberships = known_type_specific_memberships
+
             if key in known_memberships:
                 for known_membership in known_memberships[key]:
                     if known_membership.is_applicable():
                         yield known_membership
+
+    @staticmethod
+    def has_known_membership(element, *, domain_type=None, 
+                             include_canonical_forms=True,
+                             assumptions=USE_DEFAULTS):
+        try:
+            next(InClass.yield_known_memberships(
+                element, include_canonical_forms=include_canonical_forms,
+                domain_type=domain_type, assumptions=assumptions))
+            return True
+        except StopIteration:
+            return False # no known memberships
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -385,9 +434,8 @@ class ClassMembership:
             self.expr = InClass(self.element, self.domain)
 
     def side_effects(self, judgment):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'side_effects' method implemented" % str(
-                self.__class__))
+        return # No side-effects by default
+        yield
 
     def _build_canonical_form(self):
         '''

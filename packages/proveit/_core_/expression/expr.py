@@ -905,10 +905,9 @@ class Expression(metaclass=ExprType):
         # See if this Expression already has a legitimate proof.
         found_truth = Judgment.find_judgment(self, assumptions)
         if found_truth is not None:
-            found_truth.with_matching_styles(
-                self, assumptions)  # give it the appropriate style
             # found an existing Judgment that does the job!
-            return found_truth
+            return found_truth.with_matching_styles(
+                self, assumptions)  # give it the appropriate style
 
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
@@ -922,27 +921,24 @@ class Expression(metaclass=ExprType):
             # Reprove under new assumptions.
             found_truth = found_truth.reprove(assumptions=assumptions,
                                               new_style_expr=self)
-            found_truth.with_matching_styles(
+            return found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
-            # found an existing Judgment that does the job!
-            return found_truth
-
-        # See if this Expression can be proven indirectly (proven under
-        # assumptions that are provable under current assumptions).
-        found_truth = Judgment.find_judgment(self, assumptions,
-                                             allow_indirect_provable_assumptions=True)
-        if found_truth is not None:
-            for _assumption in found_truth.assumptions:
-                _assumption.prove(assumptions=assumptions)
-            # Reprove under new assumptions.
-            found_truth = found_truth.reprove(assumptions=assumptions,
-                                              new_style_expr=self)
-            found_truth.with_matching_styles(
-                self, assumptions)  # give it the appropriate style
-            # found an existing Judgment that does the job!
-            return found_truth
 
         if not self._readily_provable():
+            # See if this Expression can be proven indirectly (proven under
+            # assumptions that are provable under current assumptions).
+            found_truth = Judgment.find_judgment(self, assumptions,
+                                                 allow_indirect_provable_assumptions=True)
+            if found_truth is not None:
+                for _assumption in found_truth.assumptions:
+                    _assumption.prove(assumptions=assumptions)
+                # Reprove under new assumptions.
+                found_truth = found_truth.reprove(assumptions=assumptions,
+                                                  new_style_expr=self)
+                # found an existing Judgment that does the job!
+                return found_truth.with_matching_styles(
+                    self, assumptions)  # give it the appropriate style
+            
             # Maybe this Expression isn't readily provable by
             # expression-specific means (note that '_readily_provable'
             # is intended, not 'readily_provable'), but something else 

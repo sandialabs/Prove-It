@@ -2,9 +2,9 @@
 
 from .number_sets import (
     ZeroSet, Natural, NaturalPos,
-    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
-    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
-    RationalNonPos,
+    Integer, IntegerEven, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    IntegerOdd, Rational, RationalNonZero, RationalPos, RationalNeg,
+    RationalNonNeg, RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
     Complex, ComplexNonZero, Conjugate,
     complex_polar_coordinates, 
@@ -57,11 +57,14 @@ from .functions import (MonDecFuncs, deduce_as_mon_dec_func,
 import proveit
 
 
-if proveit.defaults.running_theory_notebook is None:
+if proveit.defaults.running_theory_notebook is None: # might include here 2 is even, 4 is even, etc
     # Import some fundamental theorems without quantifiers when not 
     # running an common/axioms/theorems theory notebook.
     #from .number_sets.natural_numbers import zero_in_nats
-    from .number_sets.integers import zero_is_int, zero_is_nonpos_int
+    from .number_sets.integers import (zero_is_int, zero_is_nonpos_int,
+            zero_is_even, two_is_even, four_is_even, six_is_even,
+            eight_is_even, one_is_odd, three_is_odd, five_is_odd,
+            seven_is_odd, nine_is_odd)
     from .number_sets.rational_numbers import (
             zero_is_rational, zero_is_nonneg_rational, 
             zero_is_nonpos_rational)

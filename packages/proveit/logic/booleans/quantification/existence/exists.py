@@ -202,7 +202,7 @@ class Exists(OperationOverInstances):
         Exists.choose() method to produce the Skolem constant-based
         subset of assumptions you wish to eliminate from S.
         '''
-        from proveit import Lambda
+        from proveit import free_vars, Lambda
         from proveit import n, P, Q, alpha
         from proveit.logic import And
         from proveit.core_expr_types import (x_1_to_n, y_1_to_n)
@@ -216,6 +216,18 @@ class Exists(OperationOverInstances):
                            "Skolem constants to be eliminated must appear "
                            "exactly as specified in the original "
                            "Exists.choose() method.".format(skolem_constants))
+        # Since the Skolem constants appear to be correct, we check
+        # if any of the Skolem constants appear as free variables in
+        # the judgment, raising an error if so:
+        skolem_constants_remaining = (
+            set(skolem_constants).intersection(free_vars(judgment)) )
+        if skolem_constants_remaining != set():
+            raise ValueError(
+                    "In calling the Exists.eliminate() static method, which "
+                    "might have arisen from a judgment.eliminate() call, "
+                    f"the Skolem constant(s) {skolem_constants_remaining} "
+                    "still appear as free variable(s) in the target judgment "
+                    f"{judgment}, which is not allowed. ")
         existential = Exists.skolem_consts_to_existential[skolem_constants]
         skolem_assumptions = set(existential.choose(
             *skolem_constants, print_message=False))
@@ -243,11 +255,12 @@ class Exists(OperationOverInstances):
             # the skolem_elim theorem being instantiated further below
             P_implies_alpha = _alpha.as_implication(
                 hypothesis=_P.apply(*skolem_constants))
-            # the generalization to further match theorem details
-            # can be handled through automation
-            # P_implies_alpha.generalize(
-            #         skolem_constants,
-            #         conditions=[_Q.apply(*skolem_constants)])
+            # Although the generalization to further match theorem
+            # details can be handled through automation, it can reduce
+            # computations to explicitly handle it here right now:
+            P_implies_alpha.generalize(
+                    skolem_constants,
+                    conditions=[_Q.apply(*skolem_constants)])
     
             return skolem_elim.instantiate(
                 {n: _n, P: _P, Q: _Q, alpha: _alpha,
@@ -258,16 +271,50 @@ class Exists(OperationOverInstances):
     @prover
     def unfold(self, **defaults_config):
         '''
-        From this existential quantifier, derive the "unfolded"
-        version according to its definition (the negation of
-        a universal quantification).
+        From this existential quantifier, and knowing or assuming
+        self to be TRUE, derive the "unfolded" version according
+        to its definition, producing the negation of a universal
+        quantification. For example, given
+
+            A = |- Exists((a,b), (a+b = 5), domain = NaturalPos),
+
+        A.unfold() produces:
+
+            |- Not(Forall((a, b in NaturalPos), [(a+b = 5) != T])).
+
+        As explained in the existence axioms notebook, the format here
+        (and the awkwardness of the conclusion) arises from the effort
+        to avoid the assumption that the operation always returns a
+        Boolean. On the other hand, if we have:
+
+            B = |- Exists(x, Not(P(x))),
+
+        then B.unfold() produces:
+
+            |- Not(Forall(x, P(x)))
+
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_unfolding
+        from proveit.logic import Not, TRUE
+        from proveit.logic.booleans.quantification.existence import (
+                exists_not_unfolding, exists_unfolding)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
+        if _case_not:
+            return exists_not_unfolding.instantiate(
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
@@ -276,16 +323,68 @@ class Exists(OperationOverInstances):
         '''
         Return definition of this existential quantifier as an
         equation with this existential quantifier on the left
-        and a negated universal quantification on the right.
+        and a negated universal quantification on the right. This
+        handles two separate cases (along with cases with and w/out
+        conditions):
+            Exists(x, P(x)) vs. Exists(x, Not(P(x))),
+        which return:
+            Not(Forall(x, P(x) != T)) and Not(Forall(x, P(x))),
+        respectively.
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_def
+        from proveit import defaults
+        from proveit.logic import Forall, Not, NotEquals, TRUE
+        from proveit.logic.booleans.quantification.existence import (
+            exists_def, exists_not_eq_not_forall)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
-        return exists_def.instantiate(
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
+
+        # Construct the rhs result to preserve (using
+        # 'preserve_all = TRUE' in the instantiation step further
+        # below tends to preserve too much, in particular preserving
+        # the "empty" condition _Q = Lambda(_x, TRUE) when we'd like
+        # it to be simplified away entirely).
+        if hasattr(self, 'condition'):
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand,
+                        conditions = [self.condition])))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x, 
+                        NotEquals(self.instance_expr, TRUE),
+                        conditions = [self.condition])))
+        else:
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand)))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x,
+                        NotEquals(self.instance_expr, TRUE))))
+        
+        # now ready to instantiate thm based on _case_not, and
+        # explicitly preserving the expected rhs of the resulting eq.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.preserved_exprs = {self, rhs_to_preserve}
+            if _case_not:
+                return exists_not_eq_not_forall.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
+            else:
+                return exists_def.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
 
     @prover
     def deduce_not_exists(self, **defaults_config):

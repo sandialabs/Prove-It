@@ -31,11 +31,6 @@ class VecSpaces(Function):
     # a known vector spaces (see 'yield_known_vec_spaces').
     default_field = Complex # appropriate in typical cases.
     
-    # Map vector spaces to their known membership(s) within 
-    # VecSpaces(K) for some field K. Such a membership relation is the 
-    # indication that it is a vector space over the corresponding field.
-    known_vec_spaces_memberships = dict() 
-        
     def __init__(self, field, *, styles=None, _operator=None):
         if _operator is None:
             _operator = VecSpaces._operator_
@@ -83,8 +78,8 @@ class VecSpaces(Function):
             # specified field.
             domain = membership.domain
             vec_space = None
-            if (field is None and 
-                    domain in VecSpaces.known_vec_spaces_memberships):
+            if (field is None and InClass.has_known_membership(
+                    domain, domain_type=VecSpaces._operator_)):
                 vec_space = domain
             elif (field is not None and
                       InClass(domain, VecSpaces(field)).proven()):
@@ -111,10 +106,9 @@ class VecSpaces(Function):
         '''
         Given a vector space, yield its known fields.
         '''
-        if vec_space in VecSpaces.known_vec_spaces_memberships:
-            judgments = VecSpaces.known_vec_spaces_memberships[vec_space]
-            for judgment in judgments:
-                yield judgment.expr.domain.field
+        for membership in InClass.yield_known_memberships(vec_space):
+            if isinstance(membership.domain, VecSpaces):
+                yield membership.domain.field
 
     @staticmethod
     def known_vec_space(vec, *, field=None):
@@ -216,15 +210,6 @@ class VecSpacesMembership(ClassMembership):
             raise TypeError("domain expected to be VecSpaces, not %s"
                             %domain.__class__)
         self.field = domain.field
-    
-    def side_effects(self, judgment):
-        '''
-        Remember known VecSpaces memberships.
-        '''
-        VecSpaces.known_vec_spaces_memberships.setdefault(
-                self.element, set()).add(judgment)
-        return # generator yielding nothing
-        yield
     
     def conclude(self):
         '''
