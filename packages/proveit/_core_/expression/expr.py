@@ -924,7 +924,8 @@ class Expression(metaclass=ExprType):
             return found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
 
-        if not self._readily_provable():
+        is_readily_provable = self._readily_provable()
+        if not is_readily_provable:
             # See if this Expression can be proven indirectly (proven under
             # assumptions that are provable under current assumptions).
             found_truth = Judgment.find_judgment(self, assumptions,
@@ -972,9 +973,32 @@ class Expression(metaclass=ExprType):
                 assumptions,
                 "Infinite 'conclude' recursion blocked.")
         Expression.in_progress_to_conclude.add(in_progress_key)
+        
+        if is_readily_provable:
+            try:
+                # If it is readily provable, we should be able to prove this
+                # with a call to 'conclude' (otherwise, the readily provable
+                # method should be fixed).
+                return self.conclude(assumptions=assumptions)
 
-        try:
+            finally:
+                Expression.in_progress_to_conclude.remove(in_progress_key)
+
+        try:            
             concluded_truth = None
+            try:
+                if is_readily_provable:
+                    # If it is readily provable, we should be able to prove
+                    # this with a call to 'conclude' (otherwise, the readily
+                    # provable  method should be fixed).
+                    concluded_truth = self.conclude(assumptions=assumptions)
+            except:
+                raise ProofFailure(
+                    self,
+                    assumptions,
+                    "Bad 'readily_provable' claim: "
+                    "'conclude' method didn't work.")                    
+            
             if isinstance(self, Not):
                 # if it is a Not expression, try conclude_negation on the
                 # operand
