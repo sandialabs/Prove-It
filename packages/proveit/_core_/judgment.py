@@ -1042,9 +1042,10 @@ class Judgment:
             defaults.preserved_exprs.difference_update(
                     temporarily_preserved_exprs)
 
+    @prover
     def generalize(self, forall_var_or_vars_or_var_lists, *,
                    domain_lists=None, domain=None, conditions=tuple(),
-                   antecedent=None):
+                   antecedent=None, **defaults_config):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized Judgment.  Can introduce any number of
