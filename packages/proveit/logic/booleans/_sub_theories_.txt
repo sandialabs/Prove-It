@@ -2,5 +2,4 @@ implication
 negation
 conjunction
 disjunction
-exclusive_disjunction
 quantification
