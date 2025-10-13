@@ -261,9 +261,8 @@ class And(Operation):
         if self.operands.num_entries() == 0:
             return  # No side-effects needed for [And]().
         if self.operands.is_double():
-            if self.operands[1] == Not(self.operands[0]):
-                # (A or not(A)) is an unfolded Boolean
-                return  # stop to avoid infinite recursion.
+            yield self.derive_left
+            yield self.derive_right
         yield self.derive_in_bool
         for _i, operand in enumerate(self.operands):
             if (isinstance(operand, ExprRange) and 
