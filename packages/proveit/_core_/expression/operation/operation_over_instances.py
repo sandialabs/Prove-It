@@ -562,8 +562,10 @@ class OperationOverInstances(Operation):
         from all_conditions() to _all_conditions() and adding a separate
         non-generator version of the all_conditions() fxn below.
         '''
-        for condition in self.conditions:
-            yield condition
+        #for condition in self.conditions:
+        #    yield condition
+        if hasattr(self, 'condition'):
+            yield self.condition # possibly a conjunction
         if isinstance(self.instance_expr, self.__class__):
             for condition in self.instance_expr.all_conditions():
                 yield condition
