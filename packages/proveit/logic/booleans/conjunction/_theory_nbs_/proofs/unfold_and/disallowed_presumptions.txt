@@ -10,3 +10,6 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.implication.not_iff_via_not_right_impl
 proveit.logic.booleans.implication.negated_reflex
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.falsified_negation_intro

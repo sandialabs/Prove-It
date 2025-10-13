@@ -4,3 +4,10 @@ proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.implication.not_iff_via_not_right_impl
 proveit.logic.booleans.implication.negated_reflex
 proveit.logic.equality.fold_not_equals
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.logic.sets.equivalence.set_equiv_is_bool
+proveit.numbers
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.booleans.implication.negated_true_antecedent_implication

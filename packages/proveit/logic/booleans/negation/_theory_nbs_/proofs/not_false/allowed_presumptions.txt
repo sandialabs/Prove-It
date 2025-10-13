@@ -1,3 +1,4 @@
 proveit.logic.equality.substitution
 proveit.logic.equality.equals_symmetry
 proveit.logic.booleans.implication.false_implies_false
+proveit.logic.booleans.negation.unfold_negation

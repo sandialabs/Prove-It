@@ -1,1 +1,1 @@
-proveit.logic.equality.contradiction_via_falsification
+proveit.logic.booleans.in_bool_if_true

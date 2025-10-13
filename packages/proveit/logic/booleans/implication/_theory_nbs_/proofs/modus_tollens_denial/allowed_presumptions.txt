@@ -1,2 +1,7 @@
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.implication.affirmation_via_contradiction

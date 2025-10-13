@@ -1,0 +1,7 @@
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.eq_true_elim
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.in_bool_if_true
