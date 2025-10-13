@@ -1479,7 +1479,7 @@ class Theorem(Proof):
                         " DISALLOWED to prevent circular logic.")
         elif self.is_fully_proven():
             hint = ("\nHint: %s is fully proven and based upon current "
-                    "proofs, \nit is safe to ALLOW.")
+                    "proofs, \nit is safe to ALLOW."%self)
         
         # If running build.py, just return False to allow proofs to
         # go through without intervention if they can.
