@@ -98,6 +98,11 @@ class Not(Operation):
         or double negation.
         '''
         from proveit.logic import Implies, FALSE, EvaluationError
+        # First, try conclude_negation on the operand
+        try:
+            return self.operands[0].conclude_negation()
+        except (NotImplementedError, ProofFailure):
+            pass  # that didn't work; keep trying
         if Implies(self.operand, FALSE).proven():
             # Conclude Not(A) from (A ⇒ ⊥).
             return self.conclude_as_folded()

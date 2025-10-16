@@ -999,14 +999,6 @@ class Expression(metaclass=ExprType):
                     "Bad 'readily_provable' claim: "
                     "'conclude' method didn't work.")                    
             
-            if isinstance(self, Not):
-                # if it is a Not expression, try conclude_negation on the
-                # operand
-                try:
-                    concluded_truth = self.operands[0].conclude_negation(
-                        assumptions=assumptions)
-                except (NotImplementedError, ProofFailure):
-                    pass  # that didn't work, try conclude on the Not expression itself
             if concluded_truth is None:
                 try:
                     # first attempt to prove via implication
