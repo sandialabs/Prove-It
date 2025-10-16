@@ -144,10 +144,12 @@ class Or(Operation):
         '''
         from proveit.logic import And
         from . import true_or_true, true_or_false, false_or_true
-        if self in {true_or_true.expr, true_or_false.expr, false_or_true.expr}:
-            # should be proven via one of the imported theorems as a
-            # simple special case
-            return self.prove()
+        for boolean_or_truth in (true_or_true, true_or_false, false_or_true):
+            if self is boolean_or_truth.expr and (
+                    boolean_or_truth.is_fully_proven_and_usable()):
+                # should be proven via one of the imported theorems as a
+                # simple special case
+                return self.prove()
         
         if self.operands.is_double():
             # See if we can prove this via the law of the excluded

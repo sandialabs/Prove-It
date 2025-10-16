@@ -187,7 +187,7 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from . import true_and_true
-        if self == true_and_true.expr:
+        if self == true_and_true.expr and true_and_true.is_fully_proven_and_usable():
             return true_and_true  # simple special case
         # if (self.operands.num_entries() == 1 and
         #         isinstance(self.operands[0], ExprRange) and
