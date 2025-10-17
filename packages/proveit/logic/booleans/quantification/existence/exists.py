@@ -328,13 +328,38 @@ class Exists(OperationOverInstances):
         conditions):
             Exists(x, P(x)) vs. Exists(x, Not(P(x))),
         which return:
-            Not(Forall(x, P(x) != T)) and Not(Forall(x, P(x))),
+            Not(Forall(x, Not(P(x))) and Not(Forall(x, P(x))),
         respectively.
         '''
         from proveit import defaults
-        from proveit.logic import Forall, Not, NotEquals, TRUE
+        from proveit.logic import Forall, Not
         from proveit.logic.booleans.quantification.existence import (
-            exists_def, exists_not_eq_not_forall)
+            exists_definition, exists_not_definition)
+        _case_not = False
+        _x = _y = self.instance_param
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        if _case_not:
+            rhs_to_preserve = (
+                Not(Forall(_x, self.instance_expr.operand)))
+        else:
+            rhs_to_preserve = (
+                Not(Forall(_x, Not(self.instance_expr))))
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.preserved_exprs = {self, rhs_to_preserve}
+            if _case_not:
+                return exists_not_definition.instantiate({P: _P, x: _x, y: _y})
+            else:
+                return exists_definition.instantiate({P: _P, x: _x, y: _y})
+            
+        
+        '''
+        # TODO: Work on generalizations later.
+        from proveit.logic.booleans.quantification.existence import (
+            exists_definition, exists_not_eq_not_forall)
         _x = _y = self.instance_params
         _n = _x.num_elements()
 
@@ -383,8 +408,9 @@ class Exists(OperationOverInstances):
                 return exists_not_eq_not_forall.instantiate(
                     {n: _n, P: _P, Q: _Q, x: _x, y: _y})
             else:
-                return exists_def.instantiate(
+                return exists_definition.instantiate(
                     {n: _n, P: _P, Q: _Q, x: _x, y: _y})
+        '''
 
     @prover
     def deduce_not_exists(self, **defaults_config):
