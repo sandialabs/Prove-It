@@ -131,7 +131,8 @@ class Implies(TransitiveRelation):
             return untrue_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
         elif (isinstance(self.antecedent, Not) and 
-              self.antecedent.operand.readily_provable()):
+              self.antecedent.operand.readily_provable() and
+              negated_true_antecedent_implication.is_fully_proven_and_usable()):
             # Either the consequent or the antecedent is disprovable
             # so we should try to prove the implication via
             # falsified_antecedent_implication.
@@ -378,7 +379,7 @@ class Implies(TransitiveRelation):
         
         for truth_table_thm in (implies_t_f, implies_t_t, implies_f_t, implies_f_f):
             if self == truth_table_thm.expr.lhs:
-                print("truth table match")
+                #print("truth table match")
                 return truth_table_thm # simple truth-table match
         
         if must_evaluate:

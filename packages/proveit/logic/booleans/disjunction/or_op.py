@@ -142,7 +142,7 @@ class Or(Operation):
         or_if_any theorem.  Otherwise, a reduction proof will be
         attempted (evaluating the operands).
         '''
-        from proveit.logic import And
+        from proveit.logic import And, Not
         from . import true_or_true, true_or_false, false_or_true
         for boolean_or_truth in (true_or_true, true_or_false, false_or_true):
             if self is boolean_or_truth.expr and (
@@ -152,11 +152,16 @@ class Or(Operation):
                 return self.prove()
         
         if self.operands.is_double():
+            # See if we can use 'conclude_as_folded'
+            _A = self.operands[0]
+            _B = self.operands[1]
+            if _B.readily_provable(assumptions=defaults.assumptions+(Not(_A),)):
+                return self.conclude_as_folded()
+            elif _A.readily_provable(assumptions=defaults.assumptions+(Not(_B),)):
+                return Or(_B, _A).conclude_as_folded().commute()
             # See if we can prove this via the law of the excluded
             # middle.
             from proveit.logic import Not
-            _A = self.operands[0]
-            _B = self.operands[1]
             _A_cf = _A.canonical_form()
             _B_cf = _B.canonical_form()
             if _B_cf == Not(_A_cf):

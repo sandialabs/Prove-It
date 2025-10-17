@@ -149,18 +149,18 @@ class Not(Operation):
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
         from proveit.logic import TRUE, FALSE, EvaluationError, evaluate_truth
-        from proveit.logic.booleans.negation import (
-                negation_intro, falsified_negation_intro)
+        from proveit.logic.booleans import eq_false_intro
+        from proveit.logic.booleans.negation import negation_intro
         from . import not_t, not_f  # load in truth-table evaluations
-        if self.operand == TRUE:
+        if self.operand == TRUE and not_t.is_fully_proven_and_usable():
             return not_t
-        elif self.operand == FALSE:
+        elif self.operand == FALSE and not_f.is_fully_proven_and_usable():
             return not_f
         elif self.operand.proven():
-            # evaluate to FALSE via falsified_negation_intro
-            return falsified_negation_intro.instantiate({A: self.operand})
+            # evaluate to FALSE via eq_false_intro
+            return eq_false_intro.instantiate({A: self.operand})
         elif self.operand.disproven():
-            # evaluate to TRUE via falsified_negation_intro
+            # evaluate to TRUE via negation_intro
             return evaluate_truth(negation_intro.instantiate(
                     {A: self.operand}))
         elif must_evaluate:
