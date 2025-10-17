@@ -155,7 +155,7 @@ def _make_decorated_prover(func, automatic=False):
                 raise ProofFailure(proven_truth.expr, defaults.assumptions,
                                    "@prover method %s returned a Judgment, "
                                    "%s, that is not applicable under given "
-                                   "assumptions") 
+                                   "assumptions"%(func, proven_truth))
             return proven_truth
 
         if (automatic and not defaults.preserve_all) or (
