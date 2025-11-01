@@ -152,29 +152,30 @@ class Or(Operation):
                 return self.prove()
         
         if self.operands.is_double():
-            # See if we can use 'conclude_as_folded'
+            from proveit.logic.booleans.disjunction import excluded_middle
             _A = self.operands[0]
             _B = self.operands[1]
+            
+            # See if we can prove this via the law of the excluded middle.   
+            if excluded_middle.is_fully_proven_and_usable():
+                _A_cf = _A.canonical_form()
+                _B_cf = _B.canonical_form()
+                if _B_cf == Not(_A_cf):
+                    # Prove A or Not(A)
+                    replacements = []
+                    if _B != Not(_A):
+                        replacements.append(Not(_A).deduce_canonically_equal(_B))
+                    return excluded_middle.instantiate(
+                            {A:_A}, replacements=replacements)
+                elif _A_cf == Not(_B_cf):
+                    # Prove Not(A) or A
+                    return Or(_B, _A).prove().inner_expr().commute()
+
+            # See if we can use 'conclude_as_folded'
             if _B.readily_provable(assumptions=defaults.assumptions+(Not(_A),)):
                 return self.conclude_as_folded()
             elif _A.readily_provable(assumptions=defaults.assumptions+(Not(_B),)):
                 return Or(_B, _A).conclude_as_folded().commute()
-            # See if we can prove this via the law of the excluded
-            # middle.
-            from proveit.logic import Not
-            _A_cf = _A.canonical_form()
-            _B_cf = _B.canonical_form()
-            if _B_cf == Not(_A_cf):
-                # Prove A or Not(A)
-                from proveit.logic.booleans import unfold_is_bool
-                replacements = []
-                if _B != Not(_A):
-                    replacements.append(Not(_A).deduce_canonically_equal(_B))
-                return unfold_is_bool.instantiate(
-                        {A:_A}, replacements=replacements)
-            elif _A_cf == Not(_B_cf):
-                # Prove Not(A) or A
-                return Or(_B, _A).prove().inner_expr().commute()
 
         if self.operands.contains_range():
             # There are ExprRange operands.
@@ -679,8 +680,7 @@ class Or(Operation):
     def affirm_via_contradiction(self, conclusion, **defaults_config):
         '''
         From (A or B), derive the conclusion provided that the negated
-        conclusion implies not(A) and not(B), and the conclusion is a
-        Boolean.
+        conclusion implies not(A) and not(B).
         '''
         from proveit.logic.booleans.implication import affirm_via_contradiction
         return affirm_via_contradiction(self, conclusion)
@@ -690,8 +690,7 @@ class Or(Operation):
         '''
 
         From (A or B), derive the negated conclusion provided that the
-        conclusion implies both not(A) and not(B), and the conclusion
-        is a Boolean.
+        conclusion implies both not(A) and not(B).
         '''
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)

@@ -205,6 +205,19 @@ class Implies(TransitiveRelation):
         self.antecedent.prove()
         return ModusPonens(self, defaults.assumptions).proven_truth
 
+    @prover
+    def derive_consequent_via_excluded_middle(self, **defaults_config):
+        r'''
+        From A => B derive and return B provide that Not(A) => B is also true.
+        '''
+        from proveit.logic.booleans import from_excluded_middle
+        if isinstance(self.antecedent, Not):
+            _A = self.antecedent.operand
+        else:
+            _A = self.antecedent
+        _C = self.consequent
+        return from_excluded_middle.instantiate({A:_A, C:_C})
+
     def _derive_consequent_generically(self, **defaults_config):
         '''
         Drive the consequent assuming the antecedent.  

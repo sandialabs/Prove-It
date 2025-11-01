@@ -152,14 +152,14 @@ class Forall(OperationOverInstances):
                             return self.conclude_via_domain_inclusion(
                                     superset)
 
-        if self.has_domain() and hasattr(self.first_domain(), 'prove_by_cases'):
-            try:
-                return self.conclude_by_cases()
-            except ProofFailure:
-                raise ProofFailure(self, defaults.assumptions,
-                                   "Unable to conclude automatically; the "
-                                   "prove_by_cases method on the domain "
-                                   "has failed. :o( ")
+        # Try concluding by cases
+        try:
+            return self.conclude_by_cases()
+        except ProofFailure:
+            raise ProofFailure(self, defaults.assumptions,
+                               "Unable to conclude automatically; the "
+                               "prove_by_cases method on the domain "
+                               "has failed. :o( ")
         # conclude via generalization as last resort
         return self.conclude_via_generalization()
 
@@ -260,10 +260,6 @@ class Forall(OperationOverInstances):
         on the domain. For example, conclude
         forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
         '''
-        assert self.has_domain(), (
-            "Forall.conclude_by_cases: cannot fold a forall statement, or "
-            "prove a forall statement using proof by cases, if the forall "
-            "statement has no domain specified.")
         if self.instance_params.num_entries() > 1:
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and then
@@ -271,8 +267,16 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality().rhs
             unbundled = unbundled.conclude_by_cases()
             return unbundled.bundle()
-        result = self.domain.prove_by_cases(self)
-        return result
+        if self.has_domain() and hasattr(self.domain, 'prove_by_cases'):
+            return self.domain.prove_by_cases(self)            
+        else:
+            # Use forall_by_excluded_middle which is applicable even without
+            # an explicit domain (but implicitly for effectively Boolean
+            # cases of True and not True).
+            from proveit.logic.booleans import forall_by_excluded_middle
+            _P = Lambda(self.instance_param, self.instance_expr)
+            return forall_by_excluded_middle.instantiate(
+                {P:_P, A:self.instance_param}).derive_consequent()
     
     @prover
     def conclude_via_domain_inclusion(self, superset_domain,
