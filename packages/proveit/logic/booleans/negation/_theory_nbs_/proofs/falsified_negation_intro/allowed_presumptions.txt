@@ -1,2 +1,0 @@
-proveit.logic.equality.substitute_truth
-proveit.logic.booleans.negation.not_t
