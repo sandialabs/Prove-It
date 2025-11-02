@@ -1,1 +1,3 @@
 proveit.logic.equality.substitution
+proveit.logic.booleans.negation.falsified_negation_intro
+proveit.logic.equality.equals_symmetry

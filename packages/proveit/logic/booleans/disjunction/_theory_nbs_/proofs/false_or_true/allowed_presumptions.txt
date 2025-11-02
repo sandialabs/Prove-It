@@ -1,2 +1,4 @@
 proveit.logic.booleans.disjunction.or_f_t
 proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.disjunction.or_if_right
+proveit.logic.booleans.true_truth

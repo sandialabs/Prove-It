@@ -4,3 +4,10 @@ proveit.logic.booleans.eq_true_elim
 proveit.logic.booleans.negation.fold_negation
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.equality.fold_not_equals
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.unfold_not_equals
+proveit.logic.booleans.implication.affirmation_via_contradiction

@@ -1,0 +1,3 @@
+proveit.logic.equality.not_equals_reversal
+proveit.logic.booleans.from_not_false
+proveit.logic.booleans.in_bool_if_true

@@ -1,1 +1,8 @@
 proveit.logic.booleans.false_not_true
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.sets
+proveit.numbers
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.equality.not_equals_reversal
+proveit.logic.booleans.from_not_false

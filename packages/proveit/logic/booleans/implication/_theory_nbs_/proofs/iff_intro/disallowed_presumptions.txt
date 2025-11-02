@@ -7,3 +7,7 @@ proveit.logic.booleans.implication.eq_from_mutual_impl
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.conjunction.conjunction_eq_quantification
 proveit.logic.booleans.implication.iff_implies_both
+proveit.logic.sets
+proveit.numbers
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and

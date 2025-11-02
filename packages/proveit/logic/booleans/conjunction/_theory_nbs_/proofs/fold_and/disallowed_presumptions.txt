@@ -11,3 +11,6 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.equality.sub_right_side_into
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.falsified_negation_intro

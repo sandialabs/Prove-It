@@ -1,2 +1,6 @@
 proveit.logic.booleans.true_not_false
 proveit.logic.equality.not_equals_reversal
+proveit.logic.equality.unfold_not_equals
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.fold_not_equals

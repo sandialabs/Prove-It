@@ -1,1 +1,6 @@
 proveit.logic.equality.equals_transitivity
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and

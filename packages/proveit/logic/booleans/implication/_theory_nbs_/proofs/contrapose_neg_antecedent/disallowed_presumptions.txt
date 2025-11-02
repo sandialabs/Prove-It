@@ -1,0 +1,3 @@
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.implication.negated_true_antecedent_implication
+proveit.logic.booleans.implication.untrue_antecedent_implication

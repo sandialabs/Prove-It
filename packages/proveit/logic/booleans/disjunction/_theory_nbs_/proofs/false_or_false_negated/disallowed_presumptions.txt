@@ -1,3 +1,8 @@
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.not_left_if_neither
 proveit.logic.booleans.disjunction.not_right_if_neither
+proveit.logic.booleans.disjunction.neither_intro
+proveit.logic.sets
+proveit.numbers
+proveit.logic.booleans.disjunction.not_or_if_not_any
+proveit.logic.booleans.disjunction.disjunction_eq_quantification

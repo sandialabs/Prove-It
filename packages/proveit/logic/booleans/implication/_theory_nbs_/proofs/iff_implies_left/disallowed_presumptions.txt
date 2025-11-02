@@ -7,3 +7,5 @@ proveit.logic.booleans.conjunction.conjunction_eq_quantification
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.sets
+proveit.numbers

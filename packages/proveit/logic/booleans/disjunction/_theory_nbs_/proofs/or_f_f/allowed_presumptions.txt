@@ -18,3 +18,5 @@ proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_in_true
 proveit.logic.booleans.implication.implies_t_f
 proveit.logic.booleans.negation.not_f
+proveit.logic.booleans.negation.falsified_negation_intro
+proveit.logic.booleans.eq_true_elim

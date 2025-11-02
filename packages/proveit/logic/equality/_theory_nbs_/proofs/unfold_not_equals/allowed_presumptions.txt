@@ -1,3 +1,12 @@
 proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.not_equals_def
 proveit.logic.equality.not_equals_def_quantified
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.falsified_negation_intro
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.fold_not_equals

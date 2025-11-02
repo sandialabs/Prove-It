@@ -6,3 +6,5 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.sets
+proveit.numbers

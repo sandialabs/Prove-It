@@ -2,3 +2,11 @@ proveit.logic.booleans.implication.eq_from_iff
 proveit.logic.booleans.implication.iff_via_both_true
 proveit.logic.booleans.implication.iff_via_both_false
 proveit.logic.booleans.implication.iff_intro
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.not_iff_via_not_right_impl
+proveit.logic.sets
+proveit.numbers
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.booleans.implication.negated_true_antecedent_implication

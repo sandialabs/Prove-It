@@ -5,3 +5,4 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.substitute_in_true
 proveit.logic.equality.sub_left_side_into
 proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.negation.not_f

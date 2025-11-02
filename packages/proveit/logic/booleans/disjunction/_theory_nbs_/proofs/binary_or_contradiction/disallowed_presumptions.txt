@@ -5,3 +5,4 @@ proveit.logic.booleans.disjunction.disjunction_eq_quantification
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_1
 proveit.logic.booleans.from_not_false
+proveit.logic.booleans.disjunction.not_or_if_not_any

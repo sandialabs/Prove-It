@@ -1,3 +1,9 @@
 proveit.logic.booleans.disjunction.or_if_any
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.singular_constructive_multi_dilemma
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.booleans.disjunction.destructive_dilemma
+proveit.logic.booleans.disjunction.constructive_multi_dilemma
+proveit.logic.booleans.disjunction.destructive_multi_dilemma
+proveit.logic.booleans.disjunction.disjunction_eq_quantification

@@ -9,3 +9,4 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.conjunction.conjunction_intro
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.disjunction.fold_or

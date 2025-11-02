@@ -7,3 +7,4 @@ proveit.logic.booleans.implication.modus_tollens_affirmation
 proveit.logic.booleans.conjunction.conjunction_intro
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.disjunction.not_left_if_neither

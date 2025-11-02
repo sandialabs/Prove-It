@@ -8,3 +8,10 @@ proveit.logic.booleans.implication.false_antecedent_implication
 proveit.logic.booleans.implication.falsified_antecedent_implication
 proveit.logic.booleans.implication.negated_true_antecedent_implication
 proveit.logic.booleans.implication.untrue_antecedent_implication
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.disjunction.not_left_if_neither
+proveit.logic.booleans.disjunction.not_right_if_neither
