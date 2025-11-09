@@ -812,23 +812,26 @@ class TheoryStorage:
                 # Don't allow anything to be imported from the folder
                 # that is currently being generated.
                 raise KeyError("Self importing is not allowed")
-            if kind not in ('defining_property', 'def_existence', 'def_extension'):
-                expr_id = self._kindname_to_exprhash[(kind, name)]
-                expr = theory_folder_storage.make_expression(expr_id)
 
             # make and return common expression, axiom, defining property,
             # or theorem
             if kind == 'common':
+                expr_id = self._kindname_to_exprhash[(kind, name)]
+                expr = theory_folder_storage.make_expression(expr_id)
                 obj = expr
-            elif kind == 'axiom':
-                obj = Axiom(expr, self.theory, name)
+            else:
+                if kind not in ('axiom', 'defining_property', 'def_existence',
+                                'def_extension', 'theorem'):
+                    raise ValueError(
+                        "'kind' expected to be 'common', 'axiom', or 'theorem'.")
+                obj_id = self._kindname_to_objhash[(kind, name)]
+                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
+            if kind == 'axiom':
                 if not isinstance(obj, Axiom):
                     raise TypeError("Expecting Axiom, not %s" % obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
             elif kind == 'defining_property':
-                obj_id = self._kindname_to_objhash[(kind, name)]
-                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
                 if not (isinstance(obj, BasicDefinition) or
                         isinstance(obj, DefiningProperty)):
                     raise TypeError("Expecting DefiningProperty, not %s" 
@@ -836,24 +839,16 @@ class TheoryStorage:
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
             elif kind == 'def_existence':
-                obj_id = self._kindname_to_objhash[(kind, name)]
-                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
                 assert isinstance(obj, DefinitionExistence)
             elif kind == 'def_extension':
-                obj_id = self._kindname_to_objhash[(kind, name)]
-                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
                 assert isinstance(obj, DefinitionExtension)
             elif kind == 'theorem':
-                obj = Theorem(expr, self.theory, name)
                 if not isinstance(obj, Theorem):
                     raise TypeError(
                         "Expecting Theorem, not %s" %
                         obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
-            else:
-                raise ValueError(
-                    "'kind' expected to be 'common', 'axiom', or 'theorem'.")
         finally:
             # reset the default Theory
             Theory.default = prev_theory_default
@@ -2880,7 +2875,7 @@ class StoredTheorem(StoredSpecialStmt):
         Return the recorded set of eliminated theorems
         (via literal generalization).
         '''
-        return set(self._read_stmts('eliminated_theorems.text'))
+        return set(self._read_stmts('eliminated_theorems.txt'))
 
 
     def _read_stmts(self, filename):
