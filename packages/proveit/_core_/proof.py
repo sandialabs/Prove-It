@@ -2957,7 +2957,7 @@ class _ShowProof:
     def __init__(self, theory, folder, proof_id, step_info,
                  ref_obj_id_groups):
         self._style_id = proof_id
-        if '_' in step_info:
+        if '-' in step_info:
             # Must be an axiom, theorem, or definition with the format
             # axiom-theory.name or theorem-theory.name
             self.step_type_str, full_name = step_info.split('-', 1)
@@ -2993,6 +2993,15 @@ class _ShowProof:
             {k for k, obj_id in enumerate(ref_obj_id_groups[-1])
              if obj_id[-1] == '*'}
         _ShowProof.show_proof_by_id[proof_id] = self
+        if self.proven_truth.num_lit_gen > 0:
+            # A literal generalization step.
+            assert self.step_type() == 'literal_generalization'
+            # We need to obtain the eliminated theorems.
+            # Leverage code in Proof.__init__ to accomplish this.
+            proof_obj = Proof(self.proven_truth,
+                              [_req_proof.proven_truth for _req_proof
+                               in self.required_proofs])
+            self.eliminated_theorems = proof_obj._eliminated_theorems
 
     def _repr_html_(self):
         if not defaults.display_latex:
@@ -3020,6 +3029,20 @@ class _ShowProof:
 
     def explicitly_allowed(self):
         return True
+
+    def used_theorems(self):
+        '''
+        Returns the set of Theorems that are used directly 
+        (not via other theorems) in this proof.
+        '''
+        if self.step_type() == 'theorem':
+            return {self.theory.get_theorem(self.name)}
+        thms = set().union(
+            *[required_proof.used_theorems()
+              for required_proof in self.required_proofs])
+        if self.proven_truth.num_lit_gen > 0:
+            return thms - self._eliminated_theorems #??
+        return thms
 
 class ProofFailure(Exception):
     def __init__(self, expr, assumptions, message):
