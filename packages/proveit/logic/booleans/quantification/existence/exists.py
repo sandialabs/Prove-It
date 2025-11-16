@@ -35,6 +35,31 @@ class Exists(OperationOverInstances):
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map, styles=styles)
 
+    @classmethod
+    def _create_instance_expr_with_condition(cls, instance_expr, condition):
+        '''
+        The condition for an existential quantifier is effected via a
+        conjunction. That is, exists_{x | Q(x)} P(x) is a stylized form of
+        exists_{x} [Q(x) ∧ P(x).]
+        Return the conjunction (e.g., Q(x) ∧ P(x) in the example).
+        '''
+        from proveit.logic import And
+        return And(condition, instance_expr)
+        
+    @classmethod
+    def _extract_condition_and_instance_expr(cls, lambda_body):
+        '''
+        The condition for an existential quantifier is effected via a
+        conjunction. That is, exists_{x | Q(x)} P(x) is a stylized form of
+        exists_{x} [Q(x) ∧ P(x).]
+        Return the condition and instance_expr as a tuple.  For the example,
+        this would return (Q(x), P(x)).
+        '''
+        from proveit.logic import And
+        if isinstance(lambda_body, And) and lambda_body.operands.is_double():
+            return tuple(lambda_body.operands)
+        return None, lambda_body
+
     def _readily_provable(self):
         '''
         Return True iff we should be able to conclude this existential

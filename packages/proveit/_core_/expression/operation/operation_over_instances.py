@@ -79,8 +79,18 @@ class OperationOverInstances(Operation):
         include forall, exists, summation, etc. instance_param_or_params may be
         singular or plural (iterable).  Each parameter may be a Variable or
         Iter over IndexedVars (just as a Lambda parameter).  An
-        OperationOverInstances is effected as an Operation over a Lambda map
-        with a conditional body.
+        OperationOverInstances is effected as an Operation over a Lambda map.
+        
+        Conditions are handled differently for different kinds of operations
+        and is effected as a style option.  For forall and exists, the 
+        conditions are effected, respectively, via implication or conjunction;
+        for example, forall_{x | Q(x)} P(x) is a style for 
+        forall_{x} [Q(x) ⇒ P(x)]. exists_{x | Q(x)} P(x) is a style for
+        exists_{x} [Q(x) ∧ P(x)].  For summation, its effected via a
+        ConditionalSet with a default of zero.  These choices are made for
+        convenience.  We could have chosen to use ConditionalSets for all of
+        these, but implication and conjunction are more convenient condition
+        implementations for universal and existential quantifiers.
 
         If a 'domain' is supplied, additional conditions are generated that
         each instance parameter is in the domain "set": InSet(x_i, domain),
@@ -115,16 +125,16 @@ class OperationOverInstances(Operation):
             from proveit.logic import And
             lambda_map = _lambda_map
             instance_params = lambda_map.parameters
-            if isinstance(lambda_map.body, Conditional):
+            condition, instance_expr = (
+                self.__class__._extract_condition_and_instance_expr(
+                    lambda_map.body))
+            if condition is not None:
                 # Has conditions.
-                instance_expr = lambda_map.body.value
-                if (isinstance(lambda_map.body.condition, And) and
-                        not is_single(lambda_map.body.condition.operands)):
-                    conditions = composite_expression(
-                        lambda_map.body.condition.operands)
+                if (isinstance(condition, And) and
+                        not is_single(condition.operands)):
+                    conditions = composite_expression(condition.operands)
                 else:
-                    conditions = composite_expression(
-                        lambda_map.body.condition)
+                    conditions = composite_expression(condition)
             else:
                 # No conditions.
                 instance_expr = lambda_map.body
@@ -226,11 +236,8 @@ class OperationOverInstances(Operation):
             if instance_params.num_entries() == 1:
                 instance_param_or_params = instance_params[0]
             # Generate the Lambda sub-expression.
-            lambda_map = OperationOverInstances._createOperand(
+            lambda_map = self.__class__._create_operand(
                 instance_param_or_params, instance_expr, conditions)
-
-        self.instance_expr = instance_expr
-        '''Expression corresponding to each 'instance' in the OperationOverInstances'''
 
         self.instance_params = instance_params
         if (instance_params.num_entries() > 1 or
@@ -263,11 +270,25 @@ class OperationOverInstances(Operation):
             self.domain = domain
             '''Domain of the outermost instance parameter (may be None)'''
 
+        _condition, _inst_expr = (
+            self.__class__._extract_condition_and_instance_expr(lambda_map.body))
+        
+        self._instance_expr = _inst_expr
+
+        if _condition is not None:
+            self.condition = _condition
+            if _lambda_map is None and (
+                    not self.has_domain() and len(conditions)==0):
+                # Don't display as a stylized condition since there
+                # was no given 'domain' or 'condition', just an instance_expr
+                # that happens to be in the form of a condition
+                # (e.g., an Implies in the case of Forall).
+                styles = dict() if styles is None else dict(styles)
+                styles['condition'] = 'internalized'
+                # We need this in case of a 'condition':'stylized' switch:
+                conditions = ExprTuple(_condition)
         self.conditions = conditions
         '''Conditions applicable to the outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.  May include an implicit 'domain' condition.'''
-
-        if isinstance(lambda_map.body, Conditional):
-            self.condition = lambda_map.body.condition
 
         Operation.__init__(self, operator, [lambda_map], styles=styles)
 
@@ -318,13 +339,34 @@ class OperationOverInstances(Operation):
             return self.domains[0]
         return self.domain
 
-    @staticmethod
-    def _createOperand(instance_param_or_params, instance_expr, conditions):
+    @classmethod
+    def _create_operand(cls, instance_param_or_params, instance_expr, conditions):
         if conditions.num_entries() == 0:
             return Lambda(instance_param_or_params, instance_expr)
         else:
-            conditional = Conditional(instance_expr, conditions)
-            return Lambda(instance_param_or_params, conditional)
+            if conditions.is_single():
+                condition = conditions[0]
+            else:
+                from proveit.logic import And
+                condition = And(*conditions)
+            body = cls._create_instance_expr_with_condition(
+                instance_expr, condition)
+            return Lambda(instance_param_or_params, body)
+    
+    @classmethod
+    def _create_instance_expr_with_condition(cls, instance_expr, condition):
+        # Return the instance expression that includes the condition
+        # explicitly (e.g., a ConditionalSet, implication in the case of
+        # forall, conjunction in the case of exists).
+        raise NotImplementedError("_create_conditioned_instance_expr must be "
+                                  "implemented for %s"%cls)
+        
+    @classmethod
+    def _extract_condition_and_instance_expr(cls, lambda_body):
+        # Given the lambda body, return the condition and instance_expr
+        # (independent of the condition) as a tuple pair.
+        raise NotImplementedError("_extract_condition_and_instance_expr must be "
+                                  "implemented for %s"%cls)
 
     def extract_my_init_arg_value(self, arg_name):
         '''
@@ -470,7 +512,7 @@ class OperationOverInstances(Operation):
                      in conds[num_explicit_domains:]], key=hash)
             canonical_conditions = ExprTuple(*canonical_conditions)
             canonical_instance_expr = instance_expr.canonical_form()
-            canonical_lambda = OperationOverInstances._createOperand(
+            canonical_lambda = self.__class__._create_operand(
                     parameters, canonical_instance_expr,
                     canonical_conditions)
         else:
@@ -579,6 +621,21 @@ class OperationOverInstances(Operation):
         Added by wdc on 6/06/2019.
         '''
         return list(self._all_conditions())
+    
+    @property
+    def instance_expr(self):
+        '''
+        Expression corresponding to each 'instance' in the 
+        OperationOverInstances.  When there are conditions, this can
+        depend on the 'condition' style.  For example, the instance_expr
+        of forall_{x | Q(x)} P(x) is P(x) if that style is 'stylized' but
+        will display as forall_{x} [Q(x) ⇒ P(x)] with [Q(x) ⇒ P(x)] as the
+        instance_expr if that style is 'internalized'.
+        '''
+        if self.get_style('condition', 'stylized') == 'stylized':
+            return self._instance_expr
+        else:
+            return self.operand.body
 
     def _all_instance_exprs(self):
         '''
@@ -623,6 +680,9 @@ class OperationOverInstances(Operation):
         '''
         Return the domains of the instance variables as a tuple.
         '''
+        if self.get_style('condition', 'stylized') == 'internalized':
+            # No explicit domains when using style 'condition':'internalized'.
+            return tuple()
         if not self.has_domain():
             return tuple()
         if hasattr(self, 'domains'):
@@ -688,7 +748,11 @@ class OperationOverInstances(Operation):
         (after the "such that" symbol "|") at this level according to the
         style.  By default, this includes all of the 'joined' conditions except
         implicit 'domain' conditions.
+        If using 'condition':'internalized' style, there are no 'explicit'
+        conditions.
         '''
+        if self.get_style('condition', 'stylized') == 'internalized':
+            return tuple()
         if hasattr(self, 'domains'):
             assert (self.conditions.num_entries() >= 
                     len(self.domains)), (
@@ -741,6 +805,14 @@ class OperationOverInstances(Operation):
                            "the parameters"),
             default = None, 
             related_methods = ('with_wrapping',))
+        if hasattr(self, 'condition'):
+            options.add_option(
+                name = 'condition',
+                description = ("Show the condition as 'stylized' or "
+                               "'internalized' (as internally represented)."),
+                default = 'stylized',
+                related_methods = ('with_stylized_condition',
+                                   'with_internalized_condition')),
         options.add_option(
             name = 'condition_wrapping',
             description = ("Wrap 'before' or 'after' the condition (or None)."),
@@ -780,6 +852,12 @@ class OperationOverInstances(Operation):
 
     def with_wrap_after_condition(self):
         return self.with_styles(condition_wrapping='after')
+    
+    def with_stylized_condition(self):
+        return self.with_styles(condition='stylized')
+    
+    def with_internalized_condition(self):
+        return self.with_styles(condition='internalized')
 
     def with_no_condition_wrapping(self):
         return self.with_styles(condition_wrapping=None)
@@ -795,6 +873,10 @@ class OperationOverInstances(Operation):
         \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
         '''
         return self.with_styles(wrap_params=str(wrap))
+
+    def has_stylized_condition(self):
+        return hasattr(self, 'condition') and (
+            self.get_style('condition', 'stylized') == 'stylized')
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -825,12 +907,16 @@ class OperationOverInstances(Operation):
                     self.get_style('wrap_params', 'False') == 'True')
         condition_wrapping = self.get_style(
                 'condition_wrapping', 'No')
+        show_internalized_condition = (self.get_style('condition', 'stylized')
+                                       == 'internalized')
         if condition_wrapping == 'No': condition_wrapping=None
         if justification is None:
             justification = self.get_style('justification', 'center')
         # override this default as desired
         explicit_iparams = list(self.explicit_instance_params())
-        if (hasattr(self, 'condition') and isinstance(self.condition, And)
+        if show_internalized_condition:
+            has_explicit_conditions = False
+        elif (hasattr(self, 'condition') and isinstance(self.condition, And)
             and (self.condition.operands.is_single() or
                  self.condition.operands.is_empty()) ):
             # explicitly format And cases that should reduce

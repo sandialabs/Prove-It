@@ -870,12 +870,12 @@ class Judgment:
         details).  Automation may be used in attempting to prove these 
         requirements provided proveit.defaults.conclude_automation=True.
         '''
-        from proveit import (Variable, Operation, Conditional, Lambda,
+        from proveit import (Variable, Operation, Lambda,
                              single_or_composite_expression,
                              ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall
+        from proveit.logic import Forall, Implies
         from .proof import Theorem, Instantiation, ProofFailure
         
         if not self.is_usable():
@@ -991,9 +991,9 @@ class Judgment:
                     "Forall Operation operand must be a Lambda function")
                 instance_param_vars = lambda_expr.parameter_vars
                 expr = lambda_expr.body
-                if isinstance(expr, Conditional):
+                if isinstance(expr, Implies):
                     # Skip over the "conditions" of the Forall expression.
-                    expr = expr.value
+                    expr = expr.consequent
                 forall_depth += 1
                 for iparam_var in instance_param_vars:
                     if iparam_var in remaining_repl_vars:
@@ -1030,13 +1030,26 @@ class Judgment:
                 temporarily_preserved_exprs.discard(replacement.lhs)
             defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
-            return self._checkedTruth(
-                Instantiation.get_instantiation(
-                        self, num_forall_eliminations=num_forall_eliminations,
-                        repl_map=processed_repl_map,
-                        equiv_alt_expansions=equiv_alt_expansions,
-                        simplify_only_where_marked=simplify_only_where_marked,
-                        markers_and_marked_expr=markers_and_marked_expr))
+            judgment = self
+            while num_forall_eliminations > 0:                
+                has_stylized_condition = judgment.has_stylized_condition()
+                if num_forall_eliminations > 1:
+                    _repl_map = dict()
+                    for _var in tuple(processed_repl_map.keys()):
+                        if _var in judgment.expr.operand.parameter_vars:
+                            _repl_map[_var] = processed_repl_map.pop(_var)
+                else:
+                    _repl_map = processed_repl_map
+                judgment = judgment._checkedTruth(
+                    Instantiation.get_instantiation(
+                            judgment, repl_map=_repl_map,
+                            equiv_alt_expansions=equiv_alt_expansions,
+                            simplify_only_where_marked=simplify_only_where_marked,
+                            markers_and_marked_expr=markers_and_marked_expr))
+                if has_stylized_condition:
+                    judgment = judgment.derive_consequent()
+                num_forall_eliminations -= 1
+            return judgment
         finally:
             # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(
@@ -1045,7 +1058,7 @@ class Judgment:
     @prover
     def generalize(self, forall_var_or_vars_or_var_lists, *,
                    domain_lists=None, domain=None, conditions=tuple(),
-                   antecedent=None, **defaults_config):
+                   **defaults_config):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized Judgment.  Can introduce any number of
@@ -1067,11 +1080,7 @@ class Judgment:
         LiteralGeneralizationFailure will be raised.  That is, *all* 
         needed axioms/theorems which use that Literal must be converted 
         to an assumption (with the Literal converted to a Variable) and 
-        then included in the conditions (or antecedent).
-
-        If an antecedent is provided, it plays the role of an extra
-        condition but is placed in an implication instead of a
-        Conditional.
+        then included in the conditions.
         '''
         from proveit._core_.proof import Generalization
         from proveit._core_.expression.label import Literal
@@ -1140,7 +1149,7 @@ class Judgment:
             conditions = domain_conditions + list(conditions)
 
         return self._checkedTruth(Generalization(
-            self, forall_var_lists, conditions, antecedent))
+            self, forall_var_lists, conditions))
 
     @prover
     def as_implication(self, hypothesis, **defaults_config):

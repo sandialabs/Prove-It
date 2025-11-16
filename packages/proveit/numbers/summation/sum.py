@@ -64,6 +64,41 @@ class Sum(OperationOverInstances):
             self.domain = Interval(zero,infinity)
         """
 
+    @classmethod
+    def _create_instance_expr_with_condition(cls, instance_expr, condition):
+        '''
+        The condition for set comprehension is effected via a
+        Conditional. That is, ∑_{x | Q(x)} f(x) is a stylized
+        form of ∑_{x} [{f(x) if Q(x). {0 if ¬Q(x).]
+        '''
+        from proveit import Conditional
+        from proveit.core_expr_types import ConditionalSet
+        from proveit.logic import Not
+        from proveit.numbers import zero
+        return ConditionalSet(Conditional(instance_expr, condition),
+                              Conditional(zero, Not(condition)))
+        
+    @classmethod
+    def _extract_condition_and_instance_expr(cls, lambda_body):
+        '''
+        The condition for set comprehension is effected via a
+        Conditional. That is, ∑_{x | Q(x)} f(x) is a stylized
+        form of ∑_{x} [{f(x) if Q(x). {0 if ¬Q(x).]
+        Return the condition and instance_expr as a tuple.  For the example,
+        this would return (Q(x), f(x)).
+        '''
+        from proveit.core_expr_types import ConditionalSet
+        from proveit.logic import Not
+        from proveit.numbers import zero
+        if isinstance(lambda_body, ConditionalSet):
+            if len(lambda_body.conditionals) == 2 and (
+                    lambda_body.conditionals[1].condition == 
+                    Not(lambda_body.conditionals[0].condition) and
+                    lambda_body.conditionals[1].value == zero):
+                return (lambda_body.conditionals[0].condition, 
+                        lambda_body.conditionals[0].value)
+        raise NotImplementedError("How to handle summation over %s?"%lambda_body)
+
     def _build_canonical_form(self):
         '''
         Returns a canonical form of this Sum with any 

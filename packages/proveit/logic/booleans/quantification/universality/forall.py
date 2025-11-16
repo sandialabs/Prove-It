@@ -31,6 +31,31 @@ class Forall(OperationOverInstances):
             instance_expr, domain=domain, domains=domains,
             condition=condition, conditions=conditions, styles=styles,
             _lambda_map=_lambda_map)
+
+    @classmethod
+    def _create_instance_expr_with_condition(cls, instance_expr, condition):
+        '''
+        The condition for a universal quantifier is effected via implication.
+        That is, forall_{x | Q(x)} P(x) is a stylized form of
+        forall_{x} [Q(x) ⇒ P(x).]
+        Return the implication (e.g., Q(x) ⇒ P(x) in the example).
+        '''
+        from proveit.logic import Implies
+        return Implies(condition, instance_expr)
+        
+    @classmethod
+    def _extract_condition_and_instance_expr(cls, lambda_body):
+        '''
+        The condition for a universal quantifier is effected via implication.
+        That is, forall_{x | Q(x)} P(x) is a stylized form of
+        forall_{x} [Q(x) ⇒ P(x).]
+        Return the condition and instance_expr as a tuple.  For the example,
+        this would return (Q(x), P(x)).
+        '''
+        from proveit.logic import Implies
+        if isinstance(lambda_body, Implies):
+            return lambda_body.antecedent, lambda_body.consequent
+        return None, lambda_body
     
     def _record_as_proven(self, judgment):
         '''
@@ -230,7 +255,7 @@ class Forall(OperationOverInstances):
             inner_assumptions = \
                 [assumption for assumption in inner_assumptions if
                  free_vars(assumption).isdisjoint(new_vars)]
-            if hasattr(expr, 'condition'):
+            if expr.has_stylized_condition():
                 inner_assumptions.append(expr.condition)
                 conditions += expr.conditions.entries
             expr = expr.instance_expr
