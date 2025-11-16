@@ -35,13 +35,6 @@ class SetEquiv(EquivRelation):
                                styles=styles)
         if self not in SetEquiv.initializing:
             SetEquiv.initializing.add(self)
-            try:
-                # proactively prove (a equiv b) in Boolean.
-                self.deduce_in_bool()
-            except BaseException:
-                # may fail before the relevent _axioms_ have
-                # been generated
-                pass  # and that's okay
             SetEquiv.initializing.remove(self)
 
     def side_effects(self, judgment):
@@ -341,5 +334,6 @@ class SetEquiv(EquivRelation):
         Deduce and return that this SetEquiv claim is in the Boolean
         set.
         '''
+        assert False
         from . import set_equiv_is_bool
         return set_equiv_is_bool.instantiate({A: self.lhs, B: self.rhs})

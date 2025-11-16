@@ -61,25 +61,26 @@ if proveit.defaults.running_theory_notebook is None: # might include here 2 is e
     # Import some fundamental theorems without quantifiers when not 
     # running an common/axioms/theorems theory notebook.
     #from .number_sets.natural_numbers import zero_in_nats
-    from .number_sets.integers import (zero_is_int, zero_is_nonpos_int,
-            zero_is_even, two_is_even, four_is_even, six_is_even,
-            eight_is_even, one_is_odd, three_is_odd, five_is_odd,
-            seven_is_odd, nine_is_odd)
-    from .number_sets.rational_numbers import (
-            zero_is_rational, zero_is_nonneg_rational, 
-            zero_is_nonpos_rational)
-    from .number_sets.real_numbers import (
-            zero_is_real, zero_is_nonneg_real, zero_is_nonpos_real)
-    from .number_sets.complex_numbers import zero_is_complex
-    from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
-    from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-    from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
-    from .negation import negated_zero
-    from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
-    from .number_sets.complex_numbers import (
-            i_is_complex, i_is_complex_nonzero)
-    from proveit.abstract_algebra.fields import (
-            rational_field, real_field, complex_field)
+    #from .number_sets.integers import (zero_is_int, zero_is_nonpos_int,
+    #        zero_is_even, two_is_even, four_is_even, six_is_even,
+    #        eight_is_even, one_is_odd, three_is_odd, five_is_odd,
+    #        seven_is_odd, nine_is_odd)
+    #from .number_sets.rational_numbers import (
+    #        zero_is_rational, zero_is_nonneg_rational, 
+    #        zero_is_nonpos_rational)
+    #from .number_sets.real_numbers import (
+    #        zero_is_real, zero_is_nonneg_real, zero_is_nonpos_real)
+    #from .number_sets.complex_numbers import zero_is_complex
+    #from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
+    #from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
+    #from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9
+    #from .negation import negated_zero
+    #from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
+    #from .number_sets.complex_numbers import (
+    #        i_is_complex, i_is_complex_nonzero)
+    #from proveit.abstract_algebra.fields import (
+    #        rational_field, real_field, complex_field)
+    pass
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

@@ -30,7 +30,7 @@ class Not(Operation):
             # derive FALSE given Not(A) and A
             yield self.derive_contradiction
         yield self.unfold  # (A ⇒ ⊥) from Not(A)
-        yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
+        #yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negation_side_effects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
