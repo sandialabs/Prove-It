@@ -2215,7 +2215,7 @@ class Instantiation(Proof):
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices=None):
         inst = Instantiation(
-            None, None, None, None, self.mapping, self.mapping_key_order, 
+            None, None, None, self.mapping, self.mapping_key_order, 
             None, None, _proven_truth=proven_truth, _requirements=requirements,
             _marked_req_indices=marked_req_indices)
         return inst
