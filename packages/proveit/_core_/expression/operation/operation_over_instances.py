@@ -358,6 +358,11 @@ class OperationOverInstances(Operation):
         # Return the instance expression that includes the condition
         # explicitly (e.g., a ConditionalSet, implication in the case of
         # forall, conjunction in the case of exists).
+        if cls is OperationOverInstances:
+            if condition is not None:
+                raise ValueError("Cannot create a generic OperationOverInstances"
+                                 " with a condition")
+            return instance_expr
         raise NotImplementedError("_create_conditioned_instance_expr must be "
                                   "implemented for %s"%cls)
         
@@ -365,6 +370,8 @@ class OperationOverInstances(Operation):
     def _extract_condition_and_instance_expr(cls, lambda_body):
         # Given the lambda body, return the condition and instance_expr
         # (independent of the condition) as a tuple pair.
+        if cls is OperationOverInstances:
+            return None, lambda_body
         raise NotImplementedError("_extract_condition_and_instance_expr must be "
                                   "implemented for %s"%cls)
 
