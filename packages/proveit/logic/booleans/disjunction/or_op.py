@@ -206,6 +206,7 @@ class Or(Operation):
                 "Or.conclude() has failed to find a proof for the "
                 "disjunction: ({})".format(self))
 
+    """
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
@@ -216,6 +217,7 @@ class Or(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
+    """
 
     def negation_side_effects(self, judgment):
         '''

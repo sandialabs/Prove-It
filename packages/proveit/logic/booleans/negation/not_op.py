@@ -26,7 +26,7 @@ class Not(Operation):
         #    yield self.derive_untrue  # A != TRUE given Not(A)
         if isinstance(self.operand, Not):
             yield self.derive_via_double_negation  # A given Not(Not(A))
-        if self.operand.proven():
+        if self.operand.proven() and not FALSE.proven():
             # derive FALSE given Not(A) and A
             yield self.derive_contradiction
         yield self.unfold  # (A ⇒ ⊥) from Not(A)
@@ -207,14 +207,6 @@ class Not(Operation):
             {x: self.operand, P: Plambda})
     """
 
-    @relation_prover
-    def derive_in_bool(self, **defaults_config):
-        '''
-        From Not(A) derive [Not(A) in Boolean].
-        '''
-        from proveit.logic.booleans import in_bool_if_true
-        return in_bool_if_true.instantiate({A: self})
-
     def readily_in_bool(self):
         '''
         Returns True if we can readily prove that the operand is
@@ -288,7 +280,7 @@ class Not(Operation):
         See Not.conclude_via_double_negation for the reverse process.
         Also see Not.negate_via_double_negation.
         '''
-        from . import double_negation_elim
+        from proveit.logic.booleans import double_negation_elim
         if isinstance(self.operand, Not):
             return double_negation_elim.instantiate(
                 {A: self.operand.operand})
@@ -317,7 +309,7 @@ class Not(Operation):
         Also see Not.derive_via_double_negation and
         Not.conclude_via_double_negation.
         """
-        from . import double_negation_elim
+        from proveit.logic.booleans import double_negation_elim
         return double_negation_elim.instantiate({A: self.operand})
     
     @prover

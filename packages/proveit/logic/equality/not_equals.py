@@ -25,8 +25,8 @@ class NotEquals(Relation):
         from proveit.logic.booleans import FALSE
         # automatically derive the reversed form which is equivalent
         yield self.derive_reversed  # y != x from x != y
-        if self.rhs == FALSE:
-            yield self.derive_via_double_negation  # A from A != False and A in Boolean
+        #if self.rhs == FALSE:
+        #    yield self.derive_via_double_negation  # A from A != False and A in Boolean
         yield self.unfold  # Not(x=y) from x != y
 
     def _readily_provable(self, try_readily_not_equal=True):

@@ -263,13 +263,14 @@ class And(Operation):
         if self.operands.is_double():
             yield self.derive_left
             yield self.derive_right
-        yield self.derive_in_bool
-        for _i, operand in enumerate(self.operands):
-            if (isinstance(operand, ExprRange) and 
-                    self.operands.num_entries()==1):
-                yield lambda : self.derive_quantification()
-            else:
-                yield lambda : self.derive_any(_i)
+        #yield self.derive_in_bool
+        else:
+            for _i, operand in enumerate(self.operands):
+                if (isinstance(operand, ExprRange) and 
+                        self.operands.num_entries()==1):
+                    yield lambda : self.derive_quantification()
+                else:
+                    yield lambda : self.derive_any(_i)
 
         # yield self.derive_commutation
 
@@ -279,7 +280,7 @@ class And(Operation):
         Not(A and B and .. and .. Z).
         '''
         from proveit.logic import Not, Or
-        yield self.derive_in_bool  # (A and B and ... and Z) in Boolean
+        #yield self.derive_in_bool  # (A and B and ... and Z) in Boolean
         # implemented by JML on 7/2/19
         # If all of the operands are negated call the disjunction form of
         # DeMorgan's
@@ -359,8 +360,7 @@ class And(Operation):
         form of And(X).
         '''
         from proveit import ExprRange
-        from . import (any_from_and, left_from_and, right_from_and,
-                                 from_unary_and)
+        from . import left_from_and, right_from_and
         if isinstance(index_or_expr, int):
             idx = index_or_expr
         else:
@@ -370,6 +370,7 @@ class And(Operation):
         contains_range = self.operands.contains_range()
         if self.operands.num_entries() == 1 and not contains_range:
             # Derive A from And(A).
+            from . import from_unary_and
             return from_unary_and.instantiate({A: self.operands[0]})
         if self.operands.is_double() and not contains_range:
             # Two operand special case:
@@ -387,6 +388,7 @@ class And(Operation):
                 # Derive the conjunction of a range of operands.
                 return self.derive_some(idx)
             else:
+                from . import any_from_and
                 A_sub = self.operands[:idx]
                 B_sub = self.operands[idx]
                 C_sub = self.operands[idx + 1:]
