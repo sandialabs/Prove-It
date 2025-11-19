@@ -1070,18 +1070,26 @@ class Expression(metaclass=ExprType):
         passed through to the _readily_provable method.
         '''
         from proveit import Judgment, ExprTuple
+        from proveit._core_.proof import Assumption
         from proveit.logic import TRUE
 
         if isinstance(self, ExprTuple):
             return False # An ExprTuple cannot be true or false.
-
+        
         with defaults.temporary() as tmp_defaults:
-            # Make sure we derive assumption side-effects first.
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
-            tmp_defaults.automation=False
-                
-            if self.proven(): # this will "make" the assumptions
+
+            tmp_defaults.conclude_automation=False
+            
+            if defaults.sideeffect_automation:
+                # Generate assumption side-effects.
+                Assumption.make_assumptions()
+            
+            found_truth = Judgment.find_judgment(
+                self, defaults.assumptions, allow_indirect_proven_assumptions=True)
+            if found_truth is not None:
+                assert found_truth.expr == self
                 return True
             
             if not must_be_direct:
@@ -1096,6 +1104,8 @@ class Expression(metaclass=ExprType):
                     # used in Expression.prove for using a proven
                     # expression with the same canonical form.
                     for proven_expr in cf_to_proven_exprs[cf]:
+                        # should we recurse and use readily proven here?
+                        # that would need to be tested.
                         if proven_expr != self and proven_expr.proven():
                             return True
             
