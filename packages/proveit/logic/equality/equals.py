@@ -518,7 +518,7 @@ class Equals(EquivRelation):
         '''
         from . import equals_reflexivity
         assert self.lhs == self.rhs
-        return equals_reflexivity.instantiate({x: self.lhs})
+        return equals_reflexivity.instantiate({x: self.lhs}, preserve_all=True)
 
     @prover
     def derive_reversed(self, **defaults_config):
