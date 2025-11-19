@@ -262,34 +262,60 @@ class Conditional(Expression):
             return (subbed_val, subbed_condition)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
+    def simplification(self, *, simplify_top_level=True,
+                       simplify_only_where_marked=False,
+                       markers_and_marked_expr=None, **defaults_config):
         from proveit.relation import TransRelUpdater
-        from proveit.logic import And
+        from proveit.logic import And, Equals
+        
+        if defaults.preserve_all or self in defaults.preserved_exprs:
+            return Equals(self, self).conclude_via_reflexivity()
+        if simplify_only_where_marked:
+            from proveit._core_.expression.expr import MarkedExprError
+            markers, marked_expr = markers_and_marked_expr
+            if marked_expr in markers:
+                # Marked here, so all simplification is now fair game.
+                simplify_only_where_marked = False
+            elif not isinstance(marked_expr, Conditional):
+                raise MarkedExprError(marked_expr, self)
         
         expr = self
         eq = TransRelUpdater(expr)
         if True:#not self.value.is_simplified():
             # Simplify the 'value'.
+            if simplify_only_where_marked:
+                sub_markers_and_marked_expr = (markers, marked_expr.value)
+            else:
+                sub_markers_and_marked_expr = None
             expr = eq.update(
                     expr.value_substitution(self.value.simplification(
-                            assumptions=defaults.assumptions+(
+                        simplify_only_where_marked=simplify_only_where_marked,
+                        markers_and_marked_expr=sub_markers_and_marked_expr,
+                        assumptions=defaults.assumptions+(
                                     self.condition,))))
+        if simplify_only_where_marked:
+            markers_and_marked_expr = (markers, marked_expr.condition)
         if isinstance(self.condition, And):
             # Simplify the conditions.
             if True:#any(not condition.is_simplified() for condition 
                #    in self.condition.operands.entries):
                 inner_condition = expr.inner_expr().condition
-                expr = eq.update(inner_condition.simplification_of_operands())
+                expr = eq.update(inner_condition.simplification_of_operands(
+                    simplify_only_where_marked=simplify_only_where_marked,
+                    markers_and_marked_expr=sub_markers_and_marked_expr))
         elif True:#not self.condition.is_simplified():
             # Simplify the condition.
             expr = eq.update(
                     expr.condition_substitution(
-                            self.condition.simplification()))
-        # Perform a shallow simplifation on this Conditional.
-        # If the expression has not been reduced yet, no need for an
-        # "evaluation check" by the @prover decorator.
-        _no_eval_check = (expr == self)
-        eq.update(expr.shallow_simplification(_no_eval_check=_no_eval_check))
+                            self.condition.simplification(
+                                simplify_only_where_marked=simplify_only_where_marked,
+                                markers_and_marked_expr=sub_markers_and_marked_expr)))
+        if simplify_top_level and not simplify_only_where_marked:
+            # Perform a shallow simplifation on this Conditional.
+            # If the expression has not been reduced yet, no need for an
+            # "evaluation check" by the @prover decorator.
+            _no_eval_check = (expr == self)
+            eq.update(expr.shallow_simplification(_no_eval_check=_no_eval_check))
         
         return eq.relation
 

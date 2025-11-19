@@ -674,25 +674,55 @@ class ExprTuple(Composite, Expression):
         return self.simplification(must_evaluate=True)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, must_evaluate=False, **defaults_config):
+    def simplification(self, *, simplify_top_level=True,
+                       simplify_only_where_marked=False,
+                       markers_and_marked_expr=None, must_evaluate=False, 
+                       **defaults_config):
         '''
         Proves that this ExprTuple is equal to an ExprTuple
         with all of its entries simplified (and ExprRanges reduced).
         '''
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange
+        from proveit.logic import Equals
+        if defaults.preserve_all or self in defaults.preserved_exprs:
+            return Equals(self, self).conclude_via_reflexivity()
         expr = self
         eq = TransRelUpdater(expr)
         _k = 0
-        for entry in self.entries:
+        if simplify_only_where_marked:
+            if must_evaluate:
+                raise ValueError("simplify_only_where_marked not implemented "
+                                 "alongside must_evaluat=True")
+            from proveit._core_.expression.expr import MarkedExprError
+            markers, marked_expr = markers_and_marked_expr
+            if marked_expr in markers:
+                # Marked here, so all simplification is now fair game.
+                simplify_only_where_marked = False
+            elif not isinstance(marked_expr, ExprTuple) or (
+                    len(marked_expr) != len(self)):
+                raise MarkedExprError(marked_expr, self)
+                            
+        for _i, entry in enumerate(self.entries):
             if isinstance(entry, ExprRange):
-                entry_simp = entry.reduction(preserve_all=True)
+                if not simplify_only_where_marked or (
+                        marked_expr.entries[_i] in markers):
+                    entry_simp = entry.reduction(preserve_all=True)
+                else:
+                    entry_simp = Equals(entry, entry)
                 num_entries = entry_simp.rhs.num_entries()
             else:
                 if must_evaluate:
                     entry_simp = entry.evaluation()
                 else:
-                    entry_simp = entry.simplification()
+                    if simplify_only_where_marked:
+                        sub_markers_and_marked_expr = (markers, 
+                                                       marked_expr.entries[_i])
+                    else:
+                        sub_markers_and_marked_expr = None
+                    entry_simp = entry.simplification(
+                        simplify_only_where_marked=simplify_only_where_marked,
+                        markers_and_marked_expr=sub_markers_and_marked_expr)
                 num_entries = 1
             if entry_simp.lhs != entry_simp.rhs:
                 expr = eq.update(expr.substitution(entry_simp,

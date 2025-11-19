@@ -41,8 +41,7 @@ class Proof:
         Instantiation.condition_assumptions = None
         _ShowProof.show_proof_by_id.clear()
 
-    def __init__(self, proven_truth, required_truths,
-                 marked_required_truth_indices=None):
+    def __init__(self, proven_truth, required_truths):
         '''
         # Uncomment to print useful debugging information when tracking side-effects.
         if not isinstance(self, Theorem) and not isinstance(self, Axiom):
@@ -55,6 +54,7 @@ class Proof:
         # on a Proof instance basis.
         self.proven_truth = proven_truth
         self.required_truths = tuple(required_truths)
+        '''
         if marked_required_truth_indices is None:
             self.marked_required_truth_indices = set()
         else:
@@ -65,6 +65,7 @@ class Proof:
                     required_truths):
                 raise ValueError("marked_required_truth_indices must be a set "
                                  "of integers indexing required_truths")
+        '''
 
         # The meaning data is shared among Proofs with the same
         # structure disregarding style
@@ -255,6 +256,7 @@ class Proof:
         # Derive obvious consequences from this truth.
         self._derive_side_effects()
 
+    """
     def regenerate_proof_with_replacements(self, simplify_only_where_marked=False,
                                            markers_and_marked_expr=None):
         '''
@@ -289,12 +291,13 @@ class Proof:
         assumptions = list(OrderedDict.fromkeys(assumptions))
         proven_truth = Judgment(eq_replaced_expr, assumptions)
         # Mark the requirements that are "equality replacements".
-        marked_req_indices = set(self.marked_required_truth_indices)
-        for k in range(len(self.required_truths), len(all_requirements)):
-            marked_req_indices.add(k)
+        #marked_req_indices = set(self.marked_required_truth_indices)
+        #for k in range(len(self.required_truths), len(all_requirements)):
+        #    marked_req_indices.add(k)
         return self._regenerate_proof_object(
-            proven_truth, all_requirements, marked_req_indices)
-
+            proven_truth, all_requirements) #, marked_req_indices)
+    """
+    
     def regenerate_proof_under_new_assumptions(self, assumptions, *,
                                                new_style_expr=None):
         '''
@@ -367,8 +370,7 @@ class Proof:
         proven_truth = Judgment(proven_expr, assumptions)
         return self._regenerate_proof_object(proven_truth, all_requirements)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         raise NotImplementedError("Must be implemented for each Proof "
                                   "object")
     
@@ -467,10 +469,11 @@ class Proof:
         required_objs = (self.required_proofs
                          if hasattr(self, 'required_proofs')
                          else self.required_truths)
-        required_obj_marks = [('*' if k in self.marked_required_truth_indices
-                               else '') for k in range(len(required_objs))]
-        required_objs_str = ','.join(object_rep_fn(obj) + mark for obj, mark
-                                     in zip(required_objs, required_obj_marks))
+        #required_obj_marks = [('*' if k in self.marked_required_truth_indices
+        #                       else '') for k in range(len(required_objs))]
+        #required_objs_str = ','.join(object_rep_fn(obj) + mark for obj, mark
+        #                             in zip(required_objs, required_obj_marks))
+        required_objs_str = ','.join(object_rep_fn(obj) for obj in required_objs)
         return (self._generate_step_info(object_rep_fn) +
                 '[%s];[%s]'
                 % (object_rep_fn(self.proven_truth), required_objs_str))
@@ -901,12 +904,14 @@ class Proof:
 
         def req_link(proof, req_idx, n):
             nonlocal any_marked
-            is_marked = (req_idx in proof.marked_required_truth_indices)
-            if is_marked:
-                any_marked = True
-            mark_str = r'<sup>*</sup>' if is_marked else ''
-            return ('<a href="#%s_step%d">%d</a>%s'
-                    % (proof_id, n, n, mark_str))
+            #is_marked = (req_idx in proof.marked_required_truth_indices)
+            #if is_marked:
+            #    any_marked = True
+            #mark_str = r'<sup>*</sup>' if is_marked else ''
+            #return ('<a href="#%s_step%d">%d</a>%s'
+            #        % (proof_id, n, n, mark_str))
+            return ('<a href="#%s_step%d">%d</a>'
+                    % (proof_id, n, n))
         proof_num_map = {proof: k for k, proof in enumerate(proof_steps)}
         for k, proof in enumerate(proof_steps):
             if hasattr(self, '_steps_to_include'):
@@ -954,11 +959,12 @@ class Proof:
         def req_ref(proof, req_idx):
             global any_marked
             req = proof.required_proofs[req_idx]
-            is_marked = (req_idx in proof.marked_required_truth_indices)
-            if is_marked:
-                any_marked = True
-            mark_str = r'*' if is_marked else ''
-            return ('%d%s' % (proof_num_map[req], mark_str))
+            #is_marked = (req_idx in proof.marked_required_truth_indices)
+            #if is_marked:
+            #    any_marked = True
+            #mark_str = r'*' if is_marked else ''
+            #return ('%d%s' % (proof_num_map[req], mark_str))
+            return ('%d' % proof_num_map[req])
         out_str = '\tstep type\trequirements\tstatement\n'
         for k, proof in enumerate(proof_steps):
             out_str += str(k) + '\t'
@@ -988,7 +994,7 @@ class _ProofReference:
     def __init__(self, ref):
         self.required_proofs = [ref]
         self.proven_truth = ref.proven_truth
-        self.marked_required_truth_indices = set()  # nothing marked
+        #self.marked_required_truth_indices = set()  # nothing marked
 
     def step_type(self):
         # only used in the HTML version
@@ -1001,13 +1007,11 @@ class Assumption(Proof):
     considered_assumption_sets = set()    
 
     def __init__(self, expr, assumptions=None, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         from proveit import ExprRange
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         assert expr._style_id not in Assumption.all_assumptions_by_style, \
             ("Do not create an Assumption object directly; "
@@ -1034,11 +1038,9 @@ class Assumption(Proof):
             defaults.assumptions = prev_default_assumptions
         Assumption.all_assumptions_by_style[expr._style_id] = self
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return Assumption(
-            None, _proven_truth=proven_truth, _requirements=requirements,
-            _marked_req_indices=marked_req_indices)
+            None, _proven_truth=proven_truth, _requirements=requirements)
 
     @staticmethod
     def make_assumption(expr):
@@ -1092,8 +1094,7 @@ class Assumption(Proof):
 
 class Axiom(Proof):
     def __init__(self, expr, theory, name, *, 
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         if not isinstance(theory, Theory):
             raise TypeError("An axiom 'theory' must be a Theory object")
         if not isinstance(name, str):
@@ -1102,17 +1103,14 @@ class Axiom(Proof):
         self.name = name
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         else:
             Proof.__init__(self, Judgment(expr, frozenset()), [])
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return Axiom(None, self.theory, self.name,
-                     _proven_truth=proven_truth, _requirements=requirements,
-                     _marked_req_indices=marked_req_indices)
+                     _proven_truth=proven_truth, _requirements=requirements)
 
     def _generate_step_info(self, object_rep_fn):
         return self.step_type() + '-' + str(self) + ':'
@@ -1149,8 +1147,7 @@ class Theorem(Proof):
     all_theorems = []
 
     def __init__(self, expr, theory, name, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         if not isinstance(theory, Theory):
             raise TypeError("A theorem 'package' must be a Theory object")
         if not isinstance(name, str):
@@ -1162,19 +1159,16 @@ class Theorem(Proof):
         self._possibleProofs = []
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         else:
             # Note that _mark_usability will be called within Proof.__init__
             Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.all_theorems.append(self)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return Theorem(None, self.theory, self.name,
-                       _proven_truth=proven_truth, _requirements=requirements,
-                       _marked_req_indices=marked_req_indices)
+                       _proven_truth=proven_truth, _requirements=requirements)
 
     def _generate_step_info(self, object_rep_fn):
         # For these purposes, we should use 'theorem' even if the
@@ -1530,8 +1524,7 @@ class BasicDefinition(Proof):
     the Literal being defined on the left side without appearing on the right.
     '''
     def __init__(self, expr, theory, name, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         if not isinstance(theory, Theory):
             raise TypeError("A BasicDefinition 'theory' must be a "
                              "Theory object")
@@ -1542,18 +1535,15 @@ class BasicDefinition(Proof):
         self.name = name
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         else:
             Proof.__init__(self, Judgment(expr, frozenset()), [])
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return BasicDefinition(
                 None, self.theory, self.name,
-                _proven_truth=proven_truth, _requirements=requirements,
-                _marked_req_indices=marked_req_indices)
+                _proven_truth=proven_truth, _requirements=requirements)
 
     def step_type(self):
         return 'basic_definition'
@@ -1595,19 +1585,15 @@ class DefinitionExistence(Theorem):
     '''
 
     def __init__(self, expr, theory, name, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         Theorem.__init__(self, expr, theory, name, 
                          _proven_truth=_proven_truth,
-                         _requirements=_requirements, 
-                         _marked_req_indices=_marked_req_indices)
+                         _requirements=_requirements)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return DefinitionExistence(
                 None, self.theory, self.name,
-                _proven_truth=proven_truth, _requirements=requirements,
-                _marked_req_indices=marked_req_indices)
+                _proven_truth=proven_truth, _requirements=requirements)
 
     def step_type(self):
         if self.is_conjecture():
@@ -1642,19 +1628,15 @@ class DefinitionExtension(Theorem):
     '''
 
     def __init__(self, expr, theory, name, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         Theorem.__init__(self, expr, theory, name, 
                          _proven_truth=_proven_truth,
-                         _requirements=_requirements, 
-                         _marked_req_indices=_marked_req_indices)
+                         _requirements=_requirements)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return DefinitionExtension(
                 None, self.theory, self.name,
-                _proven_truth=proven_truth, _requirements=requirements,
-                _marked_req_indices=marked_req_indices)
+                _proven_truth=proven_truth, _requirements=requirements)
 
     def step_type(self):
         if self.is_conjecture():
@@ -1689,8 +1671,7 @@ class DefiningProperty(Proof):
     '''
     def __init__(self, expr, theory, name, *, 
                  def_existence=None, def_extension=None,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         if not isinstance(theory, Theory):
             raise TypeError("A DefiningProperty 'theory' must be a "
                              "Theory object")
@@ -1701,8 +1682,7 @@ class DefiningProperty(Proof):
         self.name = name
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         else:
             if not isinstance(def_existence, DefinitionExistence):
@@ -1715,12 +1695,10 @@ class DefiningProperty(Proof):
                 required_truths = [def_existence.proven_truth]
             Proof.__init__(self, Judgment(expr, frozenset()), required_truths)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return DefiningProperty(
                 None, self.theory, self.name,
-                _proven_truth=proven_truth, _requirements=requirements,
-                _marked_req_indices=marked_req_indices)
+                _proven_truth=proven_truth, _requirements=requirements)
 
     def step_type(self):
         return 'defining_property'
@@ -1772,16 +1750,14 @@ def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
 
 class ModusPonens(Proof):
     def __init__(self, implication_expr, assumptions=None, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         from proveit.logic import Implies
         from proveit._core_.expression.composite import is_double
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
             self.implication_truth = _requirements[0]
             self.antecedent_truth = _requirements[1]
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         assumptions = defaults.checked_assumptions(assumptions)
         prev_default_assumptions = defaults.assumptions
@@ -1838,11 +1814,9 @@ class ModusPonens(Proof):
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return ModusPonens(
-            None, _proven_truth=proven_truth, _requirements=requirements,
-            _marked_req_indices=marked_req_indices)
+            None, _proven_truth=proven_truth, _requirements=requirements)
 
     def step_type(self):
         return 'modus_ponens'
@@ -1850,15 +1824,13 @@ class ModusPonens(Proof):
 
 class Deduction(Proof):
     def __init__(self, consequent_truth, antecedent_expr, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 _proven_truth=None, _requirements=None):
         from proveit import ExprRange
         from proveit.logic import Implies, And
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
             self.consequent_truth = _requirements[0]
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         if isinstance(antecedent_expr, ExprRange):
             # Assumption ranges must be transformed to a
@@ -1885,11 +1857,10 @@ class Deduction(Proof):
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         return Deduction(
             None, None, _proven_truth=proven_truth,
-            _requirements=requirements, _marked_req_indices=marked_req_indices)
+            _requirements=requirements)
 
     def step_type(self):
         return 'deduction'
@@ -1919,9 +1890,7 @@ class Instantiation(Proof):
     condition_assumptions = None
     
     @staticmethod
-    def get_instantiation(orig_judgment, repl_map, equiv_alt_expansions,
-                          simplify_only_where_marked,
-                          markers_and_marked_expr):
+    def get_instantiation(orig_judgment, repl_map, equiv_alt_expansions):
         '''
         Create or retrieve an Instantiation.  If we have performed
         the Instantiation previously, return it; otherwise, create
@@ -1940,8 +1909,6 @@ class Instantiation(Proof):
                                    'replacements', 'preserved_exprs')
         important_configs = [getattr(defaults, attr) for attr
                              in important_default_attrs]
-        if simplify_only_where_marked:
-            important_configs.append(markers_and_marked_expr)
         # Make the replacements and preserved_exprs sets hashable.
         for _k in (2, 3):
             important_configs[_k] = tuple(
@@ -1961,9 +1928,7 @@ class Instantiation(Proof):
                     return inst.with_matching_styles(
                         inst.expr, defaults.assumptions)
         inst = Instantiation(orig_judgment, repl_map, equiv_alt_expansions,
-                             mapping, mapping_key_order,
-                             simplify_only_where_marked,
-                             markers_and_marked_expr)
+                             mapping, mapping_key_order)
         assert inst.mapping == mapping
         #if not defaults.simplify_with_known_evaluations:
         #    Instantiation.instantiations.setdefault(key, set()).add(inst)
@@ -2071,10 +2036,8 @@ class Instantiation(Proof):
 
     
     def __init__(self, orig_judgment, repl_map, equiv_alt_expansions,
-                 mapping, mapping_key_order,
-                 simplify_only_where_marked, markers_and_marked_expr, *,
-                 _proven_truth=None, _requirements=None,
-                 _marked_req_indices=None):
+                 mapping, mapping_key_order, *,
+                 _proven_truth=None, _requirements=None):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -2098,8 +2061,7 @@ class Instantiation(Proof):
             self.general_truth = _requirements[0]
             self.mapping = mapping
             self.mapping_key_order = mapping_key_order
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
         
         # Determine the set of variables that will be instantiated
@@ -2165,14 +2127,13 @@ class Instantiation(Proof):
 
         # Perform the instantiations, recording requirements.
         requirements = []
-        equality_repl_requirements = set()
+        #equality_repl_requirements = set()
         try:
             instantiated_expr = Instantiation._instantiated_expr(
                 orig_judgment, relabel_params, relabel_param_replacements,
                 param_to_num_operand_entries, repl_map,
                 equiv_alt_expansions, 
-                simplify_only_where_marked, markers_and_marked_expr,
-                requirements, equality_repl_requirements)
+                requirements) #, equality_repl_requirements)
         except LambdaApplicationError as e:
             raise InstantiationFailure(orig_judgment, repl_map,
                                        defaults.assumptions, str(e))
@@ -2203,21 +2164,20 @@ class Instantiation(Proof):
                           in requirements)
         instantiated_truth = Judgment(instantiated_expr, assumptions,
                                       num_lit_gen=num_lit_gen)
+        '''
         # Mark the requirements that are "equality replacements".
         marked_req_indices = set()
         for k, req in enumerate(requirements):
             if req in equality_repl_requirements:
                 marked_req_indices.add(k)
+        '''
         self.general_truth = orig_judgment
-        Proof.__init__(self, instantiated_truth, requirements,
-                       marked_req_indices)
+        Proof.__init__(self, instantiated_truth, requirements)
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         inst = Instantiation(
             None, None, None, self.mapping, self.mapping_key_order, 
-            None, None, _proven_truth=proven_truth, _requirements=requirements,
-            _marked_req_indices=marked_req_indices)
+            _proven_truth=proven_truth, _requirements=requirements)
         return inst
 
     def _generate_step_info(self, object_rep_fn):
@@ -2273,9 +2233,7 @@ class Instantiation(Proof):
                            relabel_params, relabel_param_replacements,
                            param_to_num_operand_entries,
                            repl_map, equiv_alt_expansions,
-                           simplify_only_where_marked, 
-                           markers_and_marked_expr,
-                           requirements, equality_repl_requirements):
+                           requirements): #, equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
         original_judgment.
@@ -2309,8 +2267,7 @@ class Instantiation(Proof):
             raise InstantiationFailure(original_judgment, repl_map,
                                        defaults.assumptions, msg)
         
-        def instantiate(expr, _simplify_only_where_marked=False,
-                        _markers_and_marked_expr=None):
+        def instantiate(expr):
             '''
             Instantiate the given expression by applying an
             ad-hoc Lambda mapping of the active params
@@ -2324,17 +2281,19 @@ class Instantiation(Proof):
                 allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions,
                 requirements=requirements)
-            new_equality_repl_requirements = []
+            #new_equality_repl_requirements = []
             
+            '''
             eq_replaced = instantiated.equality_replaced(
                     requirements=new_equality_repl_requirements,
                     auto_simplify_top_level=False,
                     simplify_only_where_marked=_simplify_only_where_marked,
                     markers_and_marked_expr=_markers_and_marked_expr)
+            '''
 
-            requirements.extend(new_equality_repl_requirements)
-            equality_repl_requirements.update(new_equality_repl_requirements)
-            return eq_replaced
+            #requirements.extend(new_equality_repl_requirements)
+            #equality_repl_requirements.update(new_equality_repl_requirements)
+            return instantiated
 
         with defaults.temporary() as temp_defaults:
             # We don't want to simplify or make replacements when
@@ -2457,9 +2416,7 @@ class Instantiation(Proof):
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
         # not yet been used
-        # simplify_only_where_marked = False # TEMPORARILY DISABLING THIS FEATURE
-        return instantiate(expr, simplify_only_where_marked,
-                           markers_and_marked_expr)
+        return instantiate(expr)
 
 
 class Generalization(Proof):
@@ -2467,7 +2424,7 @@ class Generalization(Proof):
             self, instance_truth, new_forall_param_lists,
             new_conditions=tuple(), *, 
             _proven_truth=None, _orig_generalization=None,
-            _requirements=None, _marked_req_indices=None):
+            _requirements=None):
         '''
         A Generalization step wraps a Judgment (instance_truth) in one 
         or more Forall operations.  The number of Forall operations
@@ -2513,8 +2470,7 @@ class Generalization(Proof):
                 _orig_generalization.generalized_literals)
             self.new_forall_vars = _orig_generalization.new_forall_vars
             self.new_conditions = _orig_generalization.new_conditions
-            Proof.__init__(self, _proven_truth, _requirements,
-                           _marked_req_indices)
+            Proof.__init__(self, _proven_truth, _requirements)
             return
 
         if not isinstance(instance_truth, Judgment):
@@ -2671,13 +2627,11 @@ class Generalization(Proof):
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
-    def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices=None):
+    def _regenerate_proof_object(self, proven_truth, requirements):
         gen = Generalization(
             None, None, _proven_truth=proven_truth, 
             _orig_generalization=self,
-            _requirements=requirements,
-            _marked_req_indices=marked_req_indices)
+            _requirements=requirements)
         if len(self.generalized_literals) > 0:
             gen._eliminated_proof_steps = self._eliminated_proof_steps
             gen._eliminated_axioms = self._eliminated_axioms
@@ -2903,9 +2857,9 @@ class _ShowProof:
         self.required_proofs = \
             [theory.get_show_proof(obj_id.rstrip('*'), folder) for obj_id
              in ref_obj_id_groups[-1]]
-        self.marked_required_truth_indices = \
-            {k for k, obj_id in enumerate(ref_obj_id_groups[-1])
-             if obj_id[-1] == '*'}
+        #self.marked_required_truth_indices = \
+        #    {k for k, obj_id in enumerate(ref_obj_id_groups[-1])
+        #     if obj_id[-1] == '*'}
         _ShowProof.show_proof_by_id[proof_id] = self
         if self.proven_truth.num_lit_gen > 0:
             # A literal generalization step.

@@ -854,7 +854,7 @@ class Judgment:
         is the expression being replaced and the right-hand-side is the
         replacement.
 
-        If simplify_only_where_marked= is True, Prove-It will only 
+        If simplify_only_where_marked is True, Prove-It will only 
         simplify "marked" parts of an expression.  
         'markers_and_marked_expr' must then be a tuple: Variable 
         markers, and an expression that matches pre-simplified 
@@ -875,7 +875,7 @@ class Judgment:
                              ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall, Implies
+        from proveit.logic import Forall, Implies, Equals
         from .proof import Theorem, Instantiation, ProofFailure
         
         if not self.is_usable():
@@ -1008,6 +1008,25 @@ class Judgment:
                         # default is to map instance variables to
                         # themselves
                         processed_repl_map[iparam_var] = iparam_var
+        
+        # Get parameter variables in order of appearance so
+        # we will know how to instantiate nested universal quantifiers
+        # even if variables are relabeled.
+        all_iparam_vars = []
+        expr = self.expr
+        _num_forall_eliminations = num_forall_eliminations
+        while _num_forall_eliminations > 0:
+            _num_forall_eliminations -= 1
+            lambda_expr = expr.operand
+            assert isinstance(lambda_expr, Lambda)
+            instance_param_vars = lambda_expr.parameter_vars
+            expr = lambda_expr.body
+            if isinstance(expr, Implies):
+                # Skip over the "conditions" of the Forall expression.
+                expr = expr.consequent
+            for iparam_var in instance_param_vars:
+                all_iparam_vars.append(iparam_var)
+        
         temporarily_preserved_exprs = set()
         try:
             # Do not simplify any of the instantiation expressions since
@@ -1031,24 +1050,35 @@ class Judgment:
             defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
             judgment = self
+            iparam_index = 0
             while num_forall_eliminations > 0:                
                 has_stylized_condition = judgment.has_stylized_condition()
-                if num_forall_eliminations > 1:
-                    _repl_map = dict()
-                    for _var in tuple(processed_repl_map.keys()):
-                        if _var in judgment.expr.operand.parameter_vars:
-                            _repl_map[_var] = processed_repl_map.pop(_var)
-                else:
-                    _repl_map = processed_repl_map
+                _repl_map = dict()
+                for _var in judgment.expr.operand.parameter_vars:
+                    _orig_var = all_iparam_vars[iparam_index]
+                    iparam_index += 1
+                    if _orig_var in processed_repl_map:
+                        _repl_map[_var] = processed_repl_map.pop(_orig_var)
                 judgment = judgment._checkedTruth(
                     Instantiation.get_instantiation(
                             judgment, repl_map=_repl_map,
-                            equiv_alt_expansions=equiv_alt_expansions,
-                            simplify_only_where_marked=simplify_only_where_marked,
-                            markers_and_marked_expr=markers_and_marked_expr))
+                            equiv_alt_expansions=equiv_alt_expansions))
                 if has_stylized_condition:
                     judgment = judgment.derive_consequent()
                 num_forall_eliminations -= 1
+            
+            # Now perform default replacements and auto-simplification
+            for replacement in defaults.replacements:
+                assert isinstance(replacement, Judgment)
+                assert isinstance(replacement.expr, Equals)
+                if replacement.expr.lhs == replacement.expr.rhs:
+                    # Don't bother with reflexive (x=x) reductions.
+                    continue
+                judgment = replacement.sub_right_side_into(judgment)
+            if defaults.auto_simplify:
+                return judgment.simplify(
+                    simplify_only_where_marked=simplify_only_where_marked,
+                    markers_and_marked_expr=markers_and_marked_expr)
             return judgment
         finally:
             # Revert the preserved_exprs set back to what it was.
@@ -1308,9 +1338,12 @@ class Judgment:
         return Exists.eliminate(skolem_constants, self)
 
     # Not a @prover since it just uses the assumptions of the Judgment. 
-    def simplify(self):
+    def simplify(self, *, simplify_only_where_marked=False,
+                 markers_and_marked_expr=None,):
         '''
-        Prove a simplified form of this Judgment.
+        Prove a simplified form of this Judgment, but don't simplify
+        at the top level which would trivially simplify to True given
+        a proven Judgment.
         '''
         with defaults.temporary() as temp_defaults:
             # Use the assumptions of the Judgment
@@ -1318,7 +1351,13 @@ class Judgment:
             # Don't exploit the evaluation of the Judgment; it
             # must be TRUE (under its assumptions), but that's
             # trivial and useless.
-            simplification = self.simplification(_no_eval_check=True)
+            simplification = self.simplification(
+                simplify_top_level=False,
+                simplify_only_where_marked=simplify_only_where_marked,
+                markers_and_marked_expr=markers_and_marked_expr,
+                _no_eval_check=True)
+            if simplification.lhs == simplification.rhs:
+                return self # no change
             return simplification.derive_right_via_equality()
         
     # Not a @prover since it just uses the assumptions of the Judgment. 

@@ -1039,18 +1039,34 @@ class Lambda(Expression):
         return relabeled
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
+    def simplification(self, *, simplify_top_level=True,
+                       simplify_only_where_marked=False,
+                       markers_and_marked_expr=None, **defaults_config):
         '''
         Equat this Lambda with a form in which the body has been
         simplified.
         '''
         from proveit.logic import Equals
+        if defaults.preserve_all or self in defaults.preserved_exprs:
+            return Equals(self, self).conclude_via_reflexivity()
+        if simplify_only_where_marked:
+            from proveit._core_.expression.expr import MarkedExprError
+            markers, marked_expr = markers_and_marked_expr
+            if marked_expr in markers:
+                # Marked here, so all simplification is now fair game.
+                simplify_only_where_marked = False
+            elif not isinstance(marked_expr, Lambda) or (
+                    marked_expr.parameters != self.parameters):
+                raise MarkedExprError(marked_expr, self)
+            markers_and_marked_expr = (markers, marked_expr.body)
         inner_assumptions = \
             [assumption for assumption in defaults.assumptions if
              free_vars(assumption).isdisjoint(self.parameter_vars)]
         body_simplification = self.body.simplification(
-                assumptions=inner_assumptions)
-        if body_simplification == self.body:
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr,
+            assumptions=inner_assumptions)
+        if body_simplification.rhs == self.body:
             # No simplification.
             return Equals(self, self).conclude_via_reflexivity()
         return self.substitution(body_simplification.generalize(

@@ -1343,6 +1343,7 @@ class Expression(metaclass=ExprType):
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
 
+    """
     def equality_replaced(self, requirements,
                           auto_simplify_top_level=USE_DEFAULTS,
                           simplify_only_where_marked=False,
@@ -1693,6 +1694,7 @@ class Expression(metaclass=ExprType):
             return (markers, marked_expr)
         except:
             raise MarkedExprError(marked_expr, self)
+    """
     
     def copy(self):
         '''
@@ -1809,7 +1811,9 @@ class Expression(metaclass=ExprType):
         raise EvaluationError(self)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
+    def simplification(self, *, simplify_top_level=True,
+                       simplify_only_where_marked=False,
+                        markers_and_marked_expr=None, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -1818,6 +1822,13 @@ class Expression(metaclass=ExprType):
         simplification, a check that the resulting proven statement is 
         an equality with self on the lhs, and it remembers the 
         simplification for next time.
+
+        If simplify_only_where_marked is True, only simplify "marked"
+        parts of an expression.  'markers_and_marked_expr' must then be
+        a tuple: Variable markers, and an expression that matches 
+        pre-simplified instantiated expression except where marked with
+        the markers.  Only sub-expressions containing a marker may be
+        simplified.
         
         The default Expression.simplification only checks to see
         if there is an evaluation to be used as the simplification, but
@@ -1825,10 +1836,25 @@ class Expression(metaclass=ExprType):
         
         See also Operation.simplification and 
         Expression.shallow_simplification.
-
         '''
-        # Resort to a shallow_simplification as the default.
-        return self.shallow_simplification(must_evaluate=False)
+        if defaults.preserve_all or self in defaults.preserved_exprs:
+            from proveit.logic import Equals
+            return Equals(self, self).conclude_via_reflexivity()
+        if simplify_only_where_marked:
+            from proveit._core_.expression.expr import MarkedExprError
+            markers, marked_expr = markers_and_marked_expr
+            if marked_expr != self and marked_expr not in markers:
+                # This is not an operation, so for marked_expr to be
+                # valid it must either match self or match a marker.
+                from proveit._core_.operation import Operation
+                assert not isinstance(self, Operation)
+                raise MarkedExprError(marked_expr, self)
+        if simplify_top_level:
+            # Resort to a shallow_simplification as the default.
+            return self.shallow_simplification(must_evaluate=False)
+        else:
+            from proveit.logic import Equals
+            return Equals(self, self).conclude_via_reflexivity()
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False, 

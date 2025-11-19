@@ -602,6 +602,9 @@ class InnerExpr:
         assumptions = defaults.assumptions
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
+        if return_proven_rhs and equality.lhs==equality.rhs:
+            # no change
+            return self.expr.prove()            
         
         # Make sure to preserve the left and right sides of the
         # original expression.
