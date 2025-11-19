@@ -111,6 +111,10 @@ class Forall(OperationOverInstances):
              free_vars(assumption).isdisjoint(instance_vars)]
         # Add the conditions as assumptions.
         inner_assumptions += list(conditions.entries)
+        if hasattr(self, 'condition') and len(conditions) != 1:
+            # Also add the 'condition' as a conjunction of multiple
+            # conditions for good measure.
+            inner_assumptions += [self.condition]
         return expr.readily_provable(assumptions=inner_assumptions)
 
     @prover
