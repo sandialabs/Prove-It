@@ -38,6 +38,7 @@ from .decorators import (prover, relation_prover, equality_prover,
                          auto_equality_prover, display_provers)
 
 from .relation import (
+    Relation,
     TransitiveRelation,
     TransitivityException,
     TransRelUpdater,
