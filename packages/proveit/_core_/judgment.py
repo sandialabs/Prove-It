@@ -821,8 +821,6 @@ class Judgment:
 
     @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    simplify_only_where_marked=False,
-                    markers_and_marked_expr=None,
                     **defaults_config):
         '''
         Performs an instantiation derivation step to be proven under the 
@@ -853,14 +851,6 @@ class Judgment:
         in the process via equality judgements where the left-hand-side
         is the expression being replaced and the right-hand-side is the
         replacement.
-
-        If simplify_only_where_marked is True, Prove-It will only 
-        simplify "marked" parts of an expression.  
-        'markers_and_marked_expr' must then be a tuple: Variable 
-        markers, and an expression that matches pre-simplified 
-        instantiated expression except where marked with the markers.
-        Only sub-expressions containing a marker may be simplified
-        (if auto_simplify=True).
         
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
@@ -1026,64 +1016,26 @@ class Judgment:
                 expr = expr.consequent
             for iparam_var in instance_param_vars:
                 all_iparam_vars.append(iparam_var)
-        
-        temporarily_preserved_exprs = set()
-        try:
-            # Do not simplify any of the instantiation expressions since
-            # there is a directive to specifically use them.  For
-            # ExprTuple instantiations, do not simplify any of the
-            # individual entries (this is important, for example, if
-            # this is replacing just a portion of an ExprTuple).
-            def gen_repl_vals_and_entries():
-                for _repl_val in processed_repl_map.values():
-                    yield _repl_val
-                    if isinstance(_repl_val, ExprTuple):
-                        for _entry in _repl_val:
-                            yield _entry
-            temporarily_preserved_exprs = (
-                    set(gen_repl_vals_and_entries()) - 
-                    defaults.preserved_exprs)
-            # Explicit replacements, however, are allowed, unless there
-            # is an explicit expression preservation to override it.
-            for replacement in defaults.replacements:
-                temporarily_preserved_exprs.discard(replacement.lhs)
-            defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
-            judgment = self
-            iparam_index = 0
-            while num_forall_eliminations > 0:                
-                has_stylized_condition = judgment.has_stylized_condition()
-                _repl_map = dict()
-                for _var in judgment.expr.operand.parameter_vars:
-                    _orig_var = all_iparam_vars[iparam_index]
-                    iparam_index += 1
-                    if _orig_var in processed_repl_map:
-                        _repl_map[_var] = processed_repl_map.pop(_orig_var)
-                judgment = judgment._checkedTruth(
-                    Instantiation.get_instantiation(
-                            judgment, repl_map=_repl_map,
-                            equiv_alt_expansions=equiv_alt_expansions))
-                if has_stylized_condition:
-                    judgment = judgment.derive_consequent()
-                num_forall_eliminations -= 1
-            
-            # Now perform default replacements and auto-simplification
-            for replacement in defaults.replacements:
-                assert isinstance(replacement, Judgment)
-                assert isinstance(replacement.expr, Equals)
-                if replacement.expr.lhs == replacement.expr.rhs:
-                    # Don't bother with reflexive (x=x) reductions.
-                    continue
-                judgment = replacement.sub_right_side_into(judgment)
-            if defaults.auto_simplify:
-                return judgment.simplify(
-                    simplify_only_where_marked=simplify_only_where_marked,
-                    markers_and_marked_expr=markers_and_marked_expr)
-            return judgment
-        finally:
-            # Revert the preserved_exprs set back to what it was.
-            defaults.preserved_exprs.difference_update(
-                    temporarily_preserved_exprs)
+        judgment = self
+        iparam_index = 0
+        while num_forall_eliminations > 0:                
+            has_stylized_condition = judgment.has_stylized_condition()
+            _repl_map = dict()
+            for _var in judgment.expr.operand.parameter_vars:
+                _orig_var = all_iparam_vars[iparam_index]
+                iparam_index += 1
+                if _orig_var in processed_repl_map:
+                    _repl_map[_var] = processed_repl_map.pop(_orig_var)
+            judgment = judgment._checkedTruth(
+                Instantiation.get_instantiation(
+                        judgment, repl_map=_repl_map,
+                        equiv_alt_expansions=equiv_alt_expansions))
+            if has_stylized_condition:
+                judgment = judgment.derive_consequent()
+            num_forall_eliminations -= 1
+        
+        return judgment
 
     @prover
     def generalize(self, forall_var_or_vars_or_var_lists, *,
@@ -1348,9 +1300,9 @@ class Judgment:
         with defaults.temporary() as temp_defaults:
             # Use the assumptions of the Judgment
             temp_defaults.assumptions = self.assumptions
-            # Don't exploit the evaluation of the Judgment; it
-            # must be TRUE (under its assumptions), but that's
-            # trivial and useless.
+            # Don't exploit the evaluation of the Judgment at the top-level;
+            # it must be TRUE (under its assumptions), but that's trivial
+            # and useless.
             simplification = self.simplification(
                 simplify_top_level=False,
                 simplify_only_where_marked=simplify_only_where_marked,
@@ -1358,7 +1310,7 @@ class Judgment:
                 _no_eval_check=True)
             if simplification.lhs == simplification.rhs:
                 return self # no change
-            return simplification.derive_right_via_equality()
+            return simplification.derive_right_via_equality(preserve_all=True)
         
     # Not a @prover since it just uses the assumptions of the Judgment. 
     def evaluation(self):

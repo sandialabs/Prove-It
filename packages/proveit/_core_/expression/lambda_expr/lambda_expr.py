@@ -1047,8 +1047,9 @@ class Lambda(Expression):
         simplified.
         '''
         from proveit.logic import Equals
-        if defaults.preserve_all or self in defaults.preserved_exprs:
-            return Equals(self, self).conclude_via_reflexivity()
+        if defaults.preserve_all or self in defaults.preserved_exprs or (
+                simplify_only_where_marked and markers_and_marked_expr[1]==self):
+            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr

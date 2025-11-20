@@ -25,7 +25,7 @@ def get_direct_prover_call_count():
     # Returns the number of times a @prover method was called directly
     return _direct_prover_calls_counter.counter
 
-def _make_decorated_prover(func, automatic=False):
+def _make_decorated_prover(func):
     '''
     Use for decorating 'prover' methods 
     (@prover, @relation_prover, or @equality_prover).
@@ -45,7 +45,15 @@ def _make_decorated_prover(func, automatic=False):
                         "attributes of proveit.defaults "
                         "('assumptions', 'styles', etc.)"%func)
     
-    is_conclude_method = func.__name__.startswith('conclude')
+    is_conclude_method = (func.__name__.startswith('conclude') or
+                          func.__name__ == 'prove')
+    is_instantate_method = func.__name__ == 'instantiate'
+    is_simplification_method = func.__name__ == 'simplification'
+    is_shallow_simplification_method = func.__name__ == 'shallow_simplification' 
+    
+    # disable auto-simplification and replacements for these:
+    no_simplify_method = (func.__name__ in ('as_implication', 'derive_consequent',
+                                            'evaluation', 'conclude'))
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment, InnerExpr
@@ -56,8 +64,15 @@ def _make_decorated_prover(func, automatic=False):
             raise ValueError(
                     "Adding 'replacements' and setting 'preserve_all' "
                     "to True are incompatible settings.")
-        preserve_lhs = kwargs.pop('preserve_lhs', False)
+        preserve_all =  kwargs.get('preserve_all', defaults.preserve_all)
+        auto_simplify =  kwargs.get('auto_simplify', defaults.auto_simplify)
+        if no_simplify_method: auto_simplify=False
         preserve_expr = kwargs.pop('preserve_expr', None)
+        preserve_lhs_on_auto_simplify = kwargs.pop('preserve_lhs_on_auto_simplify',
+                                                   None)
+        simplify_only_where_marked = kwargs.pop('simplify_only_where_marked',
+                                                False)
+        markers_and_marked_expr = kwargs.pop('markers_and_marked_expr', None)
         append_assumptions = kwargs.pop('append_assumptions', None)
         prepend_assumptions = kwargs.pop('prepend_assumptions', None)
         assumptions = kwargs.get('assumptions', None)
@@ -141,6 +156,18 @@ def _make_decorated_prover(func, automatic=False):
                     kwargs['preserved_exprs'] = (
                             defaults.preserved_exprs.union({preserve_expr}))
 
+        if is_conclude_method:
+            self = args[0]
+            if isinstance(self, Expression):
+                self_expr = self
+            elif hasattr(self, 'expr'):
+                self_expr = self.expr
+            else:
+                raise TypeError(
+                        "The @prover method %s beginning with 'conclude' "
+                        "expected to be a method for an Expression type "
+                        "or the object must have an 'expr' attribute."%func)
+        
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.
@@ -157,9 +184,8 @@ def _make_decorated_prover(func, automatic=False):
                                    "%s, that is not applicable under given "
                                    "assumptions"%(func, proven_truth))
             return proven_truth
-
-        if (automatic and not defaults.preserve_all) or (
-                len(defaults_to_change) > 0):
+        
+        if not preserve_all or len(defaults_to_change) > 0:
             # Temporarily reconfigure defaults
             with defaults.temporary() as temp_defaults:
                 if 'assumptions' in defaults_to_change:
@@ -172,16 +198,22 @@ def _make_decorated_prover(func, automatic=False):
                     if key != 'assumptions':
                         # Temporarily alter a default:
                         setattr(temp_defaults, key, kwargs[key])
-                if automatic:
-                    temp_defaults.preserve_all=True
-                    temp_defaults.preserved_exprs = set()
-                internal_kwargs = dict(kwargs)
-                internal_kwargs.update(public_attributes_dict(defaults))
                 # Make sure we derive assumption side-effects first.
                 Assumption.make_assumptions()
                 # Now call the prover function.
+                internal_kwargs = dict(kwargs)
                 with _direct_prover_calls_counter:
+                    # Postpone any applicable simplification until later
+                    # (below).
+                    temp_defaults.preserve_all=True
+                    temp_defaults.preserved_exprs = set()
+                    if is_simplification_method:
+                        internal_kwargs['simplify_only_where_marked'] = (
+                            simplify_only_where_marked)
+                        internal_kwargs['markers_and_marked_expr'] = (
+                            markers_and_marked_expr)
                     proven_truth = checked_truth(func(*args, **internal_kwargs))
+
         else:
             # No defaults reconfiguration.
             internal_kwargs = dict(kwargs)
@@ -192,7 +224,93 @@ def _make_decorated_prover(func, automatic=False):
             with _direct_prover_calls_counter:
                 proven_truth = checked_truth(func(*args, **internal_kwargs))
 
-        if automatic and not defaults.preserve_all:
+        if not preserve_all:
+            # Perform default replacements and auto-simplification
+            temporarily_preserved_exprs = set()
+            try:
+                if is_instantate_method and len(args) > 1:
+                    from proveit._core_.expression.composite import ExprTuple
+                    # Do not simplify any of the instantiation expressions since
+                    # there is a directive to specifically use them.  For
+                    # ExprTuple instantiations, do not simplify any of the
+                    # individual entries (this is important, for example, if
+                    # this is replacing just a portion of an ExprTuple).
+                    repl_map = args[1]
+                    assert isinstance(repl_map, dict)
+                    def gen_repl_vals_and_entries():
+                        for _repl_val in repl_map.values():
+                            yield _repl_val
+                            if isinstance(_repl_val, ExprTuple):
+                                for _entry in _repl_val:
+                                    yield _entry
+                    temporarily_preserved_exprs = (
+                            set(gen_repl_vals_and_entries()) - 
+                            defaults.preserved_exprs)
+                    # Explicit replacements, however, are allowed, unless there
+                    # is an explicit expression preservation to override it.
+                    for replacement in defaults.replacements:
+                        temporarily_preserved_exprs.discard(replacement.lhs)
+                    defaults.preserved_exprs.update(temporarily_preserved_exprs)
+                
+                
+            finally:
+                # Revert the preserved_exprs set back to what it was.
+                defaults.preserved_exprs.difference_update(
+                        temporarily_preserved_exprs)
+
+                # Perform default replacements
+                orig_proven_truth = proven_truth
+                for replacement in defaults.replacements:
+                    assert isinstance(replacement, Judgment)
+                    replacement_expr = replacement.expr
+                    assert isinstance(replacement_expr, Equals)
+                    if replacement_expr.lhs == replacement_expr.rhs:
+                        # Don't bother with reflexive (x=x) reductions.
+                        continue
+                    if replacement_expr.lhs in defaults.preserved_exprs:
+                        # Skip the replacement of this preserved expression.
+                        continue
+                    if preserve_lhs_on_auto_simplify:
+                        proven_truth = (
+                            replacement.inner_expr().rhs.sub_right_side_into(
+                                proven_truth))
+                    else:
+                        proven_truth = replacement.sub_right_side_into(proven_truth)
+                
+                # Do auto-simplification
+                # is_simplification_method check avoids infinite recursion.
+                # And don't simplify a conclude method call.
+                proven_expr = proven_truth.expr
+                if auto_simplify:
+                    skip_simplify = (is_shallow_simplification_method or
+                                     is_simplification_method)
+                    if proven_truth != orig_proven_truth:
+                        # Replacements were made above so try another round
+                        # of simplification.
+                        skip_simplify = False
+                    if not skip_simplify:
+                        from proveit import Relation
+                        from proveit.logic import Equals
+                        if preserve_lhs_on_auto_simplify and isinstance(
+                                proven_expr, Relation):
+                            dummy_var = proven_expr.safe_dummy_var()
+                            if simplify_only_where_marked and isinstance(
+                                    markers_and_marked_expr[1], Relation):
+                                # In addition to anything else that may be
+                                # reserved by the markedd_expr, preserve the lhs.
+                                markers_and_marked_expr[1].__class__(
+                                    proven_expr.lhs, 
+                                    markers_and_marked_expr[1].rhs)
+                            else:
+                                # Just preserve the lhs.
+                                simplify_only_where_marked=True
+                                markers_and_marked_expr = (
+                                    (dummy_var,), Equals(proven_expr.lhs,
+                                                         dummy_var))
+                        proven_truth = proven_truth.simplify(
+                            simplify_only_where_marked=simplify_only_where_marked,
+                            markers_and_marked_expr=markers_and_marked_expr)
+            '''
             # Temporarily reconfigure defaults
             with defaults.temporary() as temp_defaults:
                 for key in defaults_to_change:
@@ -201,22 +319,8 @@ def _make_decorated_prover(func, automatic=False):
                 #print(func.__name__, proven_truth)
                 # Effect the replacements and/or auto-simplification by
                 # regenerating the proof object under the active defaults.
-                orig_proven_truth = proven_truth
-                if preserve_lhs:
-                    from proveit import safe_dummy_var
-                    from proveit.relation import Relation
-                    _expr = proven_truth.expr
-                    if not isinstance(_expr, Relation):
-                        raise TypeError(
-                            "@relation_proven, %s, expected to prove a"
-                            "Relation expression but got %s"%(func, _expr))
-                    simplify_only_where_marked = True
-                    dummy_var = safe_dummy_var(_expr)
-                    markers_and_marked_expr = (
-                        (dummy_var,), type(_expr)(_expr.lhs, dummy_var))
-                else:
-                    simplify_only_where_marked = False
-                    marker_and_Marked_expr = None
+                simplify_only_where_marked = False
+                markers_and_marked_expr = None
                 new_proven_truth = (
                     proven_truth.proof().regenerate_proof_with_replacements(
                         simplify_only_where_marked, markers_and_marked_expr)
@@ -226,26 +330,18 @@ def _make_decorated_prover(func, automatic=False):
                 #print('preserved_exprs', defaults.preserved_exprs,
                 #      'orig_proven_truth', orig_proven_truth,
                 #      'proven_truth', proven_truth)
+            '''
 
-        if is_conclude_method:
-            self = args[0]
-            if isinstance(self, Expression):
-                expr = self
-            elif hasattr(self, 'expr'):
-                expr = self.expr
-            else:
-                raise TypeError(
-                        "The @prover method %s beginning with 'conclude' "
-                        "expected to be a method for an Expression type "
-                        "or the object must have an 'expr' attribute."%func)                
+        if is_conclude_method:             
             if proven_truth is None:
                 raise ValueError("@prover method %s is not implemented "
                                  "for %s."
-                                %(func, expr))
+                                %(func, self_expr))
+            proven_expr = proven_truth.expr
             if func.__name__.startswith('conclude_negation'):
                 from proveit.logic import Not
-                not_expr = Not(expr)
-                if proven_truth.expr != not_expr:
+                not_expr = Not(self_expr)
+                if proven_expr != not_expr:
                     raise ValueError(
                             "@prover method %s whose name starts with "
                             "'conclude_negation' must prove %s "
@@ -253,16 +349,16 @@ def _make_decorated_prover(func, automatic=False):
                 # Match the style of not_self.
                 return proven_truth.with_matching_style(not_expr)
             else:
-                if proven_truth.expr != expr:
+                if proven_expr != self_expr:
                     raise ValueError("@prover method %s whose name starts with "
                                      "'conclude' must prove %s but got "
-                                     "%s."%(func, expr, proven_truth))
+                                     "%s."%(func, self_expr, proven_truth))
                 # Match the style of self.
-                return proven_truth.with_matching_style(expr)
+                return proven_truth.with_matching_style(self_expr)
         return proven_truth
     return decorated_prover    
 
-def _make_decorated_relation_prover(func, automatic=False):
+def _make_decorated_relation_prover(func):
     '''
     Use for decorating 'relation_prover' methods 
     (@relation_prover or @equality_prover).  In addition
@@ -274,8 +370,7 @@ def _make_decorated_relation_prover(func, automatic=False):
     is on the left side of the returned Relation Judgment.
     '''
 
-    decorated_prover = _make_decorated_prover(func, 
-                                              automatic=automatic)
+    decorated_prover = _make_decorated_prover(func)
     
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
@@ -295,19 +390,7 @@ def _make_decorated_relation_prover(func, automatic=False):
                             "have an 'expr' attribute."%func)
         alter_lhs = kwargs.pop('alter_lhs', False)
         if not alter_lhs:
-            if automatic:
-                kwargs['preserve_lhs'] = True
-            else:
-                # preserve the left side.
-                if 'preserve_expr' in kwargs:
-                    if 'preserved_exprs' in kwargs:
-                        kwargs['preserved_exprs'] = (
-                            kwargs['preserved_exprs'].union([expr]))
-                    else:
-                        kwargs['preserved_exprs'] = (
-                            defaults.preserved_exprs.union([expr]))
-                else:
-                    kwargs['preserve_expr'] = expr
+            kwargs['preserve_lhs_on_auto_simplify'] = True
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
@@ -369,9 +452,9 @@ def prover(func):
 
 def auto_prover(func):
     '''
-
+    TODO: eliminate usage. now obsolete.
     '''
-    return _wraps(func, _make_decorated_prover(func, automatic=True))
+    return _wraps(func, _make_decorated_prover(func))
 
 def relation_prover(func):
     '''
@@ -387,17 +470,16 @@ def relation_prover(func):
 
 def auto_relation_prover(func):
     '''
-
+    TODO: eliminate usage. now obsolete.
     '''
-    return _wraps(func, _make_decorated_relation_prover(func, 
-                                                        automatic=True))
+    return _wraps(func, _make_decorated_relation_prover(func))
 
 # Keep track of equivalence provers so we may register them during
 # Expression class construction (see ExprType.__init__ in expr.py).
 _equality_prover_fn_to_tenses = dict()
 _equality_prover_name_to_tenses = dict()
 
-def equality_prover(past_tense, present_tense, automatic=False):
+def equality_prover(past_tense, present_tense):
     '''
     @equality_prover works the same way as the @relation_prover decorator
     except that it also registers the "equality method" in
@@ -430,8 +512,7 @@ def equality_prover(past_tense, present_tense, automatic=False):
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
         is_simplification_method = (name == 'simplification')
-        decorated_relation_prover = _make_decorated_relation_prover(
-            func, automatic=automatic)
+        decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
             '''
@@ -534,7 +615,10 @@ def equality_prover(past_tense, present_tense, automatic=False):
     return wrapper_maker
 
 def auto_equality_prover(past_tense, present_tense):
-    return equality_prover(past_tense, present_tense, automatic=True)
+    '''
+    TODO: eliminate usage. now obsolete.
+    '''
+    return equality_prover(past_tense, present_tense)
 
 """
 def equality_prover(past_tense, present_tense):

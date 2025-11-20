@@ -685,8 +685,9 @@ class ExprTuple(Composite, Expression):
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange
         from proveit.logic import Equals
-        if defaults.preserve_all or self in defaults.preserved_exprs:
-            return Equals(self, self).conclude_via_reflexivity()
+        if defaults.preserve_all or self in defaults.preserved_exprs or (
+                simplify_only_where_marked and markers_and_marked_expr[1]==self):
+            return self.self_equation(preserve_all=True)
         expr = self
         eq = TransRelUpdater(expr)
         _k = 0

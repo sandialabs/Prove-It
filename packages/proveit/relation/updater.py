@@ -63,6 +63,6 @@ class TransRelUpdater:
         relations = self.relations
         if len(relations) == 0:
             # Trivial, reflexive x=x.
-            return Equals(self.expr, self.expr).conclude_via_reflexivity()
+            return self.expr.self_equation(preserve_all=True)
         return TransitiveRelation.apply_transitivities(
-                relations, assumptions=self.assumptions)
+                relations, assumptions=self.assumptions, auto_simplify=False)

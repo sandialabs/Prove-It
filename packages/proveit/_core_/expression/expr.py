@@ -1081,6 +1081,7 @@ class Expression(metaclass=ExprType):
                 tmp_defaults.assumptions = assumptions
 
             tmp_defaults.conclude_automation=False
+            tmp_defaults.auto_simplify=False
             
             if defaults.sideeffect_automation:
                 # Generate assumption side-effects.
@@ -1848,12 +1849,14 @@ class Expression(metaclass=ExprType):
         Expression.shallow_simplification.
         '''
         if defaults.preserve_all or self in defaults.preserved_exprs:
-            from proveit.logic import Equals
-            return Equals(self, self).conclude_via_reflexivity()
+            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
-            if marked_expr != self and marked_expr not in markers:
+            if marked_expr == self:
+                # Not marked.  Don't simplify.
+                simplify_top_level = False
+            elif marked_expr not in markers:
                 # This is not an operation, so for marked_expr to be
                 # valid it must either match self or match a marker.
                 from proveit._core_.operation import Operation
@@ -1863,8 +1866,7 @@ class Expression(metaclass=ExprType):
             # Resort to a shallow_simplification as the default.
             return self.shallow_simplification(must_evaluate=False)
         else:
-            from proveit.logic import Equals
-            return Equals(self, self).conclude_via_reflexivity()
+            return self.self_equation(preserve_all=True)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False, 
@@ -1878,12 +1880,20 @@ class Expression(metaclass=ExprType):
         The default is to return the trivial reflexive equality.
         Must be overridden for class-specific simplification.
         '''
-        from proveit.logic import Equals, is_irreducible_value
+        from proveit.logic import is_irreducible_value
         if must_evaluate and not is_irreducible_value(self):
             raise NotImplementedError(
                 "'shallow_simplification' applicable when 'must_evaluate' "
                 "is True is not implemented for %s class" % str(
                     self.__class__))
+        return self.self_equation(preserve_all=True)
+
+    @equality_prover('self_equated', 'self_equate')
+    def self_equation(self, **defaults_config):
+        '''
+        Return this expression proven to be equal to itself: A = A.
+        '''
+        from proveit.logic import Equals
         return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod

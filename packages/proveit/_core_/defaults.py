@@ -25,20 +25,6 @@ class Defaults:
         # Display LaTeX versions of expressions.
         self.display_latex = True
 
-        # When True, Prove-It will automatically simplify expressions 
-        # as replacements are made (e.g. during instantiations), except
-        # for the 'preserved_exprs' (see below).  Turning auto_simplify 
-        # on will automatically turn preserve_all off (see below).
-        self.auto_simplify = True
-
-        # When True, Prove-It will not automatically simplify or 
-        # perform 'replacements' (see below) for any expressions.
-        # It is often the case that this should be set to True for all 
-        # but one of a multi-step process within a 
-        # @prover/@relation_prover/@equality_prover method.  Turning 
-        # preserve_all on will automatically turn auto_simplify off.
-        self.preserve_all = False
-        
         # Proven equalities which specify desired replacements.
         # Occurrences of the left side will be replaced with
         # occurrences of the right side during instantiations
@@ -50,16 +36,32 @@ class Defaults:
         # That is, whichever is done last is the directive that is
         # followed.
         self.replacements = tuple()
-        
-        # Expressions that should be 'preserved' and not 
-        # auto-simplified or replaced using an equality-based
-        # replacement.
+
+        # Expressions that should be 'preserved' and not simplified 
+        # or replaced via 'replacements'.
         # Preserving an expression in this manner overrides any
         # replacement for that expression; however, when setting
         # replacements, corresponding expressions in preserved_exprs
         # will be discarded.  That is, whichever is done last is the
         # directive that is followed.
         self.preserved_exprs = set()
+        
+        # When True, Prove-It will not automatically simplify or 
+        # perform 'replacements' (see below) for any expressions.
+        # It is often the case that this should be set to True for all 
+        # but one of a multi-step process within a 
+        # @prover/@relation_prover/@equality_prover method.  Turning 
+        # preserve_all on will automatically turn auto_simplify off.
+        self.preserve_all = False
+
+        # When True, Prove-It will automatically perform simplification
+        # on the resulting judgement of an instantiation.
+        self.auto_simplify = False
+        
+        # When True, an autosimplification after an instantiation will
+        # preserve the left-hand side of a Relation expression.
+        # (Automatically turned on for @relation_prover's).
+        self.preserve_lhs_on_auto_simplify = False
         
         # If an expression has an explicitly known evaluation, use it 
         # in the auto-simplification where auto-simplification is 

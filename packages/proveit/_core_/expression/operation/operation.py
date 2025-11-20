@@ -675,7 +675,7 @@ class Operation(Expression):
         from proveit.logic import EvaluationError, SimplificationError
         
         # Try to simplify the operands first.
-        reduction = self.simplification_of_operands(
+        reduction = self._simplification_of_operands(
             simplify_with_known_evaluations=True)
         
         # After making sure the operands have been simplified,
@@ -692,7 +692,7 @@ class Operation(Expression):
         except (SimplificationError, UnsatisfiedPrerequisites,
                 NotImplementedError, ProofFailure):
             raise EvaluationError(self)
-        return reduction.apply_transitivity(evaluation)
+        return reduction.apply_transitivity(evaluation, preserve_all=True)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, *, simplify_top_level=True,
@@ -714,9 +714,9 @@ class Operation(Expression):
         operands, were applicable, and then calls 'shallow_simplification'
         if applicable.
         '''
-        if defaults.preserve_all or self in defaults.preserved_exprs:
-            from proveit.logic import Equals
-            return Equals(self, self).conclude_via_reflexivity()
+        if defaults.preserve_all or self in defaults.preserved_exprs or (
+                simplify_only_where_marked and markers_and_marked_expr[1]==self):
+            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
@@ -726,9 +726,8 @@ class Operation(Expression):
             elif not isinstance(marked_expr, Operation) or (
                     type(marked_expr.operands) != type(self.operands)):
                 raise MarkedExprError(marked_expr, self)
-                
         # Try to simplify the operands first.
-        reduction = self.simplification_of_operands(
+        reduction = self._simplification_of_operands(
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr)
         
@@ -756,7 +755,8 @@ class Operation(Expression):
         else:
             simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
-            return reduction.apply_transitivity(simplification)
+            return reduction.apply_transitivity(simplification,
+                                                auto_simplify=False)
     
     @equality_prover('simplified_operands', 'operands_simplify')
     def simplification_of_operands(self, *, simplify_only_where_marked=False,
@@ -766,6 +766,18 @@ class Operation(Expression):
         Prove this Operation equal to a form in which its operands
         have been simplified.
         '''
+        return self.simplification_of_operands(
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr)
+    
+    def _simplification_of_operands(self, *, 
+                                    simplify_with_known_evaluations=False,
+                                    simplify_only_where_marked=False,
+                                    markers_and_marked_expr=None):
+        '''
+        Helper to prove this Operation equal to a form in which its operands
+        have been simplified.
+        '''
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange, NamedExprs
         from proveit._core_.expression.expr import MarkedExprError
@@ -773,49 +785,48 @@ class Operation(Expression):
         if any(isinstance(operand, ExprRange) for operand in self.operands):
             # If there is any ExprRange in the operands, simplify the
             # operands together as an ExprTuple.
-            return self.inner_expr().operands[:].simplification()
+            return self.inner_expr().operands[:].simplification(
+                simplify_with_known_evaluations=simplify_with_known_evaluations)
         else:
             expr = self
             eq = TransRelUpdater(expr)
-            with defaults.temporary() as temp_defaults:
-                # No auto-simplification or replacements here;
-                # just simplify operands one at a time.
-                temp_defaults.preserve_all = True
-                operands = self.operands
-                if simplify_only_where_marked:
-                    markers, marked_expr = markers_and_marked_expr
-                if isinstance(operands, NamedExprs):
-                    # operands as NamedExprs
-                    for key in operands.keys():
-                        operand = operands[key]
-                        if simplify_only_where_marked:
-                            if key not in marked_expr:
-                                raise MarkedExprError(marked_expr, self)
-                            sub_markers_and_marked_expr = (markers, 
-                                                           marked_expr[key])
-                        else:
-                            sub_markers_and_marked_expr = None
-                        if not is_irreducible_value(operand):
-                            inner_operand = getattr(expr.inner_expr(), key)
-                            expr = eq.update(inner_operand.simplification(
-                                simplify_only_where_marked=simplify_only_where_marked,
-                                markers_and_marked_expr=sub_markers_and_marked_expr))
-                else:
-                    if simplify_only_where_marked and (
-                            len(marked_expr.operands) != len(operands)):
-                        raise MarkedExprError(marked_expr, self)
-                    # operands as ExprTuple
-                    for k, operand in enumerate(operands):
-                        if simplify_only_where_marked:
-                            sub_markers_and_marked_expr = (markers, 
-                                                           marked_expr[k])
-                        else:
-                            sub_markers_and_marked_expr = None
-                        if not is_irreducible_value(operand):
-                            inner_operand = expr.inner_expr().operands[k]
-                            expr = eq.update(inner_operand.simplification(
-                                simplify_only_where_marked=simplify_only_where_marked,
-                                markers_and_marked_expr=sub_markers_and_marked_expr))
+            operands = self.operands
+            if simplify_only_where_marked:
+                markers, marked_expr = markers_and_marked_expr
+            if isinstance(operands, NamedExprs):
+                # operands as NamedExprs
+                for key in operands.keys():
+                    operand = operands[key]
+                    if simplify_only_where_marked:
+                        if key not in marked_expr:
+                            raise MarkedExprError(marked_expr, self)
+                        sub_markers_and_marked_expr = (markers, 
+                                                       marked_expr[key])
+                    else:
+                        sub_markers_and_marked_expr = None
+                    if not is_irreducible_value(operand):
+                        inner_operand = getattr(expr.inner_expr(), key)
+                        expr = eq.update(inner_operand.simplification(
+                            simplify_with_known_evaluations=simplify_with_known_evaluations,
+                            simplify_only_where_marked=simplify_only_where_marked,
+                            markers_and_marked_expr=sub_markers_and_marked_expr))
+            else:
+                if simplify_only_where_marked and (
+                        len(marked_expr.operands) != len(operands)):
+                    raise MarkedExprError(marked_expr, self)
+                # operands as ExprTuple
+                for k, operand in enumerate(operands):
+                    if simplify_only_where_marked:
+                        sub_markers_and_marked_expr = (markers, 
+                                                       marked_expr.operands[k])
+                    else:
+                        sub_markers_and_marked_expr = None
+                    if not is_irreducible_value(operand):
+                        inner_operand = expr.inner_expr().operands[k]
+                        expr = eq.update(inner_operand.simplification(
+                            simplify_with_known_evaluations=simplify_with_known_evaluations,
+                            simplify_only_where_marked=simplify_only_where_marked,
+                            markers_and_marked_expr=sub_markers_and_marked_expr))
         return eq.relation
 
     @equality_prover('operator_substituted', 'operator_substitute')
