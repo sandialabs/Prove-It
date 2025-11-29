@@ -1151,6 +1151,15 @@ class Judgment:
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
+    @prover
+    def equate_to_true(self, **defaults_config):
+        '''
+        Equate the Judgment's conclusion to TRUE via the eq_true_intro axiom.
+        Possible for all proven Judgments.
+        '''
+        from proveit.logic import Equals, TRUE
+        return Equals(self.expr, TRUE).prove()
+    
     """
     def conservative_definition_lit(self):
         '''

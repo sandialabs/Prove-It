@@ -1039,7 +1039,8 @@ class Lambda(Expression):
         return relabeled
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, simplify_top_level=True,
+    def simplification(self, *, preserved_exprs=None,
+                       simplify_top_level=True,
                        simplify_only_where_marked=False,
                        markers_and_marked_expr=None, **defaults_config):
         '''
@@ -1047,7 +1048,7 @@ class Lambda(Expression):
         simplified.
         '''
         from proveit.logic import Equals
-        if defaults.preserve_all or self in defaults.preserved_exprs or (
+        if (preserved_exprs is not None and self in preserved_exprs) or (
                 simplify_only_where_marked and markers_and_marked_expr[1]==self):
             return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
@@ -1064,6 +1065,7 @@ class Lambda(Expression):
             [assumption for assumption in defaults.assumptions if
              free_vars(assumption).isdisjoint(self.parameter_vars)]
         body_simplification = self.body.simplification(
+            preserved_exprs=preserved_exprs,
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr,
             assumptions=inner_assumptions)

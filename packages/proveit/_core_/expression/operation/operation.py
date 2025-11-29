@@ -674,6 +674,13 @@ class Operation(Expression):
         from proveit import UnsatisfiedPrerequisites, ProofFailure
         from proveit.logic import EvaluationError, SimplificationError
         
+        try:
+            # Checks if self is readily provable or readily disprovable
+            # and a Boolean
+            return Expression.evaluation(self)
+        except EvaluationError:
+            pass # try strategy below before giving up.
+        
         # Try to simplify the operands first.
         reduction = self._simplification_of_operands(
             simplify_with_known_evaluations=True)
@@ -691,11 +698,12 @@ class Operation(Expression):
                     must_evaluate=True)
         except (SimplificationError, UnsatisfiedPrerequisites,
                 NotImplementedError, ProofFailure):
-            raise EvaluationError(self)
+            raise EvaluationError(self) # end of the road
         return reduction.apply_transitivity(evaluation, preserve_all=True)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, simplify_top_level=True,
+    def simplification(self, *, preserved_exprs=None,
+                       simplify_top_level=True,
                        simplify_only_where_marked=False,
                        markers_and_marked_expr=None, **defaults_config):
         '''
@@ -714,7 +722,7 @@ class Operation(Expression):
         operands, were applicable, and then calls 'shallow_simplification'
         if applicable.
         '''
-        if defaults.preserve_all or self in defaults.preserved_exprs or (
+        if (preserved_exprs is not None and self in preserved_exprs) or (
                 simplify_only_where_marked and markers_and_marked_expr[1]==self):
             return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
@@ -728,6 +736,7 @@ class Operation(Expression):
                 raise MarkedExprError(marked_expr, self)
         # Try to simplify the operands first.
         reduction = self._simplification_of_operands(
+            preserved_exprs=preserved_exprs,
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr)
         
@@ -759,18 +768,20 @@ class Operation(Expression):
                                                 auto_simplify=False)
     
     @equality_prover('simplified_operands', 'operands_simplify')
-    def simplification_of_operands(self, *, simplify_only_where_marked=False,
+    def simplification_of_operands(self, *, preserved_exprs=None,
+                                   simplify_only_where_marked=False,
                                    markers_and_marked_expr=None,
                                    **defaults_config):
         '''
         Prove this Operation equal to a form in which its operands
         have been simplified.
         '''
-        return self.simplification_of_operands(
+        return self._simplification_of_operands(
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr)
     
     def _simplification_of_operands(self, *, 
+                                    preserved_exprs=None,
                                     simplify_with_known_evaluations=False,
                                     simplify_only_where_marked=False,
                                     markers_and_marked_expr=None):
@@ -786,7 +797,10 @@ class Operation(Expression):
             # If there is any ExprRange in the operands, simplify the
             # operands together as an ExprTuple.
             return self.inner_expr().operands[:].simplification(
-                simplify_with_known_evaluations=simplify_with_known_evaluations)
+                preserved_exprs=preserved_exprs,
+                simplify_with_known_evaluations=simplify_with_known_evaluations,
+                simplify_only_where_marked=simplify_only_where_marked,
+                markers_and_marked_expr=markers_and_marked_expr)
         else:
             expr = self
             eq = TransRelUpdater(expr)
@@ -807,6 +821,7 @@ class Operation(Expression):
                     if not is_irreducible_value(operand):
                         inner_operand = getattr(expr.inner_expr(), key)
                         expr = eq.update(inner_operand.simplification(
+                            preserved_exprs=preserved_exprs,
                             simplify_with_known_evaluations=simplify_with_known_evaluations,
                             simplify_only_where_marked=simplify_only_where_marked,
                             markers_and_marked_expr=sub_markers_and_marked_expr))
@@ -824,6 +839,7 @@ class Operation(Expression):
                     if not is_irreducible_value(operand):
                         inner_operand = expr.inner_expr().operands[k]
                         expr = eq.update(inner_operand.simplification(
+                            preserved_exprs=preserved_exprs,
                             simplify_with_known_evaluations=simplify_with_known_evaluations,
                             simplify_only_where_marked=simplify_only_where_marked,
                             markers_and_marked_expr=sub_markers_and_marked_expr))

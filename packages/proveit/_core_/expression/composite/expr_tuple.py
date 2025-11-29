@@ -674,7 +674,7 @@ class ExprTuple(Composite, Expression):
         return self.simplification(must_evaluate=True)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, simplify_top_level=True,
+    def simplification(self, *, preserved_exprs=None, simplify_top_level=True,
                        simplify_only_where_marked=False,
                        markers_and_marked_expr=None, must_evaluate=False, 
                        **defaults_config):
@@ -685,7 +685,7 @@ class ExprTuple(Composite, Expression):
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange
         from proveit.logic import Equals
-        if defaults.preserve_all or self in defaults.preserved_exprs or (
+        if (preserved_exprs is not None and self in preserved_exprs) or (
                 simplify_only_where_marked and markers_and_marked_expr[1]==self):
             return self.self_equation(preserve_all=True)
         expr = self
@@ -722,6 +722,7 @@ class ExprTuple(Composite, Expression):
                     else:
                         sub_markers_and_marked_expr = None
                     entry_simp = entry.simplification(
+                        preserved_exprs=preserved_exprs,
                         simplify_only_where_marked=simplify_only_where_marked,
                         markers_and_marked_expr=sub_markers_and_marked_expr)
                 num_entries = 1

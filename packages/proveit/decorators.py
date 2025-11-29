@@ -205,9 +205,24 @@ def _make_decorated_prover(func):
                 with _direct_prover_calls_counter:
                     # Postpone any applicable simplification until later
                     # (below).
+                    '''
+                    if not (is_simplification_method or
+                            is_shallow_simplification_method):
+                         # Unless this is a simplification method, postpone
+                         # simplification until later (below).
+                         temp_defaults.preserve_all=True
+                         temp_defaults.preserved_exprs = set()
+                    elif is_simplification_method:
+                        internal_kwargs['simplify_only_where_marked'] = (
+                            simplify_only_where_marked)
+                        internal_kwargs['markers_and_marked_expr'] = (
+                            markers_and_marked_expr)
+                    '''
                     temp_defaults.preserve_all=True
                     temp_defaults.preserved_exprs = set()
                     if is_simplification_method:
+                        internal_kwargs['preserved_exprs'] = (
+                            defaults.preserved_exprs)
                         internal_kwargs['simplify_only_where_marked'] = (
                             simplify_only_where_marked)
                         internal_kwargs['markers_and_marked_expr'] = (

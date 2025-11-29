@@ -1801,25 +1801,28 @@ class Expression(metaclass=ExprType):
         existing evaluation and a check that the resulting proven
         statement equates self with an irreducible value.
         
+        By default, check if this expression is either provable or
+        disprovable and a Boolean.
+        
         See also Operation.evaluation, Expression.simplification,
         and Expression.shallow_simplification.
         '''
         from proveit.logic import EvaluationError
+        if self.readily_provable():
+            return self.prove().equate_to_true()
+        elif self.readily_disprovable():
+            from proveit.logic import InSet, Boolean
+            from proveit.logic.booleans.negation import negation_elim
+            if InSet(self, Boolean).readily_provable() and (
+                    negation_elim.is_usable()):
+                return self.disprove().equate_negated_to_false()
+        
         # No other default options (though the Operation class
         # has some options via simplifying operands).
         raise EvaluationError(self)
 
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
-        '''
-        If possible, return a Judgment of this expression equal to an
-        irreducible value.  This default raises an EvaluationError.
-        '''       
-        from proveit.logic import EvaluationError
-        raise EvaluationError(self)
-
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, simplify_top_level=True,
+    def simplification(self, *, preserved_exprs=None, simplify_top_level=True,
                        simplify_only_where_marked=False,
                         markers_and_marked_expr=None, **defaults_config):
         '''
@@ -1845,7 +1848,7 @@ class Expression(metaclass=ExprType):
         See also Operation.simplification and 
         Expression.shallow_simplification.
         '''
-        if defaults.preserve_all or self in defaults.preserved_exprs:
+        if preserved_exprs is not None and self in preserved_exprs:
             return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
