@@ -65,12 +65,12 @@ class IntervalMembership(NumberMembership):
         '''
         Yield side-effects when proving n in an Interval for a given n.
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import Natural, IntegerNonPos
-        yield self.derive_element_in_integer
+        from proveit.numbers.number_sets.integers import Integer
+        if not InSet(self.element, Integer).proven():
+            yield self.derive_element_in_integer
         yield self.derive_element_lower_bound
         yield self.derive_element_upper_bound
-        yield self.derive_element_in_restricted_number_set_if_known
+        #yield self.derive_element_in_restricted_number_set_if_known
         # Added but commented the following out while we debate the
         # wisdom of further side-effects
         # yield lambda: self.deduce_member_in_real(member)

@@ -21,11 +21,10 @@ class IntegerMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
-        yield self.derive_element_in_rational
-        
-        # Added but commented the following out while we debate the
-        # wisdom of further side-effects
-        # yield lambda: self.deduce_member_in_real(member)
+        from proveit.numbers.number_sets.natural_numbers import Natural
+        if not InSet(self.element, Natural).proven():
+            yield self.derive_element_in_rational
+        yield self.derive_element_in_real
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -81,8 +80,12 @@ class IntegerNonZeroMembership(NumberMembership):
         Yield side-effects when proving 'n in IntegerNonZero' for 
         a given n.
         '''
-        yield self.derive_element_not_zero
-        yield self.derive_element_in_integer
+        from proveit.numbers.number_sets.natural_numbers import (
+            Natural, NaturalPos)
+        if not InSet(self.element, Natural).proven():
+            yield self.derive_element_in_integer
+        if not InSet(self.element, NaturalPos).proven():
+            yield self.derive_element_not_zero
         yield self.derive_element_in_rational_nonzero
 
     @relation_prover
@@ -159,11 +162,11 @@ class IntegerNegMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in IntegerNeg' for a given n.
         '''
-        yield self.derive_element_upper_bound
         yield self.derive_element_in_integer
         yield self.derive_element_in_integer_non_zero
         yield self.derive_element_in_integer_non_pos
         yield self.derive_element_in_rational_neg
+        yield self.derive_element_upper_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -237,9 +240,9 @@ class IntegerNonPosMembership(NumberMembership):
         Yield side-effects when proving 'n in IntegerNonPos' for
         a given n.
         '''
-        yield self.derive_element_upper_bound
         yield self.derive_element_in_integer
         yield self.derive_element_in_rational_nonpos
+        yield self.derive_element_upper_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

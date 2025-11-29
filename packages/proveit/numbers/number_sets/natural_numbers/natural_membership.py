@@ -41,9 +41,10 @@ class NaturalMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in Natural' for a given n.
         '''
-        yield self.derive_element_lower_bound
         yield self.derive_element_in_int
+        yield self.derive_element_in_rational
         yield self.derive_element_in_rational_nonneg
+        yield self.derive_element_lower_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -65,6 +66,13 @@ class NaturalMembership(NumberMembership):
         return nat_within_int.derive_superset_membership(
                 self.element, auto_simplify=False)
 
+    @prover
+    def derive_element_in_rational(self, **defaults_config):
+        from proveit.numbers.number_sets.rational_numbers import (
+                nat_within_rational)
+        return nat_within_rational.derive_superset_membership(
+            self.element, auto_simplify=False)
+    
     @prover
     def derive_element_in_rational_nonneg(self, **defaults_config):
         from proveit.numbers.number_sets.rational_numbers import (
@@ -118,13 +126,13 @@ class NaturalPosMembership(NaturalMembership):
         '''
         Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
-        yield self.derive_element_lower_bound
-        yield self.derive_element_is_positive
         yield self.derive_element_in_nat
         yield self.derive_element_in_int
         yield self.derive_element_in_nonzero_int
-        yield self.derive_element_nonzero
         yield self.derive_element_in_rational_pos
+        yield self.derive_element_nonzero
+        yield self.derive_element_lower_bound
+        yield self.derive_element_is_positive
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

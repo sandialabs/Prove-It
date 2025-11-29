@@ -71,8 +71,12 @@ class RealNonZeroMembership(NumberMembership):
         Yield side-effects when proving 'n in RealNonZero' 
         for a given n.
         '''
-        yield self.derive_element_in_real
-        yield self.derive_element_not_zero
+        from proveit.numbers.number_sets.rational_numbers import (
+            Rational, RationalNonZero)
+        if not InSet(self.element, Rational).proven():
+            yield self.derive_element_in_real
+        if not InSet(self.element, RationalNonZero).proven():
+            yield self.derive_element_not_zero
         yield self.derive_element_in_complex_nonzero
 
     @relation_prover
@@ -151,10 +155,16 @@ class RealPosMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in RealPos' for a given n.
         '''
-        yield self.derive_element_in_real
-        yield self.derive_element_in_real_nonzero
-        yield self.derive_element_in_real_nonneg
-        yield self.derive_element_lower_bound
+        from proveit.numbers.number_sets.rational_numbers import (
+            Rational, RationalPos, RationalNonZero, RationalNonNeg)
+        if not InSet(self.element, Rational).proven():
+            yield self.derive_element_in_real
+        if not InSet(self.element, RationalNonZero).proven():
+            yield self.derive_element_in_real_nonzero
+        if not InSet(self.element, RationalNonNeg).proven():
+            yield self.derive_element_in_real_nonneg
+        if not InSet(self.element, RationalPos).proven():
+            yield self.derive_element_lower_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -239,10 +249,16 @@ class RealNegMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in RealNeg' for a given n.
         '''
-        yield self.derive_element_in_real
-        yield self.derive_element_in_real_nonzero
-        yield self.derive_element_in_real_nonpos
-        yield self.derive_element_upper_bound
+        from proveit.numbers.number_sets.rational_numbers import (
+            Rational, RationalNeg, RationalNonZero, RationalNonPos)
+        if not InSet(self.element, Rational).proven():
+            yield self.derive_element_in_real
+        if not InSet(self.element, RationalNonZero).proven():
+            yield self.derive_element_in_real_nonzero
+        if not InSet(self.element, RationalNonPos).proven():
+            yield self.derive_element_in_real_nonpos
+        if not InSet(self.element, RationalNeg).proven():
+            yield self.derive_element_upper_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -311,8 +327,12 @@ class RealNonNegMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in RealNonNeg' for a given n.
         '''
-        yield self.derive_element_in_real
-        yield self.derive_element_lower_bound
+        from proveit.numbers.number_sets.rational_numbers import (
+            Rational, RationalNonNeg)
+        if not InSet(self.element, Rational).proven():
+            yield self.derive_element_in_real
+        if not InSet(self.element, RationalNonNeg).proven():
+            yield self.derive_element_lower_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -369,8 +389,12 @@ class RealNonPosMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in RealNonPos' for a given n.
         '''
-        yield self.derive_element_in_real
-        yield self.derive_element_upper_bound
+        from proveit.numbers.number_sets.rational_numbers import (
+            Rational, RationalNonPos)
+        if not InSet(self.element, Rational).proven():
+            yield self.derive_element_in_real
+        if not InSet(self.element, RationalNonPos).proven():
+            yield self.derive_element_upper_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

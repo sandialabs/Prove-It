@@ -76,10 +76,13 @@ class RealIntervalMembership(NumberMembership):
         (5) Try to derive the element is in any relaxed intervals
             as appropriate (changing 'open' to 'closed').
         '''
-        yield self.derive_element_in_real
+        from proveit.numbers.number_sets.real_numbers import Real
+        if not InSet(self.element, Real).proven():
+            yield self.derive_element_in_real
         yield self.derive_element_lower_bound
         yield self.derive_element_upper_bound
-        yield self.derive_element_in_restricted_number_set_if_known
+        #yield self.derive_element_in_restricted_number_set_if_known
+        '''
         if hasattr(self, 'derive_left_relaxed_membership'):
             yield self.derive_left_relaxed_membership
         if hasattr(self, 'derive_right_relaxed_membership'):
@@ -88,6 +91,7 @@ class RealIntervalMembership(NumberMembership):
             yield self.derive_relaxed_membership
         elif hasattr(self, 'derive_fully_relaxed_membership'):
             yield self.derive_fully_relaxed_membership
+        '''
 
     @prover
     def derive_element_in_real(self, **defaults_config):

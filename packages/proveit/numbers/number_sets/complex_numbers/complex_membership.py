@@ -1,5 +1,6 @@
 from proveit import prover, relation_prover
 from proveit import x
+from proveit.logic import InSet
 from proveit.numbers.number_sets.complex_numbers import (
         Complex, ComplexNonZero)
 from proveit.numbers.number_sets.number_set import NumberMembership
@@ -61,8 +62,12 @@ class ComplexNonZeroMembership(NumberMembership):
         '''
         Yield side-effects when proving 'x in Complex' for a given x.
         '''
-        yield self.derive_element_in_complex
-        yield self.derive_element_not_zero
+        from proveit.numbers.number_sets.real_numbers import (
+            Real, RealNonZero)
+        if not InSet(self.element, Real).proven():
+            yield self.derive_element_in_complex
+        if not InSet(self.element, RealNonZero).proven():
+            yield self.derive_element_not_zero
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
