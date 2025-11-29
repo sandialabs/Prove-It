@@ -152,7 +152,7 @@ class Forall(OperationOverInstances):
             # Try a different strategy if there was an unusable proof.
             pass
         
-        if (self.has_domain() and self.instance_params.is_single 
+        if (self.has_domain() and self.instance_params.is_single() 
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
             domain = self.domain 
@@ -305,7 +305,8 @@ class Forall(OperationOverInstances):
             from proveit.logic.booleans import forall_by_excluded_middle
             _P = Lambda(self.instance_param, self.instance_expr)
             return forall_by_excluded_middle.instantiate(
-                {P:_P, A:self.instance_param}).derive_consequent()
+                {P:_P, A:self.instance_param},
+                num_forall_eliminations=1).derive_consequent()
     
     @prover
     def conclude_via_domain_inclusion(self, superset_domain,
@@ -318,7 +319,7 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic.sets.inclusion import (
                 inclusive_universal_quantification)
-        if not (self.has_domain() and self.instance_params.is_single 
+        if not (self.has_domain() and self.instance_params.is_single() 
                 and self.conditions.is_single()):
             raise ValueError("May only call conclude_via_domain_inclusion "
                              "on a Forall expression with a single instance "
@@ -405,17 +406,13 @@ class Forall(OperationOverInstances):
     @prover
     def instantiate(self, repl_map=None, *,
                     num_forall_eliminations=None,
-                    simplify_only_where_marked=False,
-                    markers_and_marked_expr=None,
                     **defaults_config):
         '''
         First attempt to prove that this Forall statement is true under
         the assumptions, and then call instantiate on the Judgment.
         '''
         return self.prove().instantiate(
-            repl_map, num_forall_eliminations=num_forall_eliminations,
-            simplify_only_where_marked=simplify_only_where_marked,
-            markers_and_marked_expr=markers_and_marked_expr)
+            repl_map, num_forall_eliminations=num_forall_eliminations)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
