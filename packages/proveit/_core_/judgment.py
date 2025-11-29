@@ -748,10 +748,14 @@ class Judgment:
         suitable_truths = []
         
         for truth in truths:
-            if len(truth.assumptions)==1 and  (
-                    next(iter(truth.assumptions)) == truth.expr):
-                # Must be a simple Assumption proof.
-                continue # Avoids infinite recursion.
+            if len(truth.assumptions)==1:
+                truth_assumption = next(iter(truth.assumptions))
+                if truth_assumption == truth.expr:
+                    # Must be a simple Assumption proof.
+                    if truth_assumption in assumptions:
+                        # Trivial proof by assumption
+                        return truth
+                    continue # Avoids infinite recursion.
             proof = truth.proof()
             if proof is not None and proof.is_possibly_usable():
                 if truth.assumptions.issubset(assumptions):
