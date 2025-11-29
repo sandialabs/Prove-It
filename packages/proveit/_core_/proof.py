@@ -402,6 +402,11 @@ class Proof:
                 #print(proven_truth)
                 proven_truth.derive_side_effects()
             Proof.sideeffect_processed.setdefault(expr, set()).add(key)
+            if key[1]:
+                # conclude_automation is on.  Nothing should be gained by
+                # deriving side-effects without conclude_automation later.
+                key = (key[0], False)
+                Proof.sideeffect_processed.setdefault(expr, set()).add(key)
 
     def _update_dependencies(self, newproof):
         '''
