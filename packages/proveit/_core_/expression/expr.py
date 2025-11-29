@@ -1042,18 +1042,15 @@ class Expression(metaclass=ExprType):
         '''
         Return True if and only if the expression is known to be true.
         '''
-        from proveit import ProofFailure
-        from proveit.decorators import _direct_prover_calls_counter
-        try:
-            # don't count this in the 'direct' @prover calls.
-            _direct_prover_calls_counter.nested_level += 1
-            
-            self.prove(assumptions=assumptions, automation=False)
+        from proveit import Judgment
+        if assumptions==USE_DEFAULTS:
+            assumptions = defaults.assumptions
+        if self in assumptions: return True # trivially True by assumption
+        found_truth = Judgment.find_judgment(self, assumptions)
+        if found_truth is not None:
+            assert found_truth.expr == self
             return True
-        except ProofFailure:
-            return False
-        finally:
-            _direct_prover_calls_counter.nested_level -= 1
+        return False
 
     def readily_provable(self, assumptions=USE_DEFAULTS, 
                          must_be_direct=False,**kwargs):
