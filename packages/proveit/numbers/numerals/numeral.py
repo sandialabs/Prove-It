@@ -7,11 +7,11 @@ import math
 
 
 class Numeral(Literal, IrreducibleValue):
-    _inNaturalStmts = None  # initializes when needed
-    _inNaturalPosStmts = None  # initializes when needed
-    _inDigitsStmts = None  # initializes when needed
-    _notZeroStmts = None  # initializes when needed
-    _positiveStmts = None  # initializes when needed
+    _inNaturalStmts = dict()  # populate as needed
+    _inNaturalPosStmts = dict()  # populate as needed
+    _inDigitsStmts = dict()  # populate as needed
+    _notZeroStmts = dict()  # populate as needed
+    _positiveStmts = dict()  # populate as needed
 
     def __init__(self, n, string_format=None, latex_format=None, *,
                  styles=None):
@@ -156,13 +156,15 @@ class Numeral(Literal, IrreducibleValue):
 
     @prover
     def deduce_in_natural(self, **defaults_config):
-        if Numeral._inNaturalStmts is None:
-            from proveit.numbers.number_sets.natural_numbers import zero_in_nats
-            from .decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
-            Numeral._inNaturalStmts = {0: zero_in_nats, 1: nat1, 2: nat2,
-                                       3: nat3, 4: nat4, 5: nat5, 6: nat6,
-                                       7: nat7, 8: nat8, 9: nat9}
-        return Numeral._inNaturalStmts[self.n]
+        n = self.n
+        if n not in Numeral._inNaturalStmts:
+            if n == 0:
+                from proveit.numbers.number_sets.natural_numbers import zero_in_nats
+                Numeral._inNaturalStmts[0] = zero_in_nats
+            else:
+                import proveit.numbers.numerals.decimals as deci
+                Numeral._inNaturalStmts[n] = getattr(deci, 'nat%d'%n)
+        return Numeral._inNaturalStmts[n]
 
     @prover
     def deduce_in_integer_nonpos(self, **defaults_config):
@@ -185,61 +187,30 @@ class Numeral(Literal, IrreducibleValue):
 
     @prover
     def deduce_in_natural_pos(self, **defaults_config):
-        if Numeral._inNaturalPosStmts is None:
-            from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
-            from .decimals import posnat6, posnat7, posnat8, posnat9
-            Numeral._inNaturalPosStmts = {
-                1: posnat1,
-                2: posnat2,
-                3: posnat3,
-                4: posnat4,
-                5: posnat5,
-                6: posnat6,
-                7: posnat7,
-                8: posnat8,
-                9: posnat9}
+        n = self.n
         if self.n <= 0:
             raise ProofFailure(self, [],
                                "Cannot prove %d in NaturalPos" % self.n)
-        return Numeral._inNaturalPosStmts[self.n]
+        if n not in Numeral._inNaturalPosStmts:
+            import proveit.numbers.numerals.decimals as deci
+            Numeral._inNaturalPosStmts[n] = getattr(deci, 'posnat%d'%n)
+        return Numeral._inNaturalPosStmts[n]
 
     @prover
     def deduce_in_digits(self, **defaults_config):
-        if Numeral._inDigitsStmts is None:
-            from .decimals import digit0, digit1, digit2, digit3, digit4, digit5
-            from .decimals import digit6, digit7, digit8, digit9
-            Numeral._inDigitsStmts = {
-                0: digit0,
-                1: digit1,
-                2: digit2,
-                3: digit3,
-                4: digit4,
-                5: digit5,
-                6: digit6,
-                7: digit7,
-                8: digit8,
-                9: digit9}
-        if self.n < 0 or self.n > 9:
+        n = self.n
+        if not (isinstance(n, int) and 0 <= n <= 9):
             raise ProofFailure(self, [],
                                "Cannot prove %d in Digits" % self.n)
-        return Numeral._inDigitsStmts[self.n]
+        if n not in Numeral._inDigitsStmts:
+            import proveit.numbers.numerals.decimals as deci
+            Numeral._inDigitsStmts[n] = getattr(deci, 'digit%d'%n)
+        return Numeral._inDigitsStmts[n]
 
     @prover
     def deduce_positive(self, **defaults_config):
-        if Numeral._positiveStmts is None:
-            from .decimals import posnat1, posnat2, posnat3, posnat4, posnat5
-            from .decimals import posnat6, posnat7, posnat8, posnat9
-            Numeral._positiveStmts = {
-                1: posnat1,
-                2: posnat2,
-                3: posnat3,
-                4: posnat4,
-                5: posnat5,
-                6: posnat6,
-                7: posnat7,
-                8: posnat8,
-                9: posnat9}
-        return Numeral._positiveStmts[self.n]
+        return self.deduce_in_natural_pos().derive_element_is_positive()
+
 
 
 class NumeralSequence(Operation, IrreducibleValue):

@@ -592,13 +592,14 @@ class Add(NumberOperation):
                                      is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
-        from . import empty_addition, unary_add_reduction
 
         if self.operands.num_entries() == 0:
             # [+]() = 0
+            from . import empty_addition
             return empty_addition
 
         if self.operands.is_single():
+            from . import unary_add_reduction
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
 
