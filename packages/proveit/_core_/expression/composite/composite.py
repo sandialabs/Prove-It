@@ -48,7 +48,7 @@ def composite_expression(expressions):
     Dictionaries with string keys will be wrapped in an NamedExpressions.
     Other dictionaries will be wrapped in an ExpressionTensor.
     A single expr or iterable over only Expressions will be wrapped
-    in an exprlist.
+    in an ExprTuple.
     '''
     from .expr_tuple import ExprTuple
     from .named_exprs import NamedExprs
