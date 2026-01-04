@@ -65,6 +65,7 @@ class OperationOverInstances(Operation):
         'instance_expr': 'instance_expr',
         'domain': 'domain',
         'domains': 'domains',
+        'condition': 'condition',
         'conditions': 'conditions'}
 
     def __init__(self, operator, instance_param_or_params, instance_expr, *,
@@ -109,17 +110,6 @@ class OperationOverInstances(Operation):
         '''
         from proveit.logic import InSet, InClass
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
-
-        if condition is not None:
-            if conditions is not None:
-                raise ValueError("Cannot specify both 'conditions' and "
-                                 "'condition'")
-            conditions = (condition,)
-        elif conditions is None:
-            conditions = tuple()
-        elif isinstance(conditions, ExprTuple):
-            conditions = conditions.entries
-
         if _lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             from proveit.logic import And
@@ -140,22 +130,97 @@ class OperationOverInstances(Operation):
                 instance_expr = lambda_map.body
                 conditions = ExprTuple()
         else:
-            # We will need to generate the Lambda sub-expression.
-            # Do some initial preparations w.r.t. instance_params, domain(s), and
-            # conditions.
             instance_params = composite_expression(instance_param_or_params)
+            if domains is not None:
+                # Some initial checks regarding domain specifications
+                if len(domains) != instance_params.num_entries():
+                    raise ValueError(
+                        "When specifying multiple domains, the number "
+                        "should be the same as the number of instance "
+                        "variables.")
+                if domain is not None:
+                    raise ValueError(
+                        "Provide a single domain or multiple domains, "
+                        "not both")
+            if condition is not None and conditions is not None:
+                raise ValueError("Cannot specify both 'conditions' and "
+                                 "'condition'")
+            
+            auto_nest_multi_params = self.auto_nest_multi_params()
+            if auto_nest_multi_params and instance_params.num_entries() > 1:
+                # Make a nested Operation and use the nesting='bundled' style.
+                assert _lambda_map is None, ("Not expected '_lambda_map' with "
+                                             "'instance_params_or_params'")
+                kwargs = {arg_name:locals()[var_name] for arg_name, var_name 
+                          in self.__class__._init_argname_mapping_.items()
+                          if var_name != 'instance_param_or_params'}
+                inner_instance_params = instance_params[1:]
+                inner_instance_vars = [get_param_var(param) for param in
+                                       inner_instance_params]
+                if domain is None and domains is not None:
+                    kwargs['domains'] = domains[1:]
+                    domain, domains = domains[0], None
+                if conditions is not None:
+                    # Put conditions on the outer layer where possible.
+                    outer_conditions, inner_conditions = [], []
+                    if isinstance(conditions, ExprRange):
+                        conditions = ExprTuple(conditions)
+                    for _cond in conditions:
+                        if free_vars(_cond).isdisjoint(inner_instance_vars):
+                            outer_conditions.append(_cond)
+                        else:
+                            inner_conditions.append(_cond)
+                    kwargs['conditions'] = inner_conditions
+                    conditions = outer_conditions
+                nested_operation = self.__class__(
+                    inner_instance_params, **kwargs, styles=styles)
+                if styles is None: styles = dict()
+                styles['nesting'] = 'bundled'
+                instance_expr = nested_operation
+                instance_param_or_params = instance_params[0]
+                instance_params = composite_expression(instance_param_or_params)
+                condition = None # handled by nested operation
+
             if instance_params.num_entries() == 0:
                 raise ValueError(
                     "Expecting at least one instance parameter when "
                     "constructing an OperationOverInstances")
 
+            auto_nested_range_of_parameters = False
+            if auto_nest_multi_params and isinstance(instance_params[0], ExprRange):
+                # When using auto_nest_multi_params, take an ExprRange of
+                # parameters to be a single parameter as a function with
+                # the start/end indices represented in style options.
+                param_range = instance_params[0]
+                start_indices = param_range.start_indices()
+                end_indices = param_range.end_indices()
+                if len(start_indices) == 1:
+                    assert len(end_indices) == 1
+                    _start, _end = start_indices[0], end_indices[0]
+                else:
+                    _start = ExprTuple(start_indices)
+                    _end = ExprTuple(end_indices)
+                if styles is None: styles = dict()
+                styles['param_range_start'] = _start
+                styles['param_range_end'] = _end
+                auto_nested_range_of_parameters = True
+            
+            # We will need to generate the Lambda sub-expression.
+            # Do some initial preparations w.r.t. instance_params, domain(s), and
+            # conditions.
+            
+            if condition is not None:
+                assert conditions is None, "should have been checked above"
+                conditions = (condition,)
+            elif conditions is None:
+                conditions = tuple()
+            elif isinstance(conditions, ExprTuple):
+                conditions = conditions.entries            
+            
             # Add appropriate conditions for the domains:
             if domain is not None:
                 # prepend domain conditions
-                if domains is not None:
-                    raise ValueError(
-                        "Provide a single domain or multiple domains, "
-                        "not both")
+                assert domains is None, "should have been checked above"
                 if not isinstance(domain, Expression):
                     raise TypeError(
                         "The domain should be an 'Expression' type")
@@ -166,18 +231,11 @@ class OperationOverInstances(Operation):
                 # all domain conditions at the beginning,
                 # some may later get pushed back as "inner conditions"
                 # (see below),
-                if len(domains) != instance_params.num_entries():
-                    raise ValueError(
-                        "When specifying multiple domains, the number "
-                        "should be the same as the number of instance "
-                        "variables.")
-                for domain in domains:
-                    if domain is None:
-                        raise ValueError(
-                            "When specifying multiple domains, none "
-                            "of them can be the None value")
+                assert len(domains) == instance_params.num_entries(), (
+                    "should have been checked above")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
+                    if domain is None: continue # skip domains of None
                     # If the domain is a proper class, indicated via
                     # an 'is_proper_class' attribute, use InClass
                     # instead of InSet.
@@ -217,19 +275,9 @@ class OperationOverInstances(Operation):
                     domain_conditions.append(condition)
                 conditions = domain_conditions + list(conditions)
             conditions = composite_expression(conditions)
-
-        # domain(s) may be implied via the conditions.  If domain(s) were
-        # supplied, this should simply reproduce them from the conditions that
-        # were prepended.
-        domain = domains = None  # These may be reset below if there are ...
-        if (conditions.num_entries() >= instance_params.num_entries()):
-            domains = [_extract_domain_from_condition(ivar, cond) for
-                       ivar, cond in zip(instance_params, conditions)]
-            if all(domain is not None for domain in domains):
-                # Used if we have a single instance variable
-                domain = domains[0]
-            else:
-                domains = None
+            
+            if auto_nested_range_of_parameters:
+                instance_params = ExprTuple(get_param_var(param_range))
 
         if _lambda_map is None:
             # Now do the actual lambda_map creation
@@ -239,36 +287,35 @@ class OperationOverInstances(Operation):
             lambda_map = self.__class__._create_operand(
                 instance_param_or_params, instance_expr, conditions)
 
-        self.instance_params = instance_params
+        self._instance_params = tuple(instance_params)
         if (instance_params.num_entries() > 1 or
                 isinstance(instance_params[0], ExprRange)):
             '''Instance parameters of the OperationOverInstance.'''
-            self.instance_vars = [get_param_var(parameter) for
-                                  parameter in instance_params]
-            self.instance_param_or_params = self.instance_params
-            self.instance_var_or_vars = self.instance_vars
+            self._instance_vars = tuple([get_param_var(parameter) for
+                                         parameter in instance_params])
+            """
             '''Instance parameter variables of the OperationOverInstance.'''
             if domains is not None:
                 # Domain for each instance variable
-                self.domains = tuple(domains)
+                self._domains = domains
                 '''Domains of the instance parameters (may be None)'''
-                n_domains = len(self.domains)
+                n_domains = len(self._domains)
                 if (not any(isinstance(entry, ExprRange) for entry
-                            in self.domains)
-                        and self.domains == tuple([self.domains[0]] * n_domains)):
+                            in self._domains)
+                        and self._domains == tuple([self._domains[0]] * n_domains)):
                     # Multiple domains that are all the same.
-                    self.domain = self.domains[0]
-            else:
-                self.domain = None
+                    self._domain = self._domains[0]
+            """
         else:
-            self.instance_param = instance_params[0]
+            self._instance_param = instance_params[0]
             '''Outermost instance parameter of the OperationOverInstance.'''
-            self.instance_var = get_param_var(self.instance_param)
-            self.instance_param_or_params = self.instance_param
-            self.instance_var_or_vars = self.instance_var
+            self._instance_var = get_param_var(self._instance_param)
+            """
             '''Outermost instance parameter variable of the OperationOverInstance.'''
-            self.domain = domain
+            if domains is not None:
+                self._domain = domains[0]
             '''Domain of the outermost instance parameter (may be None)'''
+            """
 
         _condition, _inst_expr = (
             self.__class__._extract_condition_and_instance_expr(lambda_map.body))
@@ -276,21 +323,37 @@ class OperationOverInstances(Operation):
         self._instance_expr = _inst_expr
 
         if _condition is not None:
-            self.condition = _condition
-            if _lambda_map is None and (
-                    not self.has_domain() and len(conditions)==0):
-                # Don't display as a stylized condition since there
+            self._condition = _condition
+            if _lambda_map is None and len(conditions)==0:
+                # Don't display as a compact condition since there
                 # was no given 'domain' or 'condition', just an instance_expr
                 # that happens to be in the form of a condition
                 # (e.g., an Implies in the case of Forall).
                 styles = dict() if styles is None else dict(styles)
-                styles['condition'] = 'internalized'
-                # We need this in case of a 'condition':'stylized' switch:
+                styles['condition'] = 'expanded'
+                # We need this in case of a 'condition':'compact' switch:
                 conditions = ExprTuple(_condition)
-        self.conditions = conditions
+        self._conditions = conditions
         '''Conditions applicable to the outermost instance variable (or iteration of indexed variables) of the OperationOverInstance.  May include an implicit 'domain' condition.'''
 
         Operation.__init__(self, operator, [lambda_map], styles=styles)
+
+    @classmethod
+    def auto_nest_multi_params(cls):
+        '''
+        For OperationOverInstance classes for which 'auto_nest_multi_params'
+        is True and there are multiple parameter entries, put parameter 
+        entries into multiple, nested operation occurrences and set the 
+        nesting='bundled' style . Also, if there are mutliple parameters in 
+        ExprRange(s), place the start/end indices as muliparam_start and 
+        multipparam_end style options and just use the single Variable as the 
+        internally used parameter, acting as a function parameter where the 
+        index/indices are arguments to the function.
+        THIS FEATURE WAS INTENDED FOR UNIVERSAL AND EXISTENTIAL QUANTIFICATION
+        BUT WE DECIDED AGAINST IT AND MAY NOW BE MOOT BUT REMAINS AS AN OPTION
+        IN CASE WE WANT TO MAKE USE OF IT IN THE FUTURE.
+        '''
+        return False
 
     def remake_with_style_calls(self):
         '''
@@ -298,46 +361,50 @@ class OperationOverInstances(Operation):
         what "with..." method calls are most appropriate?  Return a
         tuple of strings with the calls to make.  The default for the
         OperationOverInstances class is to include appropriate
-        'with_wrapping', 'wrap_params', and 'with_justification' calls.
+        'wrapping', 'justification', 'condition', 'nesting',
+        'wrap_param_positions', 'param_justification', 'suchthat_wrapping', 
+        'suchthat_justification', 'wrap_condition_positions', and
+        'condition_justification', calls.
         '''
         with_wrapping = (self.get_style('with_wrapping', 'False') == 'True')
-        wrap_params = (self.get_style('wrap_params', 'False') == 'True')
-        condition_wrapping = self.get_style('condition_wrapping', 'No')
-        justification = self.get_style('justification')
+        justification = self.get_style('justification', 'center')
+        condition_style = self.get_style('condition', 'compact')
+        nesting_style = self.get_style('nesting', 'unbundled')
+        wrap_param_positions = self.wrap_param_positions()
+        param_justification = self.get_style('param_justification', 'left')
+        suchthat_wrapping = self.get_style('suchthat_wrapping', 'No')
+        suchthat_justification = self.get_style('suchthat_justification', 'left')
+        wrap_condition_positions = self.wrap_condition_positions()
+        condition_justification = self.get_style('condition_justification', 'left')
         call_strs = []
         if with_wrapping:
             call_strs.append('with_wrapping()')
-        if wrap_params:
-            call_strs.append('wrap_params()')
-        if condition_wrapping == 'before':
-            call_strs.append('with_wrap_before_condition()')
-        elif condition_wrapping == 'after':
-            call_strs.append('with_wrap_after_condition()')            
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
+        if condition_style == 'expanded':
+            call_strs.append('with_expanded_condition()')      
+        if nesting_style == 'bundled':
+            call_strs.append('with_bundled_nesting()')      
+        if len(wrap_param_positions) > 0:
+            call_strs.append('with_param_wrapping_at(' + ','.join(
+                str(pos) for pos in wrap_param_positions) + ')')
+        if param_justification != 'left':
+            call_strs.append('with_param_justification("' + 
+                             param_justification + '")')
+        if suchthat_wrapping == 'before':
+            call_strs.append('with_wrap_before_suchthat()')
+        elif suchthat_wrapping == 'after':
+            call_strs.append('with_wrap_after_suchthat()')            
+        if suchthat_justification != 'left':
+            call_strs.append('with_suchthat_justification("' + 
+                             condition_justification + '")')
+        if len(wrap_condition_positions) > 0:
+            call_strs.append('with_condition_wrapping_at(' + ','.join(
+                str(pos) for pos in wrap_condition_positions) + ')')
+        if param_justification != 'left':
+            call_strs.append('with_condition_justification("' + 
+                             param_justification + '")')
         return call_strs
-
-    def effective_condition(self):
-        '''
-        Return the effective 'condition' of the OperationOverInstances.
-        If there is no 'condition', return And operating on zero
-        operands.
-        '''
-        if hasattr(self, 'condition'):
-            return self.condition
-        else:
-            from proveit.logic import And
-            return And()
-
-    def has_domain(self):
-        if hasattr(self, 'domains'):
-            return self.domains is not None
-        return self.domain is not None
-
-    def first_domain(self):
-        if hasattr(self, 'domains'):
-            return self.domains[0]
-        return self.domain
 
     @classmethod
     def _create_operand(cls, instance_param_or_params, instance_expr, conditions):
@@ -387,8 +454,7 @@ class OperationOverInstances(Operation):
             return self.operator  # simply the operator
         elif arg_name == 'instance_param_or_params':
             # return the joined instance variables according to style.
-            return single_or_composite_expression(
-                OperationOverInstances.explicit_instance_params(self))
+            return self.instance_param_or_params
         elif arg_name == 'instance_expr':
             # return the inner instance expression after joining the
             # instance variables according to the style
@@ -399,7 +465,7 @@ class OperationOverInstances(Operation):
             if (not hasattr(self, 'domain') or 
                     domains != tuple([self.domain] * len(domains))):
                 if arg_name == 'domains' and len(domains) > 0:
-                    return ExprTuple(*domains)
+                    return domains
                 else:
                     return None
             if self.domain is None:
@@ -408,7 +474,7 @@ class OperationOverInstances(Operation):
         elif arg_name == 'condition' or arg_name == 'conditions':
             # return the joined conditions excluding domain conditions
             conditions = composite_expression(
-                OperationOverInstances.explicit_conditions(self))
+                OperationOverInstances.non_domain_conditions(self))
             if conditions.num_entries() == 1 and arg_name == 'condition':
                 return conditions[0]
             elif conditions.num_entries() > 1 and arg_name == 'conditions':
@@ -482,42 +548,47 @@ class OperationOverInstances(Operation):
         This override Expression._build_canonical_form to make
         sure that the domain conditions are kept in their proper place.
         '''
-        from proveit.logic import And, InClass
+        from proveit.logic import InClass
         canonical_operator = self.operator.canonical_form()
         assert self.operands.num_entries()==1
         lambda_map = self.operands[0]
         instance_expr = self.instance_expr
-        if not hasattr(self, 'condition'):
+        condition = self.condition if hasattr(self, 'condition') else None
+        if condition is None:
             # If there are not conditions, there is nothing special
             # to worry about.
             return Operation._build_canonical_form(self)
-        condition = self.condition
-        num_explicit_domains = len(self.explicit_domains())
         # parameters should be unchanged:
         parameters = lambda_map.parameters
-        if num_explicit_domains > 0:
-            # Keep the domain conditions in their proper place.
-            if isinstance(condition, And):
-                if hasattr(condition, 'operands'):
-                    conds = condition.operands
-                else:
-                    conds = ExprTuple(condition.operand)
+        # Keep the domain conditions in their proper place.
+        # For domain conditions, just use the canonical form
+        # for the domain.
+        def processed_domain_cond(domain_cond):
+            assert isinstance(domain_cond, InClass)
+            return type(domain_cond)(
+                    domain_cond.element,
+                    domain_cond.domain.canonical_form())
+        if len(parameters)==1:
+            # Designed to work when using 'auto_nest_multi_params'.
+            if hasattr(self, 'domains') and self.domains[0] is not None:
+                domain_conditions = ExprTuple(next(iter(self.domain_conditions())))
+                domain_conditions = domain_conditions.map_elements(
+                    processed_domain_cond)
+                non_domain_conditions = self._conditions[1:]
             else:
-                conds = ExprTuple(condition)
-            # For domain conditions, just use the canonical form
-            # for the domain.
-            def processed_domain_cond(domain_cond):
-                assert isinstance(domain_cond, InClass)
-                return type(domain_cond)(
-                        domain_cond.element,
-                        domain_cond.domain.canonical_form())
-            canonical_conditions = (
-                    conds[:num_explicit_domains].map_elements(
-                            processed_domain_cond))
-            canonical_conditions += sorted(
-                    [cond.canonical_form() for cond 
-                     in conds[num_explicit_domains:]], key=hash)
-            canonical_conditions = ExprTuple(*canonical_conditions)
+                domain_conditions = tuple()
+                non_domain_conditions = self._conditions
+        else:
+            assert not self.auto_nest_multi_params()
+            domain_conditions = ExprTuple(*self.domain_conditions()).map_elements(
+                processed_domain_cond)
+            non_domain_conditions = self.non_domain_conditions()
+        if len(domain_conditions) > 0:
+            non_domain_conditions = sorted(
+                (_cond.canonical_form() for _cond in non_domain_conditions),
+                key=hash)
+            canonical_conditions = ExprTuple(*domain_conditions,
+                                             *non_domain_conditions)
             canonical_instance_expr = instance_expr.canonical_form()
             canonical_lambda = self.__class__._create_operand(
                     parameters, canonical_instance_expr,
@@ -531,174 +602,247 @@ class OperationOverInstances(Operation):
                                   ExprTuple(canonical_lambda)),
                 style_preferences=self._style_data.styles)
 
-    def _all_instance_params(self):
+    def _is_properly_nested(self, *, must_be_bundled):
         '''
-        Yields the instance parameters (each a Variable or Iter of IndexedVars)
-        of this OperationOverInstances and any instance parameters of nested
-        OperationOverInstances.
+        Return True if this is a nested operation is of the same type and
+        must_be_bundled is False or the nesting syle is 'bundled'.
         '''
-        if hasattr(self, 'instance_params'):
-            for ivar in self.instance_params:
-                yield ivar
+        if self.get_style('condition', 'compact') == 'expanded':
+            # With an expanded condition, it isn't properly nested.
+            return False
+        return type(self._instance_expr) == type(self) and (
+            not must_be_bundled or 
+            self.get_style('nesting', 'unbundled') == 'bundled')
+
+    def _is_bundled(self):
+        '''
+        Return True if this is a nested operation is of the same type and
+        the nesting syle is 'bundled'.
+        '''
+        return self._is_properly_nested(must_be_bundled=True)
+
+    @property
+    def instance_param(self):
+        '''
+        Return a single, unbunded instance parameter if applicable
+        or raise an AttributeError.
+        '''
+        if hasattr(self, '_instance_param') and not self._is_bundled() and (
+                self.get_style('param_range_start', None) is None and
+                self.get_style('param_range_end', None) is None):
+            return self._instance_param
+        raise AttributeError("No single 'instance_param'")
+
+    def _effective_instance_param_entries(self, *, include_nested_only_if_bundled):
+        '''
+        Yield all bundled instance parameter entries.
+        '''
+        from proveit._core_.expression.composite.expr_range import var_range
+        if hasattr(self, '_instance_param'):
+            param_range_start = self.get_style('param_range_start', None)
+            param_range_end = self.get_style('param_range_end', None)
+            if param_range_start is None and param_range_end is None:
+                yield self._instance_param
+            else:
+                # yield a multi-parameter in an ExprRange
+                yield var_range(self._instance_param, param_range_start,
+                                param_range_end)
         else:
-            yield self.instance_param
-        if isinstance(self.instance_expr, self.__class__):
-            for inner_ivar in self.instance_expr._all_instance_params():
-                yield inner_ivar
+            for instance_param in self._instance_params:
+                yield instance_param
+        if self._is_properly_nested(must_be_bundled=include_nested_only_if_bundled):
+            # Include the nested instance parameters bundled with this one.
+            for instance_param in (
+                    self._instance_expr._effective_instance_param_entries(
+                        include_nested_only_if_bundled=include_nested_only_if_bundled)):
+                yield instance_param
+    
+    @property
+    def instance_params(self):
+        '''
+        Return instance parameters, including bundled ones, as an ExprTuple.
+        '''
+        return composite_expression(list(self._effective_instance_param_entries(
+            include_nested_only_if_bundled=True)))
+
+    @property
+    def instance_param_or_params(self):
+        '''
+        If there is a single, unbundled instance parameter, return that;
+        otherwise, return the 'instance_params'.
+        '''
+        try:
+            return self.instance_param
+        except AttributeError:
+            return self.instance_params
+
+    def _instance_param_lists(self):
+        '''
+        Yield lists of instance vars that include all of the instance
+        paramaters (see all_instance_params method) but grouped together
+        according to the style joining instance variables together.
+        '''
+        expr = self
+        while True:
+            param_list = []
+            if hasattr(expr, '_instance_param'):
+                param_list.append(expr._instance_param)
+            else:
+                param_list.extend(expr._instance_params)
+            if not expr._is_properly_nested(must_be_bundled=True):
+                yield param_list
+            if not expr._is_properly_nested(must_be_bundled=False):
+                return # end of the road
+            expr = expr._instance_expr
+
+    def instance_param_lists(self):
+        '''
+        Returns lists of instance parameters that include all of the instance
+        parameters (see all_instance_params method) but grouped together
+        according to nesting styles.
+        '''
+        return list(self._instance_param_lists())
 
     def all_instance_params(self):
         '''
-        Returns all instance parameters (each a Variable or Iter of
-        IndexedVars) of this OperationOverInstances
-        and all instance parameters of nested OperationOverInstances.
+        Returns all instance parameters of this OperationOverInstances and
+        nested OperationOverInstances of the same type regardless of the
+        'nesting' style.
         '''
-        return list(self._all_instance_params())
+        return [param for param_list in self.instance_param_lists
+                for param in param_list]
 
-    def _all_instance_vars(self):
+    @property
+    def instance_var(self):
         '''
-        Yields the instance parameter variable of this OperationOverInstances
-        and any instance parameter variables of nested OperationOverInstances
-        of the same type.
+        Return a single, unbunded instance variable if applicable
+        or raise an AttributeError.
         '''
-        if hasattr(self, 'instance_vars'):
-            for ivar in self.instance_vars:
-                yield ivar
+        if hasattr(self, '_instance_var') and not self._is_bundled():
+            return self._instance_var
+        raise AttributeError("No single 'instance_var'")
+
+    def _effective_instance_vars(self, *, include_nested_only_if_bundled):
+        '''
+        Yield all bundled instance variables.
+        '''
+        if hasattr(self, '_instance_var'):
+            yield self._instance_var
         else:
-            yield self.instance_var
-        if isinstance(self.instance_expr, self.__class__):
-            for inner_ivar in self.instance_expr._all_instance_vars():
-                yield inner_ivar
+            for instance_var in self._instance_vars:
+                yield instance_var
+        if self._is_properly_nested(must_be_bundled=include_nested_only_if_bundled):
+            # Include the nested instance parameters bundled with this one.
+            for instance_var in self._instance_expr._effective_instance_vars(
+                    include_nested_only_if_bundled=include_nested_only_if_bundled):
+                yield instance_var
+
+    @property
+    def instance_vars(self):
+        '''
+        Return instance variables, including bundled ones, as a tuple.
+        '''
+        return tuple(self._effective_instance_vars(
+            include_nested_only_if_bundled=True))
 
     def all_instance_vars(self):
         '''
         Returns all instance parameter variables of this OperationOverInstances
-        and all instance parameters variables of nested OperationOverInstances.
+        and all instance parameters variables of nested OperationOverInstances
+        regardless of the 'nesting' style.
         '''
-        return list(self._all_instance_vars())
+        return tuple(self._effective_instance_vars(
+            include_nested_only_if_bundled=False))
 
-    def _all_domains(self):
-        '''
-        Yields the domain of this OperationOverInstances
-        and any domains of nested OperationOVerInstances
-        of the same type.  Some of these may be null.
-        Modified by wdc on 6/17/2019, modifying generator fxn name
-        from alldomains() to _alldomains() and adding a separate
-        non-generator version of the alldomains() fxn below.
-        '''
-        if hasattr(self, 'domains'):
-            for domain in self.domains:
-                yield domain
-        else:
-            yield self.domain
-            if isinstance(self.instance_expr, self.__class__):
-                for domain in self.instance_expr.all_domains():
-                    yield domain
-
-    def all_domains(self):
-        '''
-        Returns all domains of this OperationOverInstances
-        including domains of nested OperationOverInstances
-        of the same type.
-        '''
-        return list(self._all_domains())
-
-    def _all_conditions(self):
-        '''
-        Yields each condition of this OperationOverInstances
-        and any conditions of nested OperationOverInstances
-        of the same type.
-        Modified by wdc on 6/06/2019, modifying generator fxn name
-        from all_conditions() to _all_conditions() and adding a separate
-        non-generator version of the all_conditions() fxn below.
-        '''
-        #for condition in self.conditions:
-        #    yield condition
-        if hasattr(self, 'condition'):
-            yield self.condition # possibly a conjunction
-        if isinstance(self.instance_expr, self.__class__):
-            for condition in self.instance_expr.all_conditions():
-                yield condition
-
-    def all_conditions(self):
-        '''
-        Returns all conditions of this OperationOverInstances
-        and all conditions of nested OperationOverInstances
-        of the same type. Relies on the Python generator function
-        _all_conditions() defined above.
-        Added by wdc on 6/06/2019.
-        '''
-        return list(self._all_conditions())
-    
     @property
     def instance_expr(self):
         '''
         Expression corresponding to each 'instance' in the 
         OperationOverInstances.  When there are conditions, this can
         depend on the 'condition' style.  For example, the instance_expr
-        of forall_{x | Q(x)} P(x) is P(x) if that style is 'stylized' but
+        of forall_{x | Q(x)} P(x) is P(x) if that style is 'compact' but
         will display as forall_{x} [Q(x) ⇒ P(x)] with [Q(x) ⇒ P(x)] as the
-        instance_expr if that style is 'internalized'.
+        instance_expr if that style is 'expanded'.  It can also depend
+        on the 'nesting' style being 'bundled' or 'unbundled'.
         '''
-        if self.get_style('condition', 'stylized') == 'stylized':
+        if self.get_style('nesting', 'unbundled') == 'bundled' and (
+                type(self._instance_expr) == type(self)):
+            return self._instance_expr.instance_expr
+        if self.get_style('condition', 'compact') == 'compact':
             return self._instance_expr
         else:
+            # Show the condition with the 'expanded' style.
             return self.operand.body
 
-    def _all_instance_exprs(self):
+    @property
+    def domain(self):
         '''
+        Return the single, only domain if applicable or raise an 
+        AttributeError.
         '''
-        expr = self
-        while hasattr(expr, 'instance_expr'):
-            yield expr.instance_expr
-            expr = expr.instance_expr
+        domains = self.domains
+        if len(domains) == 0:
+            raise AttributeError("No 'domain'")
+        domain = domains[0]
+        if domains[0] is None:
+            raise AttributeError("No 'domain'")
+        if not all(_domain==domain for _domain in domains):
+            raise AttributeError("No single 'domain'")
+        return domain
 
-    def all_instance_exprs(self):
+    def _effective_domains(self, *, include_nested_only_if_bundled):
         '''
+        Yield all bundled domains where the condition style is 'compact'.
         '''
-        return list(self._all_instance_exprs())
+        if self.get_style('condition', 'compact') == 'expanded':
+            raise AttributeError('No explicit domains')
+        instance_params = self._instance_params
+        conditions_iter = iter(self._conditions)
+        next_condition = None
+        for iparam in instance_params:
+            if next_condition is None:
+                try:
+                    next_condition = next(conditions_iter)
+                except StopIteration:
+                    yield None
+                    continue
+            condition = next_condition
+            domain = _extract_domain_from_condition(iparam, condition)
+            if domain is not None:
+                next_condition = None # move on to the next, next_condition
+            yield domain
+        if self._is_properly_nested(must_be_bundled=include_nested_only_if_bundled):
+            # Include the nested instance parameters bundled with this one.
+            for domain in self._instance_expr._effective_domains(
+                    include_nested_only_if_bundled=include_nested_only_if_bundled):
+                yield domain
 
-    def explicit_instance_params(self):
+    @property
+    def domains(self):
         '''
-        Return the instance parameters that are to be shown explicitly
-        in the formatting (as opposed to being made implicit via
-        conditions) joined together at this level according to the
-        style. By default, this includes all of the instance parameters
-        that are to be joined but this may be overridden to exclude
-        implicit instance parameters.
+        Return the domains, including bundled ones, as a tuple.
         '''
-        if hasattr(self, 'instance_params'):
-            return self.instance_params.entries
-        else:
-            return [self.instance_param]
+        return tuple(self._effective_domains(include_nested_only_if_bundled=True))
 
-    def explicit_instance_vars(self):
+    def all_domains(self):
         '''
-        Return the instance parameter variables that are to be shown explicitly
-        in the formatting (as opposed to being made implicit via conditions)
-        joined together at this level according to the style. The behavior
-        is determined by 'explicit_instance_params'.  Here, we simply extract
-        the variables from the parameters that result from
-        'explicit_instance_params'.
+        Returns all domains of this OperationOverInstances
+        including domains of nested OperationOverInstances
+        of the same type, regardless of the 'nesting' style.
         '''
-        return [get_param_var(parameter) for
-                parameter in self.explicit_instance_params()]
+        return tuple(self._effective_domains(include_nested_only_if_bundled=False))
 
     def explicit_domains(self):
         '''
-        Return the domains of the instance variables as a tuple.
+        Return the domains of the instance variables that are to be
+        displayed explicitly (not with an 'expanded' condition) as a tuple.
         '''
-        if self.get_style('condition', 'stylized') == 'internalized':
-            # No explicit domains when using style 'condition':'internalized'.
+        if self.get_style('condition', 'compact') == 'expanded':
+            # No explicit domains when using style 'condition':'expanded'.
             return tuple()
-        if not self.has_domain():
-            return tuple()
-        if hasattr(self, 'domains'):
-            return self.domains
-        elif self.domain is not None:
-            return (self.domain,)
-        return tuple()  # No explicitly displayed domains
+        return self.domains
 
-    def has_one_domain(self):
+    def has_domain(self):
         '''
         Return True if and only if each instance parameter has
         the some explicit domain.
@@ -707,58 +851,121 @@ class OperationOverInstances(Operation):
             return True
         return False
 
+    def _parameters_with_applicable_domain_conditions(self, remaining_conditions):
+        '''
+        Return a list of all parameters or applicable domain conditions
+        bundled according to 'nesting' style.
+        '''
+        instance_params = self.instance_params
+        if not hasattr(self, 'domains'):
+            return instance_params
+        domains_iter = iter(self._effective_domains(
+            include_nested_only_if_bundled=True))
+        cond_index = 0
+        for iparam in instance_params:
+            try:
+                domain = next(domains_iter)
+            except StopIteration:
+                domain = None
+            if domain is None:
+                yield iparam
+            else:
+                while True:
+                    cond = remaining_conditions[cond_index]
+                    if domain == _extract_domain_from_condition(iparam, cond):
+                        break # found the next domain condition
+                    cond_index += 1
+                remaining_conditions.pop(cond_index)
+                yield cond
+ 
     def domain_conditions(self):
         '''
         Return the domain conditions of all instance variables that
         are joined together at this level according to the style.
         '''
         if hasattr(self, 'domains'):
-            assert (self.conditions.num_entries() >= 
-                    len(self.domains)), (
-                            'expecting a condition for each domain')
-            for iparam, condition, domain in  \
-                    zip(self.instance_params, self.conditions, self.domains):
+            num_domains = 0
+            conditions_iter = iter(self.conditions)
+            for iparam, domain in zip(self.instance_params, self.domains):
+                if domain is None: continue
+                condition = next(conditions_iter)
                 assert domain == _extract_domain_from_condition(
                     iparam, condition)
-            return self.conditions[:len(self.domains)].entries
+                num_domains += 1
+            return self.conditions[:num_domains]
         else:
-            explicit_domains = self.explicit_domains()
-            if len(explicit_domains) == 0:
-                return []  # no explicit domains
-            domain_conditions = []
-            assert (self.domain ==
-                    _extract_domain_from_condition(self.instance_param,
-                                                   self.conditions[0]))
-            domain_conditions.append(self.conditions[0])
-            return domain_conditions
+            return tuple()
     
+    def _effective_conditions(self, *, include_nested_only_if_bundled):
+        '''
+        Yield all bundled conditions where the condition style is 'compact'.
+        '''
+        if self.get_style('condition', 'compact') == 'expanded':
+            return
+        for condition in self._conditions:
+            yield condition
+        if self._is_properly_nested(must_be_bundled=include_nested_only_if_bundled):
+            # Include the nested conditions bundled with this one.
+            for condition in self._instance_expr._effective_conditions(
+                    include_nested_only_if_bundled=include_nested_only_if_bundled):
+                yield condition
+
+    @property
+    def condition(self):
+        if self.get_style('condition', 'compact') == 'expanded':
+            raise AttributeError("No compact 'condition'")
+        return self._condition
+
+    @property
+    def conditions(self):
+        '''
+        Return the conditions, including domain conditions and bundled ones, 
+        as a tuple.
+        '''
+        return tuple(self._effective_conditions(include_nested_only_if_bundled=True))
+
+    def all_conditions(self):
+        '''
+        Returns the conditions, including domain conditions, of this 
+        OperationOverInstances and nested OperationOverInstances
+        of the same type, regardless of the 'nesting' style.
+        '''
+        return tuple(self._effective_conditions(include_nested_only_if_bundled=False))
+
+    def non_domain_conditions(self):
+        '''
+        Return a list of conditions that exclude the domain conditions.
+        '''
+        remaining_conditions = list(self.conditions)
+        list(self._parameters_with_applicable_domain_conditions(
+            remaining_conditions))
+        return remaining_conditions
+        
     def non_domain_condition(self):
         '''
         Return the condition that excludes domain condition(s); this
         will be a conjunction if there are more than one non-domain
-        conditions.
+        conditions or TRUE if there are zero.
         '''
         from proveit.logic import And, TRUE
-        domains = self.explicit_domains()
-        if len(domains) == 0:
-            return self.condition
-        non_domain_conditions = self.conditions[len(domains):].entries
+        non_domain_conditions = self.non_domain_conditions()
         if len(non_domain_conditions) == 0:
             return TRUE
         if len(non_domain_conditions) == 1:
             return non_domain_conditions[0]
         return And(non_domain_conditions)
-
+        
+    """
     def explicit_conditions(self):
         '''
         Return the conditions that are to be shown explicitly in the formatting
         (after the "such that" symbol "|") at this level according to the
         style.  By default, this includes all of the 'joined' conditions except
         implicit 'domain' conditions.
-        If using 'condition':'internalized' style, there are no 'explicit'
+        If using 'condition':'expanded' style, there are no 'explicit'
         conditions.
         '''
-        if self.get_style('condition', 'stylized') == 'internalized':
+        if self.get_style('condition', 'compact') == 'expanded':
             return tuple()
         if hasattr(self, 'domains'):
             assert (self.conditions.num_entries() >= 
@@ -780,68 +987,109 @@ class OperationOverInstances(Operation):
                 assert cond_domain == self.domain
                 conditions.extend(self.conditions[1:].entries)
             return conditions
-
-    def _instance_param_lists(self):
-        '''
-        Yield lists of instance vars that include all of the instance
-        paramaters (see all_instance_params method) but grouped together
-        according to the style joining instance variables together.
-        '''
-        expr = self
-        while isinstance(expr, self.__class__):
-            if hasattr(expr, 'instance_params'):
-                yield expr.instance_params  # grouped together
-            else:
-                yield [expr.instance_param]
-            expr = expr.instance_expr
-
-    def instance_param_lists(self):
-        '''
-        Returns lists of instance parameters that include all of the instance
-        parameters (see all_instance_params method) but grouped together
-        according to the style joining instance parameters together.
-        '''
-        return list(self._instance_param_lists())
+    """
 
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
+        auto_nest_multi_params = self.auto_nest_multi_params()
         options = StyleOptions(self)
         options.add_option(
             name = 'with_wrapping',
             description = ("If 'True', wrap the Expression after "
                            "the parameters"),
             default = None, 
-            related_methods = ('with_wrapping',))
-        if hasattr(self, 'condition'):
-            options.add_option(
-                name = 'condition',
-                description = ("Show the condition as 'stylized' or "
-                               "'internalized' (as internally represented)."),
-                default = 'stylized',
-                related_methods = ('with_stylized_condition',
-                                   'with_internalized_condition')),
-        options.add_option(
-            name = 'condition_wrapping',
-            description = ("Wrap 'before' or 'after' the condition (or None)."),
-            default = None,
-            related_methods = ('with_wrap_after_condition',
-                               'with_wrap_before_condition')),
-        options.add_option(
-            name = 'wrap_params',
-            description = ("If 'True', wraps every two parameters "
-                           "AND wraps the Expression after the parameters"),
-            default = None,
-            related_methods = ('with_params',)),
+            related_methods = ('with_wrapping', 'without_wrapping'))
         options.add_option(
             name = 'justification',
             description = ("justify to the 'left', 'center', or 'right' "
-                           "in the array cells"),
+                           "in the array cells when 'with_wrapping' is True"),
             default = 'center',
-            related_methods = ('with_justification',))
+            related_methods = ('with_justification', 'with_wrapping'))
+        options.add_option(
+            name = 'condition',
+            description = ("Show the condition (if there is one) as 'compact' "
+                           "or 'expanded' (as internally represented)."),
+            default = 'compact',
+            related_methods = ('with_compact_condition', 'with_expanded_condition',
+                               'has_compact_condition', 'has_expanded_condition')),
+        if auto_nest_multi_params and (
+                isinstance(self._instance_expr, self.__class__)):
+            options.add_option(
+                name = 'nesting',
+                description = ("If 'bundled', combine the next nested operation "
+                               "with this one to appear as one operation"),
+                default = 'unbundled',
+                related_methods = ('with_bundled_nesting', 
+                                   'without_bundled_nesting'))
+        options.add_option(
+            name = 'wrap_param_positions',
+            description = (
+                    "position(s) at which wrapping of parameters is to occur; "
+                    "'2 n - 1' is after the nth operand, '2 n' is "
+                    "after the nth parameter."),
+            default = '()',
+            related_methods = (
+                    'with_param_wrapping_at', 
+                    'without_param_wrapping',
+                    'wrap_param_positions'))
+        options.add_option(
+            name = 'param_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapped parameters"),
+            default = 'left',
+            related_methods = ('with_condition_justification',
+                               'with_param_wrapping_at'))     
+        options.add_option(
+            name = 'suchthat_wrapping',
+            description = ("Wrap 'before' or 'after' the '|' that separates "
+                           "the parameter(s) from the condition(s) (or None)."),
+            default = None,
+            related_methods = ('with_wrap_after_suchthat',
+                               'with_wrap_before_suchthat',
+                               'without_suchthat_wrapping')),
+        options.add_option(
+            name = 'suchthat_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapping before/after '|' "
+                           "that divides parameter(s) and condition(s)"),
+            default = 'left',
+            related_methods = ('with_suchthat_justification',
+                               'with_wrap_after_suchthat',
+                               'with_wrap_before_suchthat'))
+        options.add_option(
+            name = 'wrap_condition_positions',
+            description = (
+                    "position(s) at which wrapping of conditions is to occur; "
+                    "'2 n - 1' is after the nth operand, '2 n' is "
+                    "after the nth condition."),
+            default = '()',
+            related_methods = (
+                    'with_condition_wrapping_at', 
+                    'without_condition_wrapping',
+                    'wrap_condition_positions'))
+        options.add_option(
+            name = 'condition_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapped conditions"),
+            default = 'left',
+            related_methods = ('with_condition_justification',
+                               'with_condition_wrapping_at')),
+        if auto_nest_multi_params:
+            options.add_option(
+                name = 'param_range_start',
+                description = ("Expression of start index/indices for a "
+                               "range of parameters"),
+                default = None,
+                style_type = Expression,
+                related_methods = ('with_param_range_indices',))
+            options.add_option(
+                name = 'param_range_end',
+                description = ("Expression of end index/indices for a "
+                               "range of parameters"),
+                default = None,
+                style_type = Expression,
+                related_methods = ('with_param_range_indices',))
         return options
-
-    def with_justification(self, justification):
-        return self.with_styles(justification=justification)
 
     def with_wrapping(self, wrap=True):
         '''
@@ -854,36 +1102,99 @@ class OperationOverInstances(Operation):
         '''
         return self.with_styles(with_wrapping=str(wrap))
     
-    def with_wrap_before_condition(self):
-        return self.with_styles(condition_wrapping='before')
-
-    def with_wrap_after_condition(self):
-        return self.with_styles(condition_wrapping='after')
-    
-    def with_stylized_condition(self):
-        return self.with_styles(condition='stylized')
-    
-    def with_internalized_condition(self):
-        return self.with_styles(condition='internalized')
-
-    def with_no_condition_wrapping(self):
-        return self.with_styles(condition_wrapping=None)
-
-    def wrap_params(self, wrap=True):
+    def without_wrapping(self):
         '''
-        Wraps the parameters onto the multiple lines depending on
-        how many parameters there are.   For example:
-        \forall_{a, b, c,
-                d, e, f, g} P(a, b, c, d, e, f, g)
-
-        rather than
-        \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
+        Disable 'with_wrapping'.
         '''
-        return self.with_styles(wrap_params=str(wrap))
+        return self.with_wrapping(False)
 
-    def has_stylized_condition(self):
-        return hasattr(self, 'condition') and (
-            self.get_style('condition', 'stylized') == 'stylized')
+    def with_justification(self, justification):
+        return self.with_styles(justification=justification)
+
+    def with_compact_condition(self):
+        return self.with_styles(condition='compact')
+    
+    def with_expanded_condition(self):
+        return self.with_styles(condition='expanded')
+
+    def has_compact_condition(self):
+        return hasattr(self, '_condition') and (
+            self.get_style('condition', 'compact') == 'compact')
+
+    def has_expanded_condition(self):
+        return hasattr(self, '_condition') and (
+            self.get_style('condition', 'compact') == 'expanded')
+
+    def with_bundled_nesting(self):
+        return self.with_styles(nesting='bundled')
+
+    def without_bundled_nesting(self):
+        return self.with_styles(nesting='unbundled')
+
+    def with_param_wrapping_at(self, *wrap_positions):
+        return self.with_styles(
+            wrap_param_positions='(' +
+            ' '.join(
+                str(pos) for pos in wrap_positions) +
+            ')')
+
+    def without_param_wrapping(self, *wrap_positions):
+        return self.with_param_wrapping_at()
+
+    def with_param_justification(self, justification):
+        return self.with_styles(param_justification=justification)
+
+    def wrap_param_positions(self):
+        '''
+        Return a list of wrap positions according to the current style setting.
+        '''
+        return [int(pos_str) for pos_str in self.get_style(
+            'wrap_param_positions', '').strip('()').split(' ') if pos_str != '']
+    
+    def with_wrap_before_suchthat(self):
+        return self.with_styles(suchthat_wrapping='before')
+
+    def with_wrap_after_suchthat(self):
+        return self.with_styles(suchthat_wrapping='after')
+    
+    def without_suchthat_wrapping(self):
+        return self.with_styles(suchthat_wrapping=None)
+
+    def with_suchthat_justification(self, justification):
+        return self.with_styles(suchthat_justification=justification)
+
+    def with_condition_wrapping_at(self, *wrap_positions):
+        return self.with_styles(
+            wrap_condition_positions='(' +
+            ' '.join(
+                str(pos) for pos in wrap_positions) +
+            ')')
+
+    def without_condition_wrapping(self, *wrap_positions):
+        return self.with_condition_wrapping_at()
+
+    def with_condition_justification(self, justification):
+        return self.with_styles(condition_justification=justification)
+
+    def with_param_range_indices(self, start_index_or_indices,
+                                end_index_or_indices):
+        '''
+        Return a list of wrap conditions according to the current style setting.
+        '''
+        if not isinstance(start_index_or_indices, Expression) or (
+                not isinstance(end_index_or_indices, Expression)):
+            start_index_or_indices = composite_expression(start_index_or_indices)
+            end_index_or_indices = composite_expression(end_index_or_indices)
+        return self.with_styles(param_range_start=start_index_or_indices,
+                                param_range_end=end_index_or_indices)
+
+    def wrap_condition_positions(self):
+        '''
+        Return a list of wrap conditions according to the current style setting.
+        '''
+        return [int(pos_str) for pos_str in self.get_style(
+            'wrap_condition_positions', '').strip('()').split(' ')
+            if pos_str != '']
 
     def string(self, **kwargs):
         return self._formatted('string', **kwargs)
@@ -891,213 +1202,132 @@ class OperationOverInstances(Operation):
     def latex(self, **kwargs):
         return self._formatted('latex', **kwargs)
 
-    def _formatted(
-            self,
-            format_type,
-            with_wrapping=None,
-            wrap_params=None,
-            justification=None,
-            fence=False):
+    def _formatted(self, format_type, fence=False):
         '''
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
-        from proveit.logic import And, InSet, InClass
+        from proveit.logic import InSet, InClass
 
-        if with_wrapping is None:
-            # style call to wrap the expression after the parameters
-            with_wrapping = (
-                    self.get_style('with_wrapping', 'False') == 'True')
-        if wrap_params is None:
-            # style call to wrap the expression after the parameters
-            wrap_params = (
-                    self.get_style('wrap_params', 'False') == 'True')
-        condition_wrapping = self.get_style(
-                'condition_wrapping', 'No')
-        show_internalized_condition = (self.get_style('condition', 'stylized')
-                                       == 'internalized')
-        if condition_wrapping == 'No': condition_wrapping=None
-        if justification is None:
-            justification = self.get_style('justification', 'center')
-        # override this default as desired
-        explicit_iparams = list(self.explicit_instance_params())
-        if show_internalized_condition:
-            has_explicit_conditions = False
-        elif (hasattr(self, 'condition') and isinstance(self.condition, And)
-            and (self.condition.operands.is_single() or
-                 self.condition.operands.is_empty()) ):
-            # explicitly format And cases that should reduce
-            explicit_conditions = self.condition
-            has_explicit_conditions = True
-        else:
-            explicit_conditions = ExprTuple(*self.explicit_conditions())
-            has_explicit_conditions = (explicit_conditions.num_entries() > 0)
-        explicit_domains = ExprTuple(*self.explicit_domains())
+        # style call to wrap the expression after the parameters
+        with_wrapping = (
+                self.get_style('with_wrapping', 'False') == 'True')
+        show_expanded_condition = (self.get_style('condition', 'compact')
+                                       == 'expanded')
+        justification = self.get_style('justification', 'center')
+        suchthat_wrapping = self.get_style('suchthat_wrapping', 'No')
+        if suchthat_wrapping == 'No': suchthat_wrapping=None
+        suchthat_justification = self.get_style('suchthat_justification', 'left')
+        param_justification = self.get_style('param_justification', 'left')
+        condition_justification = self.get_style('condition_justification', 'left')
         instance_expr = self.instance_expr
-        has_explicit_iparams = (len(explicit_iparams) > 0)
-        if not has_explicit_conditions:
-            # No explicit conditions to wrap
-            condition_wrapping = None
-        has_multi_domain = not self.has_one_domain()
-        domain_conditions = ExprTuple(*self.domain_conditions())
-        # domain_membership_op will be the InSet operator if all
-        # of the domain conditions are the InSet type, or the InClass
-        # operator otherwise.
-        domain_membership_op = InSet._operator_
-        for domain_condition in domain_conditions:
-            if ((isinstance(domain_condition, ExprRange) and
-                 not isinstance(domain_condition.body, InSet)) or (
-                         not isinstance(domain_condition, ExprRange)
-                         and not isinstance(domain_condition, InSet))):
+        try:
+            # Is there a single domain?
+            domain = self.domain
+            if (hasattr(domain, 'is_proper_class')
+                    and domain.is_proper_class):
                 domain_membership_op = InClass._operator_
-        out_str = ''
-        formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
-                                      for param in explicit_iparams])
-        if hasattr(self, 'condition'):
+            else:
+                domain_membership_op = InSet._operator_
+        except AttributeError:
+            domain = None
+        
+        has_any_domain_condition = False
+        if show_expanded_condition or len(self.conditions)==0:
+            # The condition, including domain conditions, if there are any,
+            # will be included in the instance_expr.
+            params_with_applicable_domain_conds = self.instance_params
+            explicit_conditions = tuple()      
+            formatted_instance_expr = instance_expr.formatted(
+                    format_type, fence=True)
+        else:
+            # Show 'compact' conditions.
+            remaining_conditions = list(self.conditions)
+            num_starting_conditions = len(remaining_conditions)
+            params_with_applicable_domain_conds = composite_expression(
+                list(self._parameters_with_applicable_domain_conditions(
+                    remaining_conditions)))
+            if len(remaining_conditions) < num_starting_conditions:
+                has_any_domain_condition = True
+            explicit_conditions = composite_expression(remaining_conditions)
             with defaults.temporary() as temp_defaults:
-                # Add the condition as an assumption when formatting 
+                # Add the conditions as assumptions when formatting 
                 # the instance expression.
                 temp_defaults.automation = False
                 temp_defaults.assumptions = defaults.assumptions + (
-                        self.condition,)
+                        self.conditions)
                 formatted_instance_expr =  instance_expr.formatted(
                     format_type, fence=True)
-        else:
-            formatted_instance_expr = instance_expr.formatted(
-                    format_type, fence=True)
-            
-        if format_type == 'string':
-            if fence:
-                out_str += '['
-            out_str += self.operator.formatted(format_type) + '_{'
-            if has_explicit_iparams:
-                if has_multi_domain:
-                    out_str += domain_conditions.formatted(
-                        format_type, operator_or_operators=',', fence=False)
-                else:
-                    out_str += formatted_params
-            if not has_multi_domain and self.domain is not None:
-                out_str += ' %s '%domain_membership_op.string()
-                if has_multi_domain:
-                    out_str += explicit_domains.formatted(
-                        format_type, operator_or_operators='*', fence=False)
-                else:
-                    out_str += self.domain.formatted(format_type, fence=False)
-            if has_explicit_conditions:
-                if has_explicit_iparams:
-                    out_str += " | "
-                out_str += explicit_conditions.formatted(
-                    format_type, fence=False)
-                # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
-                # if condition not in implicit_conditions)
-            out_str += '} ' + formatted_instance_expr
-            if fence:
-                out_str += ']'
-        if format_type == 'latex':
-            if fence:
-                out_str += r'\left['
-            if with_wrapping:
-                out_str += r'\begin{array}{l}'                
-            if wrap_params:
-                out_str += self.operator.formatted(
-                    format_type) + r'_{ \scriptsize \begin{array}{' + justification[0] + '}' + '\n'
-                if has_explicit_iparams:
-                    if has_multi_domain:
-                        out_str += self._wrap_params_formatted(
-                            format_type=format_type,
-                            params=domain_conditions,
-                            operator_or_operators=',',
-                            fence=False)
-                    else:
-                        out_str += self._wrap_params_formatted(
-                            format_type=format_type, params=explicit_iparams, fence=False)
-                if not has_multi_domain and self.domain is not None:
-                    out_str += ' %s '%domain_membership_op.latex()
-                    out_str += self.domain.formatted(format_type, fence=False)
-                if has_explicit_conditions:
-                    if has_explicit_iparams:
-                        out_str += "~|~"
-                    out_str += self._wrap_params_formatted(
-                        format_type=format_type, params=explicit_conditions, fence=False)
-                out_str += r'\end{array}' + '\n' + r'}~ '
-                if with_wrapping:
-                    out_str += r'\\' + '\n'
-                out_str += formatted_instance_expr
-            else:
-                out_str += self.operator.formatted(format_type) + r'_{'
-                if condition_wrapping is not None:
-                    out_str += r'\scriptsize \begin{array}{l}'
-                if has_explicit_iparams:
-                    if has_multi_domain:
-                        out_str += domain_conditions.formatted(
-                            format_type, operator_or_operators=',', fence=False)
-                    else:
-                        out_str += formatted_params
-                if not has_multi_domain and self.domain is not None:
-                    out_str += ' %s '%domain_membership_op.latex()
-                    out_str += self.domain.formatted(format_type, fence=False)
-                if has_explicit_conditions:
-                    if condition_wrapping == 'before':
-                        out_str += r' \\'
-                    if has_explicit_iparams:
-                        out_str += "~|~"
-                    if condition_wrapping == 'after':
-                        out_str += r'\\ '
-                    out_str += explicit_conditions.formatted(
-                        format_type, fence=False)
-                if condition_wrapping is not None:
-                    out_str += r'\end{array}'
-                out_str += '}~'
-                if with_wrapping:
-                    out_str += r'\\' + '\n'
-                out_str += formatted_instance_expr
-            if with_wrapping:
-                out_str += r'\end{array}'                
-            if fence:
-                out_str += r'\right]'
-        # print(out_str)
-        return out_str
-
-    def _wrap_params_formatted(
-            self,
-            format_type,
-            params,
-            fence,
-            operator_or_operators=None):
-        '''
-        Wraps the list of parameters depending on the type.
-        '''
         out_str = ''
-        cap = 70
-        # the average length of a range of ranges and a range
-        count = 0
-        if isinstance(params, list):
-            for i, entry in enumerate(params):
-                if count > cap:
-                    count = 0
-                    out_str += r'\\' + '\n'
-                if i == len(params) - 1:
-                    out_str += entry.formatted(format_type, fence=fence)
-                else:
-                    out_str += entry.formatted(format_type, fence=fence) + ', '
-                count += len(entry.formatted(format_type, fence=fence))
-        elif isinstance(params, ExprTuple):
-            for entry in params.entries:
-                if count > cap:
-                    count = 0
-                    out_str += r'\\' + '\n'
-                if operator_or_operators is not None:
-                    out_str += entry.formatted(format_type,
-                                               operator_or_operators=operator_or_operators,
-                                               fence=fence)
-                    count += len(entry.formatted(format_type,
-                                                 operator_or_operators=operator_or_operators,
-                                                 fence=fence))
-                else:
-                    out_str += entry.formatted(format_type, fence=fence)
-                    count += len(entry.formatted(format_type, fence=fence))
+        if fence:
+            if format_type == 'latex':
+                out_str += r'\left['
+            else:
+                out_str += '['
+        if format_type == 'latex' and with_wrapping:
+            out_str += r'\begin{array}{%s}'%justification[0]  
+        out_str += self.operator.formatted(format_type) + '_{'
+        if format_type == 'latex' and suchthat_wrapping is not None:
+            out_str += r'\scriptsize \begin{array}{%s}'%suchthat_justification[0]
+        if domain is None and has_any_domain_condition:
+            # A different domain for each instance parameter
+            out_str += params_with_applicable_domain_conds.formatted(
+                format_type, operator_or_operators=';', 
+                wrap_positions=self.wrap_param_positions(),
+                justification=param_justification, fence=False)
         else:
-            out_str += params.formatted(format_type, fence=fence)
+            # No domains or 1 domain for all instance parameters
+            out_str += self.instance_params.formatted(
+                format_type, operator_or_operators=',', 
+                wrap_positions=self.wrap_param_positions(), 
+                justification=param_justification, fence=False)
+            if domain is not None:
+                out_str += ' %s '%domain_membership_op.formatted(format_type)
+                out_str += self.domain.formatted(format_type, fence=False)
+        if len(explicit_conditions) > 0:
+            if suchthat_wrapping == 'before':
+                if format_type == 'latex':
+                    out_str += r'\\'
+                out_str += '\n'
+            else:
+                if format_type == 'latex':
+                    out_str += '~'
+                else:
+                    out_str += ' '
+            out_str += "|"
+            if suchthat_wrapping == 'after':
+                if format_type == 'latex':
+                    out_str += r'\\'
+                out_str += '\n'
+            else:
+                if format_type == 'latex':
+                    out_str += '~'
+                else:
+                    out_str += ' '
+            wrap_condition_positions = self.wrap_condition_positions()
+            if len(wrap_condition_positions) > 0 and format_type == 'latex':
+                out_str += r'\scriptsize'
+            out_str += explicit_conditions.formatted(
+                format_type, fence=False,
+                wrap_positions=self.wrap_condition_positions(),
+                justification=condition_justification)
+        if format_type == 'latex' and suchthat_wrapping is not None:
+            out_str += r'\end{array}'
+        out_str += '}'
+        if with_wrapping:
+            if format_type == 'latex':
+                out_str += r'\\'
+            out_str += '\n'
+        else:
+            out_str += ' '
+        out_str += formatted_instance_expr
+        if format_type == 'latex' and with_wrapping:
+            out_str += r'\end{array}'
+        if fence:
+            if format_type == 'latex':
+                out_str += r'\right]'
+            else:
+                out_str += ']'
         return out_str
 
     @equality_prover('instance_substituted', 'instance_substitute')

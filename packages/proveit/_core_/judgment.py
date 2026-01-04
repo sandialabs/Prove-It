@@ -883,10 +883,10 @@ class Judgment:
         _proof = self.proof()
 
         # If no repl_map is provided, instantiate the 
-        # "explicit_instance_vars" of the Forall with default mappings
+        # "instance_vars" of the Forall with default mappings
         # (mapping instance variables to themselves)
         if repl_map is None:
-            repl_map = {ivar: ivar for ivar in self.explicit_instance_vars()}
+            repl_map = {ivar: ivar for ivar in self.instance_vars}
 
         # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
@@ -966,6 +966,7 @@ class Judgment:
                 return get_param_var(repl_key.entries[0])
             return get_param_var(repl_key)
 
+        orig_num_forall_eliminations = num_forall_eliminations
         if num_forall_eliminations is None:
             # Determine the number of Forall eliminations.
             # The number is determined by the instance variables that
@@ -980,13 +981,15 @@ class Judgment:
                 if not isinstance(expr, Forall):
                     # No more directly nested universal quantifiers
                     break  # to eliminate.
+                has_compact_condition = expr.has_compact_condition()
                 lambda_expr = expr.operand
                 assert isinstance(lambda_expr, Lambda), (
                     "Forall Operation operand must be a Lambda function")
                 instance_param_vars = lambda_expr.parameter_vars
                 expr = lambda_expr.body
-                if isinstance(expr, Implies):
-                    # Skip over the "conditions" of the Forall expression.
+                if has_compact_condition:
+                    # Skip over the condition of the Forall expression.
+                    assert isinstance(expr, Implies)
                     expr = expr.consequent
                 forall_depth += 1
                 for iparam_var in instance_param_vars:
@@ -1023,8 +1026,12 @@ class Judgment:
 
         judgment = self
         iparam_index = 0
-        while num_forall_eliminations > 0:                
-            has_stylized_condition = judgment.has_stylized_condition()
+        while num_forall_eliminations > 0:
+            if orig_num_forall_eliminations is None:
+                assert isinstance(judgment.expr, Forall)
+            elif not isinstance(judgment.expr, Forall):
+                raise ValueError("'num_forall_eliminations' too big")
+            has_compact_condition = judgment.has_compact_condition()
             _repl_map = dict()
             for _var in judgment.expr.operand.parameter_vars:
                 _orig_var = all_iparam_vars[iparam_index]
@@ -1035,7 +1042,9 @@ class Judgment:
                 Instantiation.get_instantiation(
                         judgment, repl_map=_repl_map,
                         equiv_alt_expansions=equiv_alt_expansions))
-            if has_stylized_condition:
+            if has_compact_condition and isinstance(judgment.expr, Implies):
+                # Derive the consequent for the implicit implication of the
+                # 'compact' condition.
                 judgment = judgment.derive_consequent()
             num_forall_eliminations -= 1
         
