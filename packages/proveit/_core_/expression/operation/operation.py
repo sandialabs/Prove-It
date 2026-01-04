@@ -701,11 +701,9 @@ class Operation(Expression):
             raise EvaluationError(self) # end of the road
         return reduction.apply_transitivity(evaluation, preserve_all=True)
 
-    @equality_prover('simplified', 'simplify')
-    def simplification(self, *, preserved_exprs=None,
-                       simplify_top_level=True,
-                       simplify_only_where_marked=False,
-                       markers_and_marked_expr=None, **defaults_config):
+    def _simplification(self, *, simplify_top_level=True,
+                        simplify_only_where_marked=False,
+                        markers_and_marked_expr=None):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -722,9 +720,6 @@ class Operation(Expression):
         operands, were applicable, and then calls 'shallow_simplification'
         if applicable.
         '''
-        if (preserved_exprs is not None and self in preserved_exprs) or (
-                simplify_only_where_marked and markers_and_marked_expr[1]==self):
-            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
@@ -736,7 +731,6 @@ class Operation(Expression):
                 raise MarkedExprError(marked_expr, self)
         # Try to simplify the operands first.
         reduction = self._simplification_of_operands(
-            preserved_exprs=preserved_exprs,
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr)
         
@@ -768,8 +762,7 @@ class Operation(Expression):
                                                 auto_simplify=False)
     
     @equality_prover('simplified_operands', 'operands_simplify')
-    def simplification_of_operands(self, *, preserved_exprs=None,
-                                   simplify_only_where_marked=False,
+    def simplification_of_operands(self, *, simplify_only_where_marked=False,
                                    markers_and_marked_expr=None,
                                    **defaults_config):
         '''
@@ -781,7 +774,6 @@ class Operation(Expression):
             markers_and_marked_expr=markers_and_marked_expr)
     
     def _simplification_of_operands(self, *, 
-                                    preserved_exprs=None,
                                     simplify_with_known_evaluations=False,
                                     simplify_only_where_marked=False,
                                     markers_and_marked_expr=None):
@@ -797,7 +789,6 @@ class Operation(Expression):
             # If there is any ExprRange in the operands, simplify the
             # operands together as an ExprTuple.
             return self.inner_expr().operands[:].simplification(
-                preserved_exprs=preserved_exprs,
                 simplify_with_known_evaluations=simplify_with_known_evaluations,
                 simplify_only_where_marked=simplify_only_where_marked,
                 markers_and_marked_expr=markers_and_marked_expr)
@@ -821,7 +812,6 @@ class Operation(Expression):
                     if not is_irreducible_value(operand):
                         inner_operand = getattr(expr.inner_expr(), key)
                         expr = eq.update(inner_operand.simplification(
-                            preserved_exprs=preserved_exprs,
                             simplify_with_known_evaluations=simplify_with_known_evaluations,
                             simplify_only_where_marked=simplify_only_where_marked,
                             markers_and_marked_expr=sub_markers_and_marked_expr))
@@ -839,7 +829,6 @@ class Operation(Expression):
                     if not is_irreducible_value(operand):
                         inner_operand = expr.inner_expr().operands[k]
                         expr = eq.update(inner_operand.simplification(
-                            preserved_exprs=preserved_exprs,
                             simplify_with_known_evaluations=simplify_with_known_evaluations,
                             simplify_only_where_marked=simplify_only_where_marked,
                             markers_and_marked_expr=sub_markers_and_marked_expr))

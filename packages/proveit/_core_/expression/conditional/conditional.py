@@ -261,16 +261,12 @@ class Conditional(Expression):
                         lambda _expr : _expr.condition)
             return (subbed_val, subbed_condition)
 
-    @equality_prover('simplified', 'simplify')
-    def simplification(self, *, preserved_exprs=None, simplify_top_level=True,
-                       simplify_only_where_marked=False,
-                       markers_and_marked_expr=None, **defaults_config):
+    def _simplification(self, *, simplify_top_level=True,
+                        simplify_only_where_marked=False,
+                        markers_and_marked_expr=None):
         from proveit.relation import TransRelUpdater
         from proveit.logic import And
         
-        if (preserved_exprs is not None and self in preserved_exprs) or (
-                simplify_only_where_marked and markers_and_marked_expr[1]==self):
-            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
@@ -290,7 +286,6 @@ class Conditional(Expression):
                 sub_markers_and_marked_expr = None
             expr = eq.update(
                     expr.value_substitution(self.value.simplification(
-                        preserved_exprs=preserved_exprs,
                         simplify_only_where_marked=simplify_only_where_marked,
                         markers_and_marked_expr=sub_markers_and_marked_expr,
                         assumptions=defaults.assumptions+(
@@ -303,7 +298,6 @@ class Conditional(Expression):
                #    in self.condition.operands.entries):
                 inner_condition = expr.inner_expr().condition
                 expr = eq.update(inner_condition.simplification_of_operands(
-                    preserved_exprs=preserved_exprs,
                     simplify_only_where_marked=simplify_only_where_marked,
                     markers_and_marked_expr=sub_markers_and_marked_expr))
         elif True:#not self.condition.is_simplified():
@@ -311,7 +305,6 @@ class Conditional(Expression):
             expr = eq.update(
                     expr.condition_substitution(
                             self.condition.simplification(
-                                preserved_exprs=preserved_exprs,
                                 simplify_only_where_marked=simplify_only_where_marked,
                                 markers_and_marked_expr=sub_markers_and_marked_expr)))
         if simplify_top_level and not simplify_only_where_marked:

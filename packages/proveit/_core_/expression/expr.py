@@ -32,7 +32,8 @@ class ExprType(type):
     protected = {'_apply', 'replaced', 'basic_replaced', 'instance_context',
                  '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
-                 '_auto_simplified', '_auto_simplified_sub_exprs',
+                 #'_auto_simplified', '_auto_simplified_sub_exprs',
+                 '_simplification',
                  '_range_reduction', 'relabeled',
                  'sub_expr_substitution',
                  'canonically_labeled', 'canonical_form',
@@ -1822,17 +1823,14 @@ class Expression(metaclass=ExprType):
         raise EvaluationError(self)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, *, preserved_exprs=None, simplify_top_level=True,
+    def simplification(self, *, simplify_top_level=True,
                        simplify_only_where_marked=False,
-                        markers_and_marked_expr=None, **defaults_config):
+                       markers_and_marked_expr=None, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
-        simplified form (according to strategies specified in 
-        proveit.defaults).  In the @equality_prover decorator for any
-        'simplification' method, there is a check for an existing 
-        simplification, a check that the resulting proven statement is 
-        an equality with self on the lhs, and it remembers the 
-        simplification for next time.
+        simplified form according to configurations specified in 
+        proveit.defaults (preserved_exprs, simplify_with_known_evaluations,
+        and simplify_with_provable_evaluations).
 
         If simplify_only_where_marked is True, only simplify "marked"
         parts of an expression.  'markers_and_marked_expr' must then be
@@ -1841,15 +1839,47 @@ class Expression(metaclass=ExprType):
         the markers.  Only sub-expressions containing a marker may be
         simplified.
         
-        The default Expression.simplification only checks to see
-        if there is an evaluation to be used as the simplification, but
-        this may be overridden for particular Expression types.
-        
-        See also Operation.simplification and 
-        Expression.shallow_simplification.
+        TODO: remember simplifications for future use, but note that
+        the simplifications depend upon configurations of proveit.defaults
+        as well as the arguments passed into the simplification method.
         '''
-        if preserved_exprs is not None and self in preserved_exprs:
+        from proveit.logic import is_irreducible_value
+        if self in defaults.preserved_exprs or (simplify_only_where_marked and 
+                                                markers_and_marked_expr[1]==self):
             return self.self_equation(preserve_all=True)
+        if simplify_top_level:
+            from proveit import UnsatisfiedPrerequisites
+            from proveit._core_.expression.composite import ExprRange
+            from proveit.logic import Equals
+            if not (is_irreducible_value(self) or isinstance(self, ExprRange)):
+                if defaults.simplify_with_provable_evaluations:
+                    # Look for an readily provable evaluation.
+                    try:
+                        replacement = Equals.get_readily_provable_evaluation(self)
+                    except UnsatisfiedPrerequisites:
+                        replacement = None
+                elif defaults.simplify_with_known_evaluations:
+                    # Look for an explicitly known evaluation.
+                    try:
+                        replacement = Equals.get_known_evaluation(self)
+                    except UnsatisfiedPrerequisites:
+                        replacement = None
+                else:
+                    replacement = None
+            if replacement is not None:
+                return replacement
+        return self._simplification(
+            simplify_top_level=simplify_top_level,
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr)
+
+    def _simplification(self, *, simplify_top_level=True,
+                        simplify_only_where_marked=False,
+                        markers_and_marked_expr=None):
+        '''
+        Expression-specific simplification overridden in core
+        Expression classes.
+        '''
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
@@ -1862,11 +1892,9 @@ class Expression(metaclass=ExprType):
                 from proveit._core_.operation import Operation
                 assert not isinstance(self, Operation)
                 raise MarkedExprError(marked_expr, self)
-        if simplify_top_level:
-            # Resort to a shallow_simplification as the default.
+        if not simplify_top_level:
             return self.shallow_simplification(must_evaluate=False)
-        else:
-            return self.self_equation(preserve_all=True)
+        return self.self_equation(preserve_all=True)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False, 

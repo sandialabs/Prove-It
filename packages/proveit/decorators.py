@@ -119,42 +119,45 @@ def _make_decorated_prover(func):
             return {key:val for key, val in obj.__dict__.items() 
                     if key[0] != '_'}
 
-        exprs_to_replace = set()
+        new_exprs_to_replace = set()
         if 'replacements' in kwargs:
-            for replacement in kwargs['replacements']:
+            replacements = kwargs['replacements']
+            for replacement in replacements:
                 if not isinstance(replacement, Judgment):
                     raise TypeError("The 'replacements' must be Judgments")
                 if not isinstance(replacement.expr, Equals):
                     raise TypeError(
                         "The 'replacements' must be equality Judgments")
-                exprs_to_replace.add(replacement.expr.lhs)
+                new_exprs_to_replace.add(replacement.expr.lhs)
+            if len(replacements) > 0:
+                if kwargs.get('preserve_all', False):
+                   raise ValueError(
+                       "Cannot simultaneously make replacements and 'preserve_all'") 
+                preserve_all = False # overrides pre-existing preserve_all
+        else:
+            replacements = defaults.replacements
 
         # Make sure a preserved expression isn't also being replaced.
         if 'preserved_exprs' in kwargs:
             # Make sure a preserved expression isn't also
             # being replaced.
             preserved_exprs = kwargs['preserved_exprs']
-            if not exprs_to_replace.isdisjoint(preserved_exprs):
+            if not new_exprs_to_replace.isdisjoint(preserved_exprs):
                 raise ValueError(
                     "Cannot simultaneously replace and preserve these "
                     "expression: %s"
-                    %exprs_to_replace.intersection(preserved_exprs))
+                    %new_exprs_to_replace.intersection(preserved_exprs))
+        else:
+            preserved_exprs = set(defaults.preserved_exprs)
 
         if preserve_expr is not None:
             # Make sure this preserved expression isn't also being replaced.
-            if preserve_expr in exprs_to_replace:
+            if preserve_expr in new_exprs_to_replace:
                 raise ValueError(
                     "Cannot simultaneously replace and preserve %s"
                     %preserve_expr)
             # Preserve the 'preserve_expr'.
-            if ('preserved_exprs' in defaults_to_change
-                    or  preserve_expr not in defaults.preserved_exprs):
-                if 'preserved_exprs' in kwargs:
-                    kwargs['preserved_exprs'].add(preserve_expr)
-                else:
-                    defaults_to_change.add('preserved_exprs')
-                    kwargs['preserved_exprs'] = (
-                            defaults.preserved_exprs.union({preserve_expr}))
+            preserved_exprs.add(preserve_expr)
 
         if is_conclude_method:
             self = args[0]
@@ -203,8 +206,8 @@ def _make_decorated_prover(func):
                 # Now call the prover function.
                 internal_kwargs = dict(kwargs)
                 with _direct_prover_calls_counter:
-                    # Postpone any applicable simplification until later
-                    # (below).
+                    # Postpone any applicable simplification or replacements
+                    # until later (below).
                     '''
                     if not (is_simplification_method or
                             is_shallow_simplification_method):
@@ -221,8 +224,7 @@ def _make_decorated_prover(func):
                     temp_defaults.preserve_all=True
                     temp_defaults.preserved_exprs = set()
                     if is_simplification_method:
-                        internal_kwargs['preserved_exprs'] = (
-                            defaults.preserved_exprs)
+                        internal_kwargs['preserved_exprs'] = preserved_exprs
                         internal_kwargs['simplify_only_where_marked'] = (
                             simplify_only_where_marked)
                         internal_kwargs['markers_and_marked_expr'] = (
@@ -241,90 +243,81 @@ def _make_decorated_prover(func):
 
         if not preserve_all:
             # Perform default replacements and auto-simplification
-            temporarily_preserved_exprs = set()
-            try:
-                if is_instantate_method and len(args) > 1:
-                    from proveit._core_.expression.composite import ExprTuple
-                    # Do not simplify any of the instantiation expressions since
-                    # there is a directive to specifically use them.  For
-                    # ExprTuple instantiations, do not simplify any of the
-                    # individual entries (this is important, for example, if
-                    # this is replacing just a portion of an ExprTuple).
-                    repl_map = args[1]
-                    assert isinstance(repl_map, dict)
-                    def gen_repl_vals_and_entries():
-                        for _repl_val in repl_map.values():
-                            yield _repl_val
-                            if isinstance(_repl_val, ExprTuple):
-                                for _entry in _repl_val:
-                                    yield _entry
-                    temporarily_preserved_exprs = (
-                            set(gen_repl_vals_and_entries()) - 
-                            defaults.preserved_exprs)
-                    # Explicit replacements, however, are allowed, unless there
-                    # is an explicit expression preservation to override it.
-                    for replacement in defaults.replacements:
-                        temporarily_preserved_exprs.discard(replacement.lhs)
-                    defaults.preserved_exprs.update(temporarily_preserved_exprs)
-                
-                
-            finally:
-                # Revert the preserved_exprs set back to what it was.
-                defaults.preserved_exprs.difference_update(
-                        temporarily_preserved_exprs)
+            if is_instantate_method and len(args) > 1:
+                from proveit._core_.expression.composite import ExprTuple
+                # Do not simplify any of the instantiation expressions since
+                # there is a directive to specifically use them.  For
+                # ExprTuple instantiations, do not simplify any of the
+                # individual entries (this is important, for example, if
+                # this is replacing just a portion of an ExprTuple).
+                repl_map = args[1]
+                assert isinstance(repl_map, dict)
+                def gen_repl_vals_and_entries():
+                    for _repl_val in repl_map.values():
+                        yield _repl_val
+                        if isinstance(_repl_val, ExprTuple):
+                            for _entry in _repl_val:
+                                yield _entry
+                preserved_exprs.update(gen_repl_vals_and_entries())
 
-                # Perform default replacements
-                orig_proven_truth = proven_truth
-                for replacement in defaults.replacements:
-                    assert isinstance(replacement, Judgment)
-                    replacement_expr = replacement.expr
-                    assert isinstance(replacement_expr, Equals)
-                    if replacement_expr.lhs == replacement_expr.rhs:
-                        # Don't bother with reflexive (x=x) reductions.
-                        continue
-                    if replacement_expr.lhs in defaults.preserved_exprs:
-                        # Skip the replacement of this preserved expression.
-                        continue
-                    if preserve_lhs_on_auto_simplify:
-                        proven_truth = (
-                            replacement.inner_expr().rhs.sub_right_side_into(
-                                proven_truth))
-                    else:
-                        proven_truth = replacement.sub_right_side_into(proven_truth)
-                
-                # Do auto-simplification
-                # is_simplification_method check avoids infinite recursion.
-                # And don't simplify a conclude method call.
-                proven_expr = proven_truth.expr
-                if auto_simplify:
-                    skip_simplify = (is_shallow_simplification_method or
-                                     is_simplification_method)
-                    if proven_truth != orig_proven_truth:
-                        # Replacements were made above so try another round
-                        # of simplification.
-                        skip_simplify = False
-                    if not skip_simplify:
-                        from proveit import Relation
-                        from proveit.logic import Equals
-                        if preserve_lhs_on_auto_simplify and isinstance(
-                                proven_expr, Relation):
-                            dummy_var = proven_expr.safe_dummy_var()
-                            if simplify_only_where_marked and isinstance(
-                                    markers_and_marked_expr[1], Relation):
-                                # In addition to anything else that may be
-                                # reserved by the markedd_expr, preserve the lhs.
-                                markers_and_marked_expr[1].__class__(
-                                    proven_expr.lhs, 
-                                    markers_and_marked_expr[1].rhs)
-                            else:
-                                # Just preserve the lhs.
-                                simplify_only_where_marked=True
-                                markers_and_marked_expr = (
-                                    (dummy_var,), Equals(proven_expr.lhs,
-                                                         dummy_var))
-                        proven_truth = proven_truth.simplify(
-                            simplify_only_where_marked=simplify_only_where_marked,
-                            markers_and_marked_expr=markers_and_marked_expr)
+            # Perform default replacements
+            orig_proven_truth = proven_truth
+            for replacement in replacements:
+                from proveit import Relation
+                assert isinstance(replacement, Judgment)
+                replacement_expr = replacement.expr
+                assert isinstance(replacement_expr, Equals)
+                if replacement_expr.lhs == replacement_expr.rhs:
+                    # Don't bother with reflexive (x=x) reductions.
+                    continue
+                if replacement_expr.lhs in defaults.preserved_exprs:
+                    # Skip the replacement of this preserved expression.
+                    continue
+                if preserve_lhs_on_auto_simplify and isinstance(
+                        proven_truth.expr, Relation):
+                    proven_truth = (
+                        proven_truth.inner_expr().rhs.substitute(replacement))
+                else:
+                    proven_truth = replacement.sub_right_side_into(proven_truth)
+
+            # Do auto-simplification
+            # is_simplification_method check avoids infinite recursion.
+            # And don't simplify a conclude method call.
+            proven_expr = proven_truth.expr
+            if auto_simplify:
+                skip_simplify = (is_shallow_simplification_method or
+                                 is_simplification_method)
+                if proven_truth != orig_proven_truth:
+                    # Replacements were made above so try another round
+                    # of simplification.
+                    skip_simplify = False
+                if not skip_simplify:
+                    from proveit import Relation
+                    from proveit.logic import Equals
+                    if preserve_lhs_on_auto_simplify and isinstance(
+                            proven_expr, Relation):
+                        dummy_var = proven_expr.safe_dummy_var()
+                        if simplify_only_where_marked and isinstance(
+                                markers_and_marked_expr[1], Relation):
+                            # In addition to anything else that may be
+                            # reserved by the markedd_expr, preserve the lhs.
+                            markers_and_marked_expr[1].__class__(
+                                proven_expr.lhs,
+                                markers_and_marked_expr[1].rhs)
+                        else:
+                            # Just preserve the lhs.
+                            simplify_only_where_marked=True
+                            markers_and_marked_expr = (
+                                (dummy_var,), Equals(proven_expr.lhs,
+                                                     dummy_var))
+                    proven_truth = proven_truth.simplify(
+                        preserved_exprs=preserved_exprs,
+                        simplify_with_known_evaluations=
+                        kwargs.get('simplify_with_known_evaluations', None),
+                        simplify_with_provable_evaluations=
+                        kwargs.get('simplify_with_provable_evaluations', None),
+                        simplify_only_where_marked=simplify_only_where_marked,
+                        markers_and_marked_expr=markers_and_marked_expr)
             '''
             # Temporarily reconfigure defaults
             with defaults.temporary() as temp_defaults:

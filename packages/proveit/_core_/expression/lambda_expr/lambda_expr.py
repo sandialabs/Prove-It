@@ -1038,19 +1038,14 @@ class Lambda(Expression):
             "Relabeled version should be 'equal' to original")
         return relabeled
 
-    @equality_prover('simplified', 'simplify')
-    def simplification(self, *, preserved_exprs=None,
-                       simplify_top_level=True,
-                       simplify_only_where_marked=False,
-                       markers_and_marked_expr=None, **defaults_config):
+    def _simplification(self, *, simplify_top_level=True,
+                        simplify_only_where_marked=False,
+                        markers_and_marked_expr=None):
         '''
         Equat this Lambda with a form in which the body has been
         simplified.
         '''
         from proveit.logic import Equals
-        if (preserved_exprs is not None and self in preserved_exprs) or (
-                simplify_only_where_marked and markers_and_marked_expr[1]==self):
-            return self.self_equation(preserve_all=True)
         if simplify_only_where_marked:
             from proveit._core_.expression.expr import MarkedExprError
             markers, marked_expr = markers_and_marked_expr
@@ -1065,7 +1060,6 @@ class Lambda(Expression):
             [assumption for assumption in defaults.assumptions if
              free_vars(assumption).isdisjoint(self.parameter_vars)]
         body_simplification = self.body.simplification(
-            preserved_exprs=preserved_exprs,
             simplify_only_where_marked=simplify_only_where_marked,
             markers_and_marked_expr=markers_and_marked_expr,
             assumptions=inner_assumptions)

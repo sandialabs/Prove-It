@@ -1303,7 +1303,10 @@ class Judgment:
         return Exists.eliminate(skolem_constants, self)
 
     # Not a @prover since it just uses the assumptions of the Judgment. 
-    def simplify(self, *, simplify_only_where_marked=False,
+    def simplify(self, *, preserved_exprs=None,
+                 simplify_with_known_evaluations=None,
+                 simplify_with_provable_evaluations=None,
+                 simplify_only_where_marked=False,
                  markers_and_marked_expr=None,):
         '''
         Prove a simplified form of this Judgment, but don't simplify
@@ -1313,6 +1316,14 @@ class Judgment:
         with defaults.temporary() as temp_defaults:
             # Use the assumptions of the Judgment
             temp_defaults.assumptions = self.assumptions
+            if preserved_exprs is not None:
+                temp_defaults.preserved_exprs = preserved_exprs
+            if simplify_with_known_evaluations is not None:
+                temp_defaults.simplify_with_known_evaluations = (
+                    simplify_with_known_evaluations)
+            if simplify_with_provable_evaluations is not None:
+                temp_defaults.simplify_with_provable_evaluations = (
+                    simplify_with_provable_evaluations)
             # Don't exploit the evaluation of the Judgment at the top-level;
             # it must be TRUE (under its assumptions), but that's trivial
             # and useless.
