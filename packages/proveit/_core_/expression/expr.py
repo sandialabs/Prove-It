@@ -257,9 +257,11 @@ class Expression(metaclass=ExprType):
             ignore_inapplicable_styles = (
                     styles.pop('__IGNORE_INAPPLICABLE_STYLES__', False))
             for style in styles.values():
-                if not {',', ':', ';'}.isdisjoint(style):
-                    raise ValueError(
-                        "Styles are not allowed to contain a ',', ':', or ';'.  Just use spaces.")
+                if isinstance(style, str):
+                    if not {',', ':', ';'}.isdisjoint(style):
+                        raise ValueError(
+                            "Styles are not allowed to contain a ',', ':', or ';'."
+                            " Just use spaces.")
         else:
             ignore_inapplicable_styles = False
 
@@ -553,8 +555,21 @@ class Expression(metaclass=ExprType):
             styles = self._style_data.styles
             style_options = self.style_options()
         if styles is not None:
+            style_name_to_type = {option[0]:option[-1] for option
+                                  in style_options.options}
+            def style_str_fn(style_name, style):
+                # If a style is an Expression, make sure the style_type is set
+                # correctly and convert the Expression via object_rep_fn.
+                if isinstance(style, Expression):
+                    if style_name_to_type[style_name] != Expression:
+                        raise TypeError("Only set a style to an Expression "
+                                        "if its style_type is Expression")
+                    return object_rep_fn(style)
+                else:
+                    return str(style)
             canonical_styles = style_options.canonical_styles()
-            style_str = ','.join(style_name + ':' + styles[style_name]
+            style_str = ','.join(style_name + ':' + style_str_fn(style_name,
+                                                                 styles[style_name])
                                  for style_name in sorted(styles.keys())
                                  if styles[style_name] != canonical_styles.get(
                                          style_name, None))
@@ -833,11 +848,11 @@ class Expression(metaclass=ExprType):
         '''
         return list(self._style_data.styles.keys())
 
-    def get_style(self, style_name, default=None):
+    def get_style(self, style_name, default=KeyError):
         '''
         Return the current style setting for the given style name.
         '''
-        if default is None:
+        if default is KeyError:
             return self._style_data.styles[style_name]
         else:
             return self._style_data.styles.get(style_name, default)
@@ -1274,6 +1289,7 @@ class Expression(metaclass=ExprType):
         return self in Expression.simplified_exprs.get(directive_id, tuple())
     """
 
+    """
     def complete_replaced(self, repl_map, *, allow_relabeling=False, 
                           requirements=None, equality_repl_requirements=None):
         '''
@@ -1328,6 +1344,7 @@ class Expression(metaclass=ExprType):
         requirements.extend(new_equality_repl_requirements)
         equality_repl_requirements.update(new_equality_repl_requirements)
         return replaced_expr
+    """
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
@@ -1347,10 +1364,28 @@ class Expression(metaclass=ExprType):
             if all(subbed_sub._style_id == sub._style_id for
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
                 # Nothing change, so don't remake anything.
-                return self
-            return self.__class__._checked_make(
-                self._core_info, subbed_sub_exprs,
-                style_preferences=self._style_data.styles)
+                expr = self
+            else:
+                # Remake this expression with modified sub-expressions
+                expr = self.__class__._checked_make(
+                    self._core_info, subbed_sub_exprs,
+                    style_preferences=self._style_data.styles)
+
+            # Update any style option of an Expression type
+            style_options = expr.style_options()
+            updated_styles = dict()
+            for style_option in style_options.options:
+                style_name, style_type = style_option[0], style_option[-1]
+                if style_type == Expression:
+                    expr_style = expr.get_style(style_name, None)
+                    if expr_style is not None:
+                        expr_style = expr_style.basic_replaced(
+                                repl_map, allow_relabeling=allow_relabeling,
+                                requirements=requirements)
+                        updated_styles[style_name] = expr_style
+            if len(updated_styles) == 0:
+                return expr
+            return expr.with_styles(**updated_styles)
 
     """
     def equality_replaced(self, requirements,

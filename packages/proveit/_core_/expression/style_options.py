@@ -8,14 +8,17 @@ class StyleOptions:
         self.expr = expr
         self.options = []
 
-    def add_option(self, name, description, default, related_methods):
+    def add_option(self, name, description, default, related_methods,
+                   style_type=str):
         '''
         Add a Style option with the given name, description,
-        default value, and related methods.  These may be specific
-        to the expression and not just the expression type, though
-        typically only the 'default' is specific to the expression.
+        default value, related methods, and style type (str by default
+        but may be Expression).  These may be specific to the expression
+        and not just the expression type, though typically only the 
+        'default' is specific to the expression.
         '''
-        self.options.append((name, description, default, related_methods))
+        self.options.append((name, description, default, related_methods,
+                             style_type))
     
     def option_names(self):
         '''
@@ -27,13 +30,19 @@ class StyleOptions:
         '''
         Create a proper styles dictionary using defaults
         as appropriate and checking to make sure that unknown
-        styles aren't used.
+        styles aren't used.  For Expression style_types,
+        when given a string, use that as the lookup for the
+        Expression.
         '''
         styles = dict(styles)
         known_style_names = set()
-        for name, _, default, _ in self.options:
+        for name, _, default, _, style_type in self.options:
             if name in styles:
                 known_style_names.add(name)
+                val = styles[name]
+                if isinstance(val, str) and style_type is not str:
+                    theory, folder = styles['_theory_and_folder_']
+                    styles[name] = theory.get_stored_expr(val, folder=folder)
             elif default is not None:
                 # Use the default of the StyleOptions.
                 styles[name] = default
@@ -57,14 +66,14 @@ class StyleOptions:
         Return the styles that should be used for canonical
         expressions by choosing the defaults of the options.
         '''
-        return {name:default for name, _, default, _ in self.options
+        return {name:default for name, _, default, _, _ in self.options
                 if default is not None}
 
     def __repr__(self):
         if len(self.options) == 0:
             return 'no style options'
         s = ''
-        for name, description, default, related_methods in self.options:            
+        for name, description, default, related_methods, _ in self.options:
             s += 'style name: %s\n'%name
             s += 'description: %s\n'%description
             s += 'default: %s\n'%default
@@ -77,7 +86,7 @@ class StyleOptions:
             return 'no style options'
         s = '<table>\n'
         s += '<tr><th>name</th><th>description</th><th>default</th><th>current value</th><th>related methods</th></tr>'
-        for name, description, default, related_methods in self.options:
+        for name, description, default, related_methods, _ in self.options:
             related_methods_str = ('' if len(related_methods) == 0 
                                    else str(related_methods))
             s += '<tr>'

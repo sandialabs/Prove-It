@@ -287,11 +287,21 @@ class Operation(Expression):
                     val = default
                 if default is param.empty or val != default:
                     # Override the default if there is one.
-                    if not isinstance(val, Expression):
+                    if isinstance(val, tuple):
+                        for val_elem in val:
+                            if val_elem is None:
+                                continue # None is okay
+                            if not isinstance(val_elem, Expression):
+                                raise TypeError(
+                                    "extract_init_arg_val for %s should "
+                                    "return a tuple only with Expression or "
+                                    "None entries but is returning an entry "
+                                    "of type %s" %(param_name, type(val_elem)))
+                    if not (isinstance(val, Expression) or isinstance(val, tuple)):
                         raise TypeError(
                             "extract_init_arg_val for %s should return "
-                            "an Expression but is returning a %s" %
-                            (param_name, type(val)))
+                            "an Expression or tuple of Expression/None but is "
+                            "returning a %s" %(param_name, type(val)))
                     if param.kind == Parameter.POSITIONAL_ONLY:
                         yield val
                     else:

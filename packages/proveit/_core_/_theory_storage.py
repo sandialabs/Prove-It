@@ -2037,10 +2037,26 @@ class TheoryFolderStorage:
                     argname, arg = arg
             except BaseException:
                 pass
+            if isinstance(arg, tuple):
+                for arg_elem in arg:
+                    if arg_elem is None:
+                        continue # None is okay
+                    if isinstance(arg_elem, Expression):
+                        sub_expr = arg_elem
+                        self._exprBuildingPrerequisites(
+                            sub_expr, expr_classes_and_constructors,
+                            unnamed_sub_expr_occurences, named_sub_expr_addresses,
+                            named_items, can_self_import)
+                        continue
+                    raise TypeError("Argument of %s.remake_arguments() "
+                                    "is a tuple, but not an Expression or None"
+                                    ": %s instead"%str(arg_elem.__class__))
+                continue
             if (not isinstance(arg, Expression) and not isinstance(arg, str)
                     and not isinstance(arg, int)):
                 raise TypeError("The arguments of %s.remake_arguments() "
-                                "should be Expressions or strings or "
+                                "should be Expressions or tuple of "
+                                "Expressions/None or strings or "
                                 "integers: %s instead."
                                 % (str(expr.__class__), str(arg.__class__)))
             if isinstance(arg, Expression):
@@ -2099,6 +2115,8 @@ class TheoryFolderStorage:
             return item_names[(expr, expr._style_id)]
 
         def arg_to_string(arg):
+            if arg is None:
+                return 'None'
             if isinstance(arg, str):
                 return arg  # just a single string
             if isinstance(arg, int):
@@ -2205,6 +2223,9 @@ class TheoryFolderStorage:
                 styles,
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
+            # '_theory_' may be needed for reconstructing Expression objects
+            # within styles.
+            styles['_theory_and_folder_'] = self.theory, self.folder
             expr = expr_class._checked_make(expr_info, sub_expressions,
                                             style_preferences=styles)
             return expr
