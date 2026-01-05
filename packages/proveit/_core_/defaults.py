@@ -44,7 +44,7 @@ class Defaults:
         # replacements, corresponding expressions in preserved_exprs
         # will be discarded.  That is, whichever is done last is the
         # directive that is followed.
-        self.preserved_exprs = set()
+        self.preserved_exprs = frozenset()
         
         # When True, Prove-It will not automatically simplify or 
         # perform 'replacements' (see below) for any expressions.
@@ -135,7 +135,7 @@ class Defaults:
         from proveit._core_.judgment import Judgment
         if isinstance(expr, Judgment):
             expr = expr.expr
-        self.preserved_exprs.add(expr)
+        self.preserved_exprs = self.preserved_exprs.union((expr,))
 
 
     """
@@ -279,9 +279,10 @@ class Defaults:
                     if not isinstance(replacement.expr, Equals):
                         raise TypeError("'replacements' should be equality "
                                         "Judgments")
-                    # Setting a replacement will override an existing
-                    # preserved expression.
-                    self.preserved_exprs.discard(replacement.lhs)
+                # Setting a replacement will override an existing
+                # preserved expression.
+                self.preserved_exprs = self.preserved_exprs - (
+                    frozenset([_.lhs for _ in value]))
         elif attr == 'preserve_all' and value==True:
             # When preserving all, we can nix replacements and turn
             # off auto-simplification.
@@ -299,6 +300,7 @@ class Defaults:
                 if not isinstance(expr, Expression):
                     raise TypeError("'preserved_exprs' should be Expression "
                                     "objects, not of type %s"%type(expr))
+            value = frozenset(value)
         self.__dict__[attr] = value
 
 class TemporarySetter(object):
