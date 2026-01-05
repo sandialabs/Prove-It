@@ -110,7 +110,7 @@ class Forall(OperationOverInstances):
             [assumption for assumption in defaults.assumptions if
              free_vars(assumption).isdisjoint(instance_vars)]
         # Add the conditions as assumptions.
-        inner_assumptions += list(conditions.entries)
+        inner_assumptions += list(conditions)
         if hasattr(self, 'condition') and len(conditions) != 1:
             # Also add the 'condition' as a conjunction of multiple
             # conditions for good measure.
@@ -153,7 +153,7 @@ class Forall(OperationOverInstances):
             pass
         
         if (self.has_domain() and self.instance_params.is_single() 
-                and self.conditions.is_single()):
+                and len(self.non_domain_conditions())==0):
             instance_map = Lambda(self.instance_params, self.instance_expr)
             domain = self.domain 
             known_domains = set()
@@ -222,7 +222,6 @@ class Forall(OperationOverInstances):
                         num_forall_eliminations=len(
                                 self.instance_param_lists()),
                         assumptions=canonical_version.all_conditions())
-
             return self.prove().instantiate(
                     num_forall_eliminations=len(self.instance_param_lists()),
                     assumptions=self.all_conditions())
@@ -251,8 +250,8 @@ class Forall(OperationOverInstances):
         proven_inst_expr = None
         inner_assumptions = defaults.assumptions
         while isinstance(expr, Forall):
-            new_params = expr.explicit_instance_params()
-            new_vars = expr.explicit_instance_vars()
+            new_params = expr.instance_params()
+            new_vars = expr.instance_vars
             instance_param_lists.append(list(new_params))
             # Can't use assumptions involving instance variables
             # except from the conditions that we will explicitly add.
@@ -261,7 +260,7 @@ class Forall(OperationOverInstances):
                  free_vars(assumption).isdisjoint(new_vars)]
             if expr.has_stylized_condition():
                 inner_assumptions.append(expr.condition)
-                conditions += expr.conditions.entries
+                conditions += expr.conditions
             expr = expr.instance_expr
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = inner_assumptions
@@ -305,8 +304,7 @@ class Forall(OperationOverInstances):
             from proveit.logic.booleans import forall_by_excluded_middle
             _P = Lambda(self.instance_param, self.instance_expr)
             return forall_by_excluded_middle.instantiate(
-                {P:_P, A:self.instance_param},
-                num_forall_eliminations=1).derive_consequent()
+                {P:_P, A:self.instance_param, B:self.instance_param}).derive_consequent()
     
     @prover
     def conclude_via_domain_inclusion(self, superset_domain,
@@ -319,7 +317,7 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic.sets.inclusion import (
                 inclusive_universal_quantification)
-        if not (self.has_domain() and self.instance_params.is_single() 
+        if not (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
             raise ValueError("May only call conclude_via_domain_inclusion "
                              "on a Forall expression with a single instance "
@@ -406,13 +404,17 @@ class Forall(OperationOverInstances):
     @prover
     def instantiate(self, repl_map=None, *,
                     num_forall_eliminations=None,
+                    simplify_only_where_marked=False,
+                    markers_and_marked_expr=None,
                     **defaults_config):
         '''
         First attempt to prove that this Forall statement is true under
         the assumptions, and then call instantiate on the Judgment.
         '''
         return self.prove().instantiate(
-            repl_map, num_forall_eliminations=num_forall_eliminations)
+            repl_map, num_forall_eliminations=num_forall_eliminations,
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
