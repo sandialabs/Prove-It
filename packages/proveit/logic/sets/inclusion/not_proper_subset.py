@@ -33,7 +33,7 @@ class NotProperSubset(Relation):
         # Use the default.
         return Operation.remake_constructor(self)
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         yield self.unfold
 
     @prover

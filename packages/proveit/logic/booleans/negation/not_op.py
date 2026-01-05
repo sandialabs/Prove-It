@@ -15,7 +15,7 @@ class Not(Operation):
         from proveit import ExprTuple
         Operation.__init__(self, Not._operator_, A, styles=styles)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -31,14 +31,14 @@ class Not(Operation):
             yield self.derive_contradiction
         yield self.unfold  # (A ⇒ ⊥) from Not(A)
         #yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
-        if hasattr(self.operand, 'negation_side_effects'):
-            # derive negation side-effects for the specific type of
+        if hasattr(self.operand, 'negation_incidentals'):
+            # derive negation incidentals for the specific type of
             # expression being negated.
-            for neg_side_effect in self.operand.negation_side_effects(
+            for neg_incidental in self.operand.negation_incidentals(
                     judgment):
-                yield neg_side_effect
+                yield neg_incidental
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         """
         Side-effect derivations to attempt automatically for a double
         negation.
@@ -46,7 +46,7 @@ class Not(Operation):
         yield self.negate_via_double_negation
     
     """
-    def in_bool_side_effects(self, judgment):
+    def in_bool_incidentals(self, judgment):
         '''
         From not(A) in Boolean deduce A in Boolean, where self is not(A).
         '''

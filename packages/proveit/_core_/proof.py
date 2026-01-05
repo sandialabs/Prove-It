@@ -21,10 +21,10 @@ class Proof:
 
     # Map expressions to (sorted assumption, defaults.conclude_automation)
     # pairs to remember the conditions under which something was proven
-    # and side-effects were derived.  We track this to make sure 
+    # and incidentals were derived.  We track this to make sure 
     # we didn't miss anything while automation was disabled and then 
     # re-enabled.
-    sideeffect_processed = dict()    
+    incidental_processed = dict()
     
     @staticmethod
     def _clear_():
@@ -32,7 +32,7 @@ class Proof:
         Clear all references to Prove-It information in
         the Proof jurisdiction.
         '''
-        Proof.sideeffect_processed.clear()
+        Proof.incidental_processed.clear()
         Assumption.all_assumptions_by_style.clear()
         Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
@@ -43,7 +43,8 @@ class Proof:
 
     def __init__(self, proven_truth, required_truths):
         '''
-        # Uncomment to print useful debugging information when tracking side-effects.
+        # Uncomment to print useful debugging information when tracking
+        # incidentals.
         if not isinstance(self, Theorem) and not isinstance(self, Axiom):
             print "prove", proven_truth.expr
         '''
@@ -249,12 +250,12 @@ class Proof:
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
 
-        # Record that this is proven whether side-effect automation is
+        # Record that this is proven whether incidental automation is
         # enabled or not.
         self.proven_truth.expr._record_as_proven(self.proven_truth)         
         
         # Derive obvious consequences from this truth.
-        self._derive_side_effects()
+        self._derive_incidentals()
 
     """
     def regenerate_proof_with_replacements(self, simplify_only_where_marked=False,
@@ -374,39 +375,39 @@ class Proof:
         raise NotImplementedError("Must be implemented for each Proof "
                                   "object")
     
-    def _derive_side_effects(self):
+    def _derive_incidentals(self):
         '''
-        Derive side-effects under the active assumptions if
+        Derive incidentals under the active assumptions if
         this proof is relevent.
         '''
-        if not defaults.sideeffect_automation:
-            return # Side-effect automation is off, so don't do it.
+        if not defaults.incidental_automation:
+            return # incidental automation is off, so don't do it.
         proven_truth = self.proven_truth
         
         if proven_truth.proof() == self and self.is_possibly_usable():
             expr = proven_truth.expr
             key = (defaults.sorted_assumptions, defaults.conclude_automation)
-            if key in Proof.sideeffect_processed.get(expr, tuple()):
+            if key in Proof.incidental_processed.get(expr, tuple()):
                 return # has already been processed
 
             # Don't bother with side effects if this proof was born 
-            # obsolete or unusable.  May derive any side-effects that 
+            # obsolete or unusable.  May derive any incidentals that 
             # are obvious consequences arising from this truth
             # (if it has not already been processed):
             with defaults.temporary() as temp_defaults:
                 # Disable auto-simplification and clear the
-                # 'replacements' while deriving side-effects.
+                # 'replacements' while deriving incidentals.
                 temp_defaults.auto_simplify = False
                 if len(defaults.replacements) > 0:
                     temp_defaults.replacements = []
                 #print(proven_truth)
-                proven_truth.derive_side_effects()
-            Proof.sideeffect_processed.setdefault(expr, set()).add(key)
+                proven_truth.derive_incidentals()
+            Proof.incidental_processed.setdefault(expr, set()).add(key)
             if key[1]:
                 # conclude_automation is on.  Nothing should be gained by
-                # deriving side-effects without conclude_automation later.
+                # deriving incidentals without conclude_automation later.
                 key = (key[0], False)
-                Proof.sideeffect_processed.setdefault(expr, set()).add(key)
+                Proof.incidental_processed.setdefault(expr, set()).add(key)
 
     def _update_dependencies(self, newproof):
         '''
@@ -634,9 +635,9 @@ class Proof:
             is_defunct = (dependent.proven_truth.proof() == dependent)
             dependent._meaning_data._unusable_proof = source
             dependent.proven_truth._discard_proof(dependent)
-            # If this is proven again, we should do the side-effects again
+            # If this is proven again, we should do the incidentals again
             # for good measure:
-            Proof.sideeffect_processed.pop(dependent.proven_truth.expr,
+            Proof.incidental_processed.pop(dependent.proven_truth.expr,
                                            None)
             # Make the number of steps (and number of literal 
             # generalizations) as unknown as we go up through
@@ -1027,7 +1028,7 @@ class Assumption(Proof):
             # that's what it does.
             assumptions = assumptions + (expr,)
         prev_default_assumptions = defaults.assumptions
-        # These assumptions will be used for deriving any side-effects
+        # These assumptions will be used for deriving any incidentals
         defaults.assumptions = assumptions
         # The assumed truth from a ranges of assumptions
         # must be wrapped in a conjunction (And).
@@ -1058,11 +1059,11 @@ class Assumption(Proof):
             preexisting = Assumption.all_assumptions_by_style[
                 expr._style_id]
             # The Assumption object exists already, but it's
-            # side-effects may not have been derived yet under the
+            # incidentals may not have been derived yet under the
             # given assumptions.
             # This can happen when automation is temporarily disabled or
             # when assumptions change.
-            preexisting._derive_side_effects()
+            preexisting._derive_incidentals()
             return preexisting
         return Assumption(expr, defaults.assumptions)
 
@@ -1070,7 +1071,7 @@ class Assumption(Proof):
     def make_assumptions(assumptions=USE_DEFAULTS):
         '''
         Prove each assumption, by assumption, to deduce any 
-        side-effects (unless we have already processed this set of
+        incidentals (unless we have already processed this set of
         assumptions together before).
         '''
         with defaults.temporary() as temp_defaults:
@@ -1085,9 +1086,9 @@ class Assumption(Proof):
                 for assumption in assumptions:
                     # Note that while we only need THE assumption to 
                     # prove itself, having the other assumptions around 
-                    # can be useful for deriving side-effects.
+                    # can be useful for deriving incidentals.
                     Assumption.make_assumption(assumption)
-                if not defaults.sideeffect_automation:
+                if not defaults.incidental_automation:
                     # consideration doesn't fully count if automation is 
                     # off
                     Assumption.considered_assumption_sets.remove(
@@ -1766,7 +1767,7 @@ class ModusPonens(Proof):
             return
         assumptions = defaults.checked_assumptions(assumptions)
         prev_default_assumptions = defaults.assumptions
-        # these assumptions will be used for deriving any side-effects
+        # these assumptions will be used for deriving any incidentals
         defaults.assumptions = assumptions
         try:
             # obtain the implication and antecedent Judgments
@@ -1847,7 +1848,7 @@ class Deduction(Proof):
         assumptions = [assumption for assumption in consequent_truth.assumptions
                        if assumption != elim_assumption]
         prev_default_assumptions = defaults.assumptions
-        # These assumptions will be used for deriving any side-effects
+        # These assumptions will be used for deriving any incidentals
         defaults.assumptions = assumptions
         try:
             implication_expr = Implies(antecedent_expr, consequent_truth.expr)
@@ -1917,8 +1918,8 @@ class Instantiation(Proof):
                     # Found a known instantiation.  Retrieve it.
                     # We may be using different assumptions than
                     # previously, though, so we might need to derive
-                    # side-effects again.
-                    inst._derive_side_effects()
+                    # incidentals again.
+                    inst._derive_incidentals()
                     return inst.with_matching_styles(
                         inst.expr, defaults.assumptions)
         '''
@@ -2070,7 +2071,7 @@ class Instantiation(Proof):
         
         # REVISIT RELABELING ON THE ASSUMPTION SIDE.
         # DO WE WANT TO KEEP THIS FEATURE?
-        # IF SO, WE MAY NEED A CHANGE TO MAKE SURE SIDE-EFFECTS
+        # IF SO, WE MAY NEED A CHANGE TO MAKE SURE INCIDENTALS
         # ARE PERFORMED UNDER UPDATED ASSUMPTIONS -- THIS IS BROKEN
         # WITH THE "Remember and recall instantiations" COMMIT.
         
@@ -2519,7 +2520,7 @@ class Generalization(Proof):
         # assumptions of the original Judgment minus all of the
         # new conditions (including those implied by the new domain).
         prev_default_assumptions = defaults.assumptions
-        # these assumptions will be used for deriving any side-effects
+        # these assumptions will be used for deriving any incidentals
         defaults.assumptions = assumptions
         try:
             remaining_conditions = list(new_conditions)

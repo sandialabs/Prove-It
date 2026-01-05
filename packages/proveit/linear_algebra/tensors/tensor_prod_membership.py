@@ -16,7 +16,7 @@ class TensorProdMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effects for TensorProd membership.
         '''
@@ -27,7 +27,7 @@ class TensorProdMembership(SetMembership):
             # K^{n_1 · n_2 · ... · n_m}
             self._get_cart_exps_field_and_exponents()
             # Auto-simplification is turned off when executing
-            # side-effects -- turn it back on for this one.
+            # incidentals -- turn it back on for this one.
             yield lambda : self.derive_cart_exp_membership(auto_simplify=True)
         except ValueError:
             pass

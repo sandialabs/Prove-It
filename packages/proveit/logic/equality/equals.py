@@ -75,16 +75,16 @@ class Equals(EquivRelation):
             Equals.known_evaluation_sets.setdefault(
                 self.lhs, set()).add(judgment)        
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Derive the reversed form.  If the rhs is TRUE/FALSE derive
         the lhs or its negation.  Derive FALSE if the rhs is FALSE
-        and the lhs is readily provable.  Apply 'equality_side_effects'
+        and the lhs is readily provable.  Apply 'equality_incidentals'
         ifthe lhs has a method with this name.
         '''
         from proveit.logic.booleans import TRUE, FALSE
         if self.lhs == self.rhs:
-            # Don't bother with side-effects for reflexive equalities.
+            # Don't bother with incidentals for reflexive equalities.
             return
 
         # automatically derive the reversed form which is equivalent
@@ -100,11 +100,11 @@ class Equals(EquivRelation):
         if self.rhs in (TRUE, FALSE):
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.derive_via_boolean_equality
-        if hasattr(self.lhs, 'equality_side_effects'):
-            for side_effect in self.lhs.equality_side_effects(judgment):
-                yield side_effect
+        if hasattr(self.lhs, 'equality_incidentals'):
+            for incidental in self.lhs.equality_incidentals(judgment):
+                yield incidental
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated
         equation.
@@ -524,7 +524,7 @@ class Equals(EquivRelation):
     def derive_reversed(self, **defaults_config):
         '''
         From x = y derive y = x.  This derivation is an automatic 
-        side-effect.
+        incidental.
         '''
         from . import equals_symmetry
         return equals_symmetry.instantiate({x: self.lhs, y: self.rhs})
@@ -560,7 +560,7 @@ class Equals(EquivRelation):
         If 'include_canonical_forms' is True, also account for
         presumed equalities by having the same canonical form.
         '''
-        # Make sure we derive assumption side-effects first.
+        # Make sure we derive assumption incidentals first.
         from proveit import Assumption
         Assumption.make_assumptions()
         to_process = OrderedSet()
@@ -627,7 +627,7 @@ class Equals(EquivRelation):
             # form with implications.
             transitivity = equals_transitivity_via_implications
         # We can assume that y=x will be a Judgment if x=y is a Judgment
-        # because it is derived as a side-effect.
+        # because it is derived as an incidental.
         if self.rhs == other_equality.lhs:
             instantiation = transitivity.instantiate(
                 {x: self.lhs, y: self.rhs, z: other_equality.rhs},
@@ -729,7 +729,7 @@ class Equals(EquivRelation):
     def derive_via_boolean_equality(self, **defaults_config):
         '''
         From A = TRUE derive A, or from A = FALSE derive Not(A).  
-        This derivation is an automatic side-effect.
+        This derivation is an automatic incidental.
         Note, see derive_stmt_eq_true or Not.equate_negated_to_false 
         for the reverse process.
         '''
@@ -1210,7 +1210,7 @@ class Equals(EquivRelation):
         None otherwise.
         '''
         from proveit._core_.proof import Assumption
-        # Make sure we derive assumption side-effects first.
+        # Make sure we derive assumption incidentals first.
         Assumption.make_assumptions()
 
         if (lambda_map, rhs) in Equals.inversions:

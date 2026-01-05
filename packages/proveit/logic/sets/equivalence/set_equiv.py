@@ -37,7 +37,7 @@ class SetEquiv(EquivRelation):
             SetEquiv.initializing.add(self)
             SetEquiv.initializing.remove(self)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Derive the revised form, unfold, and derive, as universal
         quantifications, left/right membership conditioned on right/left
@@ -53,11 +53,11 @@ class SetEquiv(EquivRelation):
         yield self.derive_right_membership_via_left
         
         # STILL CHECKING ON THE RELEVANCE OF THE FOLLOWING
-        # if hasattr(self.lhs, 'equality_side_effects'):
-        #     for side_effect in self.lhs.equality_side_effects(judgment):
-        #         yield side_effect
+        # if hasattr(self.lhs, 'equality_incidentals'):
+        #     for incidental in self.lhs.equality_incidentals(judgment):
+        #         yield incidental
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a
         negated equivalence. IN PROGRESS
@@ -217,7 +217,7 @@ class SetEquiv(EquivRelation):
     def derive_reversed(self, **defaults_config):
         '''
         From A set_equiv B derive B set_equiv A.
-        This derivation is an automatic side-effect.
+        This derivation is an automatic incidental.
         '''
         from . import set_equiv_reversal
         return set_equiv_reversal.instantiate({A: self.lhs, B: self.rhs})
@@ -259,7 +259,7 @@ class SetEquiv(EquivRelation):
         other_set_equiv = other
         # We can assume that B set_equiv A will be a Judgment if
         # A set_equiv B is a Judgment because it is derived as a
-        # side-effect.
+        # incidental.
         if self.rhs == other_set_equiv.lhs:
             return set_equiv_transitivity.instantiate(
                 {A: self.lhs, B: self.rhs, C: other_set_equiv.rhs},

@@ -120,19 +120,19 @@ class InClass(Relation):
             InClass.known_type_specific_memberships_by_canonical_form.setdefault(
                 (domain_type, canonical_element), OrderedSet()).add(judgment)
         
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         If the domain has a 'membership_object' method, side effects
-        will also be generated from the 'side_effects' object that it
+        will also be generated from the 'incidentals' object that it
         generates.
         '''
         if hasattr(self, 'membership_object'):
-            for side_effect in self.membership_object.side_effects(judgment):
-                yield side_effect
+            for incidental in self.membership_object.incidentals(judgment):
+                yield incidental
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
-        Fold Not(x in S) as (x not-in S) as an automatic side-effect.
+        Fold Not(x in S) as (x not-in S) as an automatic incidental.
         '''
         yield self.deduce_not_in
 
@@ -309,7 +309,7 @@ class InClass(Relation):
         with defaults.temporary() as tmp_defaults:
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
-            # Make sure we derive assumption side-effects first.
+            # Make sure we derive assumption incidentals first.
             Assumption.make_assumptions()
     
             if include_canonical_forms:
@@ -433,8 +433,8 @@ class ClassMembership:
         else:
             self.expr = InClass(self.element, self.domain)
 
-    def side_effects(self, judgment):
-        return # No side-effects by default
+    def incidentals(self, judgment):
+        return # No incidentals by default
         yield
 
     def _build_canonical_form(self):

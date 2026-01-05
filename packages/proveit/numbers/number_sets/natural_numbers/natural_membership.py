@@ -37,9 +37,9 @@ class NaturalMembership(NumberMembership):
             nonneg_int_is_natural)
         return nonneg_int_is_natural.instantiate({a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in Natural' for a given n.
+        Yield incidentals when proving 'n in Natural' for a given n.
         '''
         yield self.derive_element_in_int
         yield self.derive_element_in_rational
@@ -122,9 +122,9 @@ class NaturalPosMembership(NaturalMembership):
             pos_int_is_natural_pos)
         return pos_int_is_natural_pos.instantiate({a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in NaturalPos' for a given n.
+        Yield incidentals when proving 'n in NaturalPos' for a given n.
         '''
         yield self.derive_element_in_nat
         yield self.derive_element_in_int

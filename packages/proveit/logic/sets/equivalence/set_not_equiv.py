@@ -27,7 +27,7 @@ class SetNotEquiv(Operation):
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
         this SetNotEquiv operation.
@@ -43,7 +43,7 @@ class SetNotEquiv(Operation):
     def derive_reversed(self,  **defaults_config):
         '''
         From A not_equiv B derive B not_equiv A.
-        Derived automatically as a side-effect in side_effects() method.
+        Derived automatically as an incidental in incidentals() method.
         '''
         from . import set_not_equiv_reversal
         return set_not_equiv_reversal.instantiate(

@@ -95,8 +95,7 @@ class Len(Operation):
                 _n = len(entries)
                 len_thm = deci.__getattr__('tuple_len_%d' % _n)
                 repl_map = dict()
-                for param, entry in zip(len_thm.explicit_instance_params(),
-                                        entries):
+                for param, entry in zip(len_thm.instance_params, entries):
                     repl_map[param] = entry
                 return len_thm.instantiate(repl_map, auto_simplify=False)
             else:
@@ -315,8 +314,7 @@ class Len(Operation):
                 n = len(entries)
                 eq_thm = deci.__getattr__('tuple_len_%d_typical_eq' % n)
                 repl_map = dict()
-                for param, entry in zip(eq_thm.explicit_instance_params(),
-                                        entries):
+                for param, entry in zip(eq_thm.instance_params, entries):
                     repl_map[param] = entry
                 return eq_thm.instantiate(repl_map, auto_simplify=False)
         elif (len(entries) == 2 and not isinstance(entries[1], ExprRange)

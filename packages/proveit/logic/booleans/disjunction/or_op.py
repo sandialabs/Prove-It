@@ -207,7 +207,7 @@ class Or(Operation):
                 "disjunction: ({})".format(self))
 
     """
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -219,13 +219,13 @@ class Or(Operation):
         yield self.derive_in_bool
     """
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for Not(A or B or .. or .. Z).
         '''
         from proveit.logic import Not, And
         if self.operands.num_entries() == 0:
-            return  # No side-effects needed for [Or]()
+            return  # No incidentals needed for [Or]()
         if self.operands.is_double():  # Not(A or B)
             yield self.deduce_not_left_if_neither  # Not(A)
             yield self.deduce_not_right_if_neither  # Not(B)
@@ -274,7 +274,7 @@ class Or(Operation):
         raise NotImplementedError()
     
     """
-    def in_bool_side_effects(self, judgment):
+    def in_bool_incidentals(self, judgment):
         '''
         From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
         (Z in Boolean).

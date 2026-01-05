@@ -13,7 +13,7 @@ a transitive search to conclude a new relation from known relations
 using transitivity rules.  To enable this, each TransitiveRelation
 needs to track to define known_left_sides and known_right_sides as
 class dictionaries; these will be populated as side effects for
-each proven relation (see derive_side_effects).  Also, the
+each proven relation (see derive_incidentals).  Also, the
 apply_transitivity method should be appropriately implemented.
 The default version handles the case when the "other" relation
 is an equality (in which case, substitution may simply be performed).

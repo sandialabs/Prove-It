@@ -7,9 +7,9 @@ class RationalMembership(NumberMembership):
     def __init__(self, element, number_set):
         NumberMembership.__init__(self, element, number_set)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in Rational' for a given q.
+        Yield incidentals when proving 'q in Rational' for a given q.
         '''
         yield self.derive_element_in_real
 
@@ -103,9 +103,9 @@ class RationalNonZeroMembership(RationalMembership):
         return nonzero_rational_is_rational_nonzero.instantiate(
             {q:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in RationalNonZero'
+        Yield incidentals when proving 'q in RationalNonZero'
         for a given q.
         '''
         yield self.derive_element_notzero
@@ -185,9 +185,9 @@ class RationalPosMembership(RationalMembership):
         from . import pos_rational_is_rational_pos
         return pos_rational_is_rational_pos.instantiate({q:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in RationalPos'
+        Yield incidentals when proving 'q in RationalPos'
         for a given q.
         '''
         yield self.derive_element_lower_bound
@@ -283,9 +283,9 @@ class RationalNegMembership(RationalMembership):
         from . import neg_rational_is_rational_neg
         return neg_rational_is_rational_neg.instantiate({q:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in RationalNeg'
+        Yield incidentals when proving 'q in RationalNeg'
         for a given q.
         '''
         yield self.derive_element_upper_bound
@@ -369,9 +369,9 @@ class RationalNonNegMembership(RationalMembership):
         return nonneg_rational_is_rational_nonneg.instantiate(
             {q:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in RationalNonNeg'
+        Yield incidentals when proving 'q in RationalNonNeg'
         for a given q.
         '''
         yield self.derive_element_lower_bound
@@ -438,9 +438,9 @@ class RationalNonPosMembership(RationalMembership):
         return nonpos_rational_is_rational_nonpos.instantiate(
             {q:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'q in RationalNonPos'
+        Yield incidentals when proving 'q in RationalNonPos'
         for a given q.
         '''
         yield self.derive_element_upper_bound

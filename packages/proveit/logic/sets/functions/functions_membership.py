@@ -11,7 +11,7 @@ class FunctionsMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Unfold the injections set membership.
         '''

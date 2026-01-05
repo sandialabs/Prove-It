@@ -42,9 +42,9 @@ class BitMembership(NumberMembership):
         except ProofFailure:
             return b_in_bits.instantiate({b:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in Digit' for a given n.
+        Yield incidentals when proving 'n in Digit' for a given n.
         '''
         yield self.derive_element_lower_bound
         yield self.derive_element_upper_bound

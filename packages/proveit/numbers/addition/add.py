@@ -182,7 +182,7 @@ class Add(NumberOperation):
             for operand in self.operands:
                 yield operand
 
-    def equality_side_effects(self, judgment):
+    def equality_incidentals(self, judgment):
         '''
         If the right side is irreducible and the left side is
         binary, a + b = c, derive the commutation
@@ -1020,8 +1020,8 @@ class Add(NumberOperation):
             # multi-digit addition
             return DecimalSequence.add_eval(_a, _b)
         with defaults.temporary() as temp_defaults:
-            # We rely upon side-effect automation here.
-            temp_defaults.sideeffect_automation = True
+            # We rely upon incidental automation here.
+            temp_defaults.incidental_automation = True
             # for single digit addition, import the theorem that provides
             # the evaluation
             proveit.numbers.numerals.decimals.__getattr__(

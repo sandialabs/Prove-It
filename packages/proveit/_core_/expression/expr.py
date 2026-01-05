@@ -909,8 +909,8 @@ class Expression(metaclass=ExprType):
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
 
-        if defaults.sideeffect_automation:
-            # Generate assumption side-effects.
+        if defaults.incidental_automation:
+            # Generate assumption incidental effects.
             Assumption.make_assumptions()
 
         if self in assumptions:
@@ -1096,8 +1096,8 @@ class Expression(metaclass=ExprType):
             tmp_defaults.conclude_automation=False
             tmp_defaults.auto_simplify=False
             
-            if defaults.sideeffect_automation:
-                # Generate assumption side-effects.
+            if defaults.incidental_automation:
+                # Generate assumption incidentals.
                 Assumption.make_assumptions()
             
             found_truth = Judgment.find_judgment(
@@ -1254,9 +1254,9 @@ class Expression(metaclass=ExprType):
         raise NotImplementedError(
             "'conclude_negation' not implemented for " + str(self.__class__))
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield methods to attempt as side-effects when this expression
+        Yield methods to attempt as incidental effects when this expression
         is proven as a judgment.  These should each accept an
         'assumptions' parameter.
         These should be obvious and useful consequences, trivial and limited.

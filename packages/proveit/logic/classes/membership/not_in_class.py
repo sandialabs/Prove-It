@@ -86,18 +86,18 @@ class NotInClass(Relation):
         NotInClass.known_nonmemberships_by_canonical_form.setdefault(
                 self.element.canonical_form(), OrderedSet()).add(judgment)
         
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Unfold x not-in S as Not(x in S) as an automatic side-effect.
+        Unfold x not-in S as Not(x in S) as an automatic incidental.
         If the domain has a 'nonmembership_object' method, side effects
-        will also be generated from the 'side_effects' object that it
+        will also be generated from the 'incidentals' object that it
         generates.
         '''
         yield self.unfold_not_in
         if hasattr(self, 'nonmembership_object'):
-            for side_effect in self.nonmembership_object.side_effects(
+            for incidental in self.nonmembership_object.incidentals(
                     judgment):
-                yield side_effect
+                yield incidental
 
     def negated(self):
         '''
@@ -245,7 +245,7 @@ class NotInClass(Relation):
         with defaults.temporary() as tmp_defaults:
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
-            # Make sure we derive assumption side-effects first.
+            # Make sure we derive assumption incidentals first.
             Assumption.make_assumptions()
         
             element_cf = element.canonical_form()
@@ -318,9 +318,9 @@ class ClassNonmembership:
         else:
             self.expr = NotInClass(self.element, self.domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         raise NotImplementedError(
-            "Nonmembership object has no 'side_effects' method implemented")
+            "Nonmembership object has no 'incidentals' method implemented")
 
     def _build_canonical_form(self):
         '''

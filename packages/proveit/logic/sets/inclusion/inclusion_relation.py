@@ -31,13 +31,13 @@ class InclusionRelation(TransitiveRelation):
         from proveit.logic.sets.equivalence import SetEquiv
         return SetEquiv
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        In addition to the TransitiveRelation side-effects, also
+        In addition to the TransitiveRelation incidentals, also
         attempt derive_relaxed (if applicable) and derive_reversed.
         '''
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in TransitiveRelation.incidentals(self, judgment):
+            yield incidental
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
     

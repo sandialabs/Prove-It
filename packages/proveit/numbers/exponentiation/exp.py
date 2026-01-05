@@ -1483,7 +1483,7 @@ class ExpSetMembership(SetMembership):
             return exponent_eval.sub_left_side_into(elem_in_set)
         return elem_in_set
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         return
         yield
 

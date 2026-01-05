@@ -17,7 +17,7 @@ class NotEquals(Relation):
         Relation.__init__(self, NotEquals._operator_, a, b,
                            styles=styles)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
         this NotEquals operation.

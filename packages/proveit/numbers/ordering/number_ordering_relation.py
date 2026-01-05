@@ -13,14 +13,14 @@ class NumberOrderingRelation(TransitiveRelation):
         # The upper bound side of this inequality.
         self.upper = self.operands[1]
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        In addition to the TransitiveRelation side-effects, also
+        In addition to the TransitiveRelation incidentals, also
         attempt derive_negated, derive_relaxed (if applicable),
         and derive_reversed.
         '''
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in TransitiveRelation.incidentals(self, judgment):
+            yield incidental
         # yield self.derive_negated # Needs to be implemented (again)
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed

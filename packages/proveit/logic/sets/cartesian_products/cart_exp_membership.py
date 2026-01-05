@@ -12,9 +12,9 @@ class CartExpMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effect methods to try when the element is proven to
+        Yield incidental methods to try when the element is proven to
         be in a CartExp set.
         '''
         yield self.unfold

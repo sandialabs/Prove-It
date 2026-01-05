@@ -16,10 +16,10 @@ class Iff(TransitiveRelation):
         theory=__file__)
 
     # map left-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation.derive_incidentals)
     known_left_sides = dict()
     # map right-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation.derive_incidentals)
     known_right_sides = dict()
 
     def __init__(self, A, B, *, styles=None):
@@ -28,14 +28,14 @@ class Iff(TransitiveRelation):
         self.A = A
         self.B = B
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield the TransitiveRelation side-effects (which also records known_left_sides
+        Yield the TransitiveRelation incidentals (which also records known_left_sides
         and known_right_sides).  Also derive the left and right implications,
         derive the reversed version and attempt to derive equality.
         '''
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in TransitiveRelation.incidentals(self, judgment):
+            yield incidental
         # (A=>B and B=>A) from A<=>B:
         yield self.derive_conjunction_of_implications
         yield self.derive_left_implication  # B=>A given A<=>B

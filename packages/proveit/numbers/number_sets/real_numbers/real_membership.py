@@ -14,9 +14,9 @@ class RealMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, Real)
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in Real' for a given n.
+        Yield incidentals when proving 'n in Real' for a given n.
         '''
         yield self.derive_element_in_complex
 
@@ -66,9 +66,9 @@ class RealNonZeroMembership(NumberMembership):
         return nonzero_real_is_real_nonzero.instantiate(
             {a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in RealNonZero' 
+        Yield incidentals when proving 'n in RealNonZero' 
         for a given n.
         '''
         from proveit.numbers.number_sets.rational_numbers import (
@@ -151,9 +151,9 @@ class RealPosMembership(NumberMembership):
         return pos_real_is_real_pos.instantiate(
             {a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in RealPos' for a given n.
+        Yield incidentals when proving 'n in RealPos' for a given n.
         '''
         from proveit.numbers.number_sets.rational_numbers import (
             Rational, RationalPos, RationalNonZero, RationalNonNeg)
@@ -245,9 +245,9 @@ class RealNegMembership(NumberMembership):
         return neg_real_is_real_neg.instantiate(
             {a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in RealNeg' for a given n.
+        Yield incidentals when proving 'n in RealNeg' for a given n.
         '''
         from proveit.numbers.number_sets.rational_numbers import (
             Rational, RationalNeg, RationalNonZero, RationalNonPos)
@@ -323,9 +323,9 @@ class RealNonNegMembership(NumberMembership):
         return nonneg_real_is_real_nonneg.instantiate(
             {a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in RealNonNeg' for a given n.
+        Yield incidentals when proving 'n in RealNonNeg' for a given n.
         '''
         from proveit.numbers.number_sets.rational_numbers import (
             Rational, RationalNonNeg)
@@ -385,9 +385,9 @@ class RealNonPosMembership(NumberMembership):
         return nonpos_real_is_real_nonpos.instantiate(
             {a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in RealNonPos' for a given n.
+        Yield incidentals when proving 'n in RealNonPos' for a given n.
         '''
         from proveit.numbers.number_sets.rational_numbers import (
             Rational, RationalNonPos)

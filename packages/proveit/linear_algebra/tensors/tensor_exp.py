@@ -61,9 +61,9 @@ class TesorExpMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Derive the broader membership as a CartExp as a side-effect.
+        Derive the broader membership as a CartExp as an incidental.
         '''
         yield self.derive_cartexp_membership
     

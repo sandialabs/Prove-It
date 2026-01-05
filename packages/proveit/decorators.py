@@ -102,7 +102,7 @@ def _make_decorated_prover(func):
                 defaults.__dict__.keys())
         if 'automation' in kwargs.keys():
             # While 'automation' isn't a defaults key, it can be set
-            # to set 'sideeffect_automation' and 'conclude_automation'.
+            # to set 'incidental_automation' and 'conclude_automation'.
             defaults_to_change.add('automation')
         # Check to see if there are any unexpected keyword
         # arguments.
@@ -194,14 +194,14 @@ def _make_decorated_prover(func):
                 if 'assumptions' in defaults_to_change:
                     # Set 'assumptions' first (before turning off
                     # 'automation', for example, so that the 
-                    # side-effects will be processed).
+                    # incidental effects will be processed).
                     key = 'assumptions'
                     setattr(temp_defaults, key, kwargs[key])
                 for key in defaults_to_change:
                     if key != 'assumptions':
                         # Temporarily alter a default:
                         setattr(temp_defaults, key, kwargs[key])
-                # Make sure we derive assumption side-effects first.
+                # Make sure we derive assumption incidentals first.
                 Assumption.make_assumptions()
                 # Now call the prover function.
                 internal_kwargs = dict(kwargs)
@@ -235,7 +235,7 @@ def _make_decorated_prover(func):
             # No defaults reconfiguration.
             internal_kwargs = dict(kwargs)
             internal_kwargs.update(public_attributes_dict(defaults))
-            # Make sure we derive assumption side-effects first.
+            # Make sure we derive assumption incidentals first.
             Assumption.make_assumptions()
             # Now call the prover function.
             with _direct_prover_calls_counter:
@@ -564,7 +564,7 @@ def equality_prover(past_tense, present_tense):
                 from proveit.logic import evaluate_truth
                 # See if there is a known evaluation (directly or
                 # indirectly and/or via canonical forms).
-                # First, make sure we derive assumption side-effects.
+                # First, make sure we derive assumption incidentals.
                 with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
                         tmp_defaults.assumptions = kwargs['assumptions']

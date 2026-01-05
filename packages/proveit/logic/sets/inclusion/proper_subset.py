@@ -21,10 +21,10 @@ class ProperSubset(InclusionRelation):
         theory=__file__)
 
     # map left-hand-sides to ProperSubset Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_left_sides = dict()
     # map right-hand-sides to ProperSubset Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_right_sides = dict()
 
     def __init__(self, A, B, *, styles=None):

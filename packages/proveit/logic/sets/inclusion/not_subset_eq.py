@@ -31,8 +31,8 @@ class NotSubsetEq(Relation):
         # Use the default.
         return Operation.remake_constructor(self)
     
-    def side_effects(self, judgment):
-        # unfold as an automatic side-effect
+    def incidentals(self, judgment):
+        # unfold as an automatic incidental
         yield self.unfold
 
     @prover

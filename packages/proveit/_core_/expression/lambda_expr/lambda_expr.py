@@ -572,7 +572,7 @@ class Lambda(Expression):
         from proveit import ExprTuple, extract_var_tuple_indices
         from proveit.logic import Equals
         
-        # derive side-effects if applicable
+        # derive incidentals if applicable
         defaults.make_assumptions()
 
         try:
