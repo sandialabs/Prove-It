@@ -61,9 +61,9 @@ class IntervalMembership(NumberMembership):
             return sub_rel.derive_superset_membership(element)
         return self.domain.deduce_elem_in_set(element)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving n in an Interval for a given n.
+        Yield incidentals when proving n in an Interval for a given n.
         '''
         from proveit.numbers.number_sets.integers import Integer
         if not InSet(self.element, Integer).proven():
@@ -72,7 +72,7 @@ class IntervalMembership(NumberMembership):
         yield self.derive_element_upper_bound
         #yield self.derive_element_in_restricted_number_set_if_known
         # Added but commented the following out while we debate the
-        # wisdom of further side-effects
+        # wisdom of further incidentals
         # yield lambda: self.deduce_member_in_real(member)
         
     @prover
@@ -226,7 +226,7 @@ class IntervalNonmembership(SetNonmembership):
                 Less(_x, _a).readily_provable() or
                 Less(_b, _x).readily_provable())
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Yield some possible side effects of Interval set nonmembership:
         (1) if element is an integer, deduce some possible bounds on it;

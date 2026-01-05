@@ -15,11 +15,11 @@ class Defaults:
         self._sorted_assumptions = tuple()
         
         # Enable/disable two types of `automation`.
-        # Side-effect automation derives additional, related facts from
+        # Incidental automation derives additional, related facts from
         # proven facts.  Conclude automation uses strategies to try
         # to prove a particular fact that is needed.  Setting
         # 'automation' to True/False turns these both on/off.
-        self.sideeffect_automation = True
+        self.incidental_automation = True
         self.conclude_automation = True
 
         # Display LaTeX versions of expressions.
@@ -212,7 +212,7 @@ class Defaults:
         If the given assumptions is None, return the default;
         otherwise return the given assumptions after
         checking that the new assumptions are valid and
-        performing appropriate automation (deriving side-effects).
+        performing appropriate automation (deriving incidentals).
         '''
         if assumptions is None:
             return self.assumptions
@@ -245,8 +245,8 @@ class Defaults:
 
     def make_assumptions(self):
         '''
-        Make the default assumption Proof objects, deriving side-effects
-        if side-effect automation is on.
+        Make the default assumption Proof objects, deriving incidentals
+        if incidental automation is on.
         '''
         from proveit._core_.proof import Assumption
         Assumption.make_assumptions()
@@ -254,7 +254,7 @@ class Defaults:
     def __setattr__(self, attr, value):
         '''
         When setting the assumptions, check that they are valid
-        and derive their side-effects.
+        and derive their incidentals.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
             value = OrderedSet(self.checked_assumptions(value), mutable=False)
@@ -292,8 +292,8 @@ class Defaults:
             # Turning auto-simplify on, so don't preserve all (anymore?)
             self.preserve_all = False
         elif attr == 'automation':
-            # Turn "side-effect" and "conclude" automation on/off.
-            self.sideeffect_automation = self.conclude_automation = value
+            # Turn "incidental" and "conclude" automation on/off.
+            self.incidental_automation = self.conclude_automation = value
         if attr == 'preserved_exprs':
             for expr in value:
                 from .expression.expr import Expression
@@ -324,7 +324,7 @@ class TemporarySetter(object):
             return
         if attr == 'automation':
             # Setting 'automation' changes both kinds.
-            setattr(self, 'sideeffect_automation', val)
+            setattr(self, 'incidental_automation', val)
             setattr(self, 'conclude_automation', val)
             return
         if attr not in self._obj.__dict__:

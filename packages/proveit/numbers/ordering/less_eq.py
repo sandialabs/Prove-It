@@ -55,21 +55,21 @@ class LessEq(NumberOrderingRelation):
                 canonical_form.lhs, OrderedSet()).add(
                 (judgment, canonical_form.rhs))
         
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        In addition to the NumberOrderingRelation side-effects, also
-        derive a ≠ b from a < b as a side-effect.
+        In addition to the NumberOrderingRelation incidentals, also
+        derive a ≠ b from a < b as an incidental.
         '''
-        for side_effect in NumberOrderingRelation.side_effects(
+        for incidental in NumberOrderingRelation.incidentals(
                 self, judgment):
-            yield side_effect
+            yield incidental
         yield self.derive_complement
         # if is_numeric_int(self.lhs) or is_numeric_int(self.rhs):
         #     yield self.derive_one_side_in_real_subset
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
-        From Not(a <= b) derive a > b as a side-effect.
+        From Not(a <= b) derive a > b as an incidental.
         '''
         yield self.deduce_complement_of_complement
 

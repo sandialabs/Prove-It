@@ -77,9 +77,9 @@ class UnitaryMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Currently no SU_Membership side-effects.
+        Currently no SU_Membership incidentals.
         '''
         return
         yield
@@ -108,9 +108,9 @@ class SpecialUnitaryMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Currently no SU_Membership side-effects.
+        Currently no SU_Membership incidentals.
         '''
         return
         yield

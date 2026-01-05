@@ -17,10 +17,10 @@ class NumberSet(Literal):
     def membership_object(self, element):
         return NumberMembership(element, self)
 
-    def membership_side_effects(self, judgment):
+    def membership_incidentals(self, judgment):
         '''
-        Yield side-effects for when the given member is in this number
-        set.  The default is to have no side-effects, but this
+        Yield incidentals for when the given member is in this number
+        set.  The default is to have no incidentals, but this
         can be adapted for the various NumberSet classes.
         '''
         return
@@ -196,26 +196,26 @@ class NumberMembership(SetMembership):
         SetMembership.__init__(self, element, number_set)
         self.number_set = number_set
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects for when the represented membership,
+        Yield incidentals for when the represented membership,
         that self.element is in self.number_set, is proven.
         '''
         number_set, element = self.number_set, self.element
         if not isinstance(judgment.expr, InSet):
             raise ValueError(
                 "Expecting the judgment of a NumberMembership "
-                "side_effects call to be for an InSet expression.")
+                "incidentals call to be for an InSet expression.")
         if judgment.element != element:
-            raise ValueError("NumberMembership.side_effects called with a "
+            raise ValueError("NumberMembership.incidentals called with a "
                              "judgment that is inconsistent w.r.t. the "
                              "element.")
         if judgment.domain != number_set:
-            raise ValueError("NumberMembership.side_effects called with a "
+            raise ValueError("NumberMembership.incidentals called with a "
                              "judgment that is inconsistent w.r.t. the "
                              "domain.")
-        for side_effect in number_set.membership_side_effects(judgment):
-            yield side_effect
+        for incidental in number_set.membership_incidentals(judgment):
+            yield incidental
 
     def readily_in_bool(self):
         '''

@@ -251,7 +251,7 @@ class And(Operation):
                            "we could not disprove any of the conjunction "
                            "operands.")
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -259,7 +259,7 @@ class And(Operation):
         from proveit.logic import Not
         from proveit import ExprRange
         if self.operands.num_entries() == 0:
-            return  # No side-effects needed for [And]().
+            return  # No incidentals needed for [And]().
         if self.operands.is_double():
             yield self.derive_left
             yield self.derive_right
@@ -274,7 +274,7 @@ class And(Operation):
 
         # yield self.derive_commutation
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for
         Not(A and B and .. and .. Z).
@@ -289,7 +289,7 @@ class And(Operation):
             yield demorgan_or.conclude_via_demorgans
 
     """
-    def in_bool_side_effects(self, judgment):
+    def in_bool_incidentals(self, judgment):
         '''
         From (A and B and .. and Z) in Boolean deduce
         (A in Boolean), (B in Boolean), ... (Z in Boolean).
@@ -446,11 +446,11 @@ class And(Operation):
                 {i:_i, j:_j, k:_k, P:_P},
                 preserve_expr=self).derive_consequent()
             
-        if defaults.sideeffect_automation:
-            # While we are at it, as an "unofficial" side-effect,
+        if defaults.incidental_automation:
+            # While we are at it, as an "unofficial" incidental,
             # let's instantatiate forall_{k in {i .. j}} P(k) to derive
             # {k in {i .. j}} |- P(k)
-            # and induce side-effects for P(k).
+            # and induce incidentals for P(k).
             assumptions = defaults.assumptions + (
                     InSet(_k, Interval(_i, _j)), )
             proven_quantification.instantiate(assumptions=assumptions)

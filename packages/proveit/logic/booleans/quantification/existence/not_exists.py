@@ -53,7 +53,7 @@ class NotExists(OperationOverInstances):
             return tuple(lambda_body.operands)
         return None, lambda_body
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically 
         for a NotExists operation.

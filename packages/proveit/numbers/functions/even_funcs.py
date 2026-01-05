@@ -215,7 +215,7 @@ class EvenFuncs(Function):
 #                             %domain.__class__)
 #         self.field = domain.field
     
-#     def side_effects(self, judgment):
+#     def incidentals(self, judgment):
 #         '''
 #         Remember known VecSpaces memberships.
 #         '''
@@ -249,7 +249,7 @@ class MonDecFuncsMembership(SetMembership):
         # analogous case for the following?
         # self.field = domain.field
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Remember known MonDecFuncs memberships.
         '''

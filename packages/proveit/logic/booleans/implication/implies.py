@@ -13,10 +13,10 @@ class Implies(TransitiveRelation):
         theory=__file__)
 
     # map left-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation.derive_incidentals)
     known_left_sides = dict()
     # map right-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation.derive_incidentals)
     known_right_sides = dict()
 
     def __init__(self, antecedent, consequent, *, styles=None):
@@ -41,31 +41,31 @@ class Implies(TransitiveRelation):
         '''
         return Implies
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield the TransitiveRelation side-effects (which also records
+        Yield the TransitiveRelation incidentals (which also records
         known_left_sides nd known_right_sides).  Also derive the consequent
-        as a side-effect if the antecedent is known to be true
-        (under the "side-effect" assumptions).
+        as an incidental if the antecedent is known to be true
+        (under the "incidental" assumptions).
         As a special case, if the consequent is FALSE, do
         derive_via_contradiction.
         '''
         from proveit.logic.booleans import FALSE
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in TransitiveRelation.incidentals(self, judgment):
+            yield incidental
         if self.antecedent.readily_provable():
             # Derive the consequent by proving the antecedent.
             yield self.derive_consequent  # B given A=>B and A
         else:
             # Derive the consequent by assuming the antecedent, but 
-            # don't propogate further side-effects.
+            # don't propogate further incidentals.
             yield self._derive_consequent_generically
         if self.consequent == FALSE:
             from proveit.logic.booleans.negation import Not
             # Not(A) given A=>FALSE
             yield Not(self.antecedent).conclude_as_folded
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically when an implication is negated.
         implemented by JML on 6/17/19
@@ -221,7 +221,7 @@ class Implies(TransitiveRelation):
     def _derive_consequent_generically(self, **defaults_config):
         '''
         Drive the consequent assuming the antecedent.  
-        Do not propagate further side-effects.
+        Do not propagate further incidentals.
         '''
         with defaults.temporary() as tmp_defaults:
             tmp_defaults.automation = False

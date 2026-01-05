@@ -63,9 +63,9 @@ class RealIntervalMembership(NumberMembership):
             return sub_rel.derive_superset_membership(element)
         return domain.deduce_elem_in_set(element)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving x in a real interval for a
+        Yield incidentals when proving x in a real interval for a
         given x.
         (1) Derive elem in Real (assuming we know upper and
             lower bounds are Real);
@@ -348,7 +348,7 @@ class RealIntervalNonmembership(SetNonmembership):
         SetNonmembership.__init__(self, element, domain)
         self.domain = domain
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Yield some possible side effects of real IntervalXX set
         nonmembership:

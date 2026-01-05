@@ -246,7 +246,7 @@ class XOr(Operation):
                 "exclusive disjunction: ({})".format(self))
 
     # not yet clear if this is relevant or correct
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically.
         '''
@@ -260,14 +260,14 @@ class XOr(Operation):
     # Started to adapt this from the Or class, but realized
     # it would have to be modified considerably to apply to XOR.
     # Leaving here as a placeholder for future consideration.
-    # def negation_side_effects(self, judgment):
+    # def negation_incidentals(self, judgment):
     #     '''
     #     Side-effect derivations to attempt automatically for
     #     Not(A xor B xor .. xor .. Z).
     #     '''
     #     from proveit.logic import Not, And
     #     if self.operands.num_entries() == 0:
-    #         return  # No side-effects needed for [XOr]()
+    #         return  # No incidentals needed for [XOr]()
     #     if self.operands.is_double():  # Not(A xor B)
     #         # these will need to be updated
     #         yield self.deduce_not_left_if_neither  # Not(A)
@@ -279,7 +279,7 @@ class XOr(Operation):
     #         demorgan_and = And(*[operand.operand for operand in self.operands])
     #         yield demorgan_and.conclude_via_demorgans
 
-    def in_bool_side_effects(self, judgment):
+    def in_bool_incidentals(self, judgment):
         '''
         From (A xor B xor .. xor Z) in Boolean,
         deduce (A in Boolean), (B in Boolean), ... (Z in Boolean).

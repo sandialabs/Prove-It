@@ -117,9 +117,9 @@ class InnerProdSpacesMembership(ClassMembership):
                             %domain.__class__)
         self.field = domain.field
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Prove VecSpaces membership as a side-effect and
+        Prove VecSpaces membership as an incidental and
         remember known InnerProdSpaces memberships.
         '''
         yield self.derive_vec_spaces_membership

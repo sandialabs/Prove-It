@@ -91,9 +91,9 @@ class HilbertSpacesMembership(ClassMembership):
             raise TypeError("domain expected to be HilbertSpaces, not %s"
                             %domain.__class__)
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Prove InnerProdSpaces and VecSpaces memberships as side-effects
+        Prove InnerProdSpaces and VecSpaces memberships as incidentals
         and also remember known HilbertSpaces memberships.
         '''
         yield self.derive_inner_prod_spaces_membership

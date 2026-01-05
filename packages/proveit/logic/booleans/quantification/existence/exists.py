@@ -162,14 +162,14 @@ class Exists(OperationOverInstances):
         Exists.known_instance_maps.setdefault(
                 instance_map, set()).add(judgment)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
         return
         yield self.derive_negated_forall  # derive the negated forall form
 
-    def negation_side_effects(self, judgment):
+    def negation_incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for a negated exists operation.
         '''

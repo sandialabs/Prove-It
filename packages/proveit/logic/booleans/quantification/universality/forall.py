@@ -67,7 +67,7 @@ class Forall(OperationOverInstances):
         Forall.known_instance_maps.setdefault(
                 instance_map, set()).add(judgment)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Side-effect derivations to attempt automatically for this
         forall operation.
@@ -80,7 +80,7 @@ class Forall(OperationOverInstances):
                 yield self.unfold
 
         # Perform a generic instantiation assuming all conditions,
-        # but don't cascade further side-effects which can be
+        # but don't cascade further incidentals which can be
         # problematic.
         yield self._instantiate_generically
         
@@ -128,7 +128,7 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic import SubsetEq
         
-        # Make sure we derive side-effects from the conditions
+        # Make sure we derive incidentals from the conditions
         # before checking of the generalization is readily provable
         # for Forall.conclude purposes.
         if hasattr(self, 'condition'):
@@ -209,7 +209,7 @@ class Forall(OperationOverInstances):
         '''
         Instantiate all nested layers of universal quantification
         with no changes to instance parameters and assuming all
-        conditions.  Do not propagate further side-effects.
+        conditions.  Do not propagate further incidentals.
         Do this for the canonical form for good measure (which would
         allow a generalization under different parameter labels).
         '''

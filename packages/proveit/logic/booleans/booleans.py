@@ -164,16 +164,16 @@ class BooleanMembership(SetMembership):
         from . import Boolean
         SetMembership.__init__(self, element, Boolean)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effect methods to try when the element is proven to be in the Boolean set
-        by calling 'in_bool_side_effects' on the element if it has such a method.
-        Edited by JML on 6/27/19 to add fold_is_bool side_effect
+        Yield incidental methods to try when the element is proven to be in the Boolean set
+        by calling 'in_bool_incidentals' on the element if it has such a method.
+        Edited by JML on 6/27/19 to add fold_is_bool incidental
         '''
         from proveit.logic.booleans import unfold_is_bool, fold_is_bool
-        if hasattr(self.element, 'in_bool_side_effects'):
-            for side_effect in self.element.in_bool_side_effects(judgment):
-                yield side_effect
+        if hasattr(self.element, 'in_bool_incidentals'):
+            for incidental in self.element.in_bool_incidentals(judgment):
+                yield incidental
         # don't automatically do unfold_is_bool_explicit if unfold_is_bool is
         # unusable -- avoids infinite recursion
         if unfold_is_bool.is_possibly_usable():
@@ -240,7 +240,7 @@ class BooleanMembership(SetMembership):
     def fold(self, **defaults_config):
         '''
         From [(element=TRUE) or (element=FALSE)], derive in_bool(Element).
-        Created by JML on 6/27/19 for fold_is_bool side_effect
+        Created by JML on 6/27/19 for fold_is_bool incidental
         '''
         from . import fold_is_bool
         if fold_is_bool.is_usable():

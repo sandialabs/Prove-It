@@ -96,10 +96,10 @@ class Judgment:
     
     qed_in_progress = False  # set to true when "%qed" is in progress
 
-    # Judgments for which derive_side_effects is in progress, tracked to 
+    # Judgments for which derive_incidentals is in progress, tracked to 
     # prevent infinite recursion when deducing side effects after 
     # something is proven.
-    in_progress_to_derive_sideeffects = set()
+    in_progress_to_derive_incidentals = set()
 
     @staticmethod
     def _clear_():
@@ -118,8 +118,8 @@ class Judgment:
         Judgment.presumed_theorems_and_dependencies = None
         Judgment.qed_in_progress = False
         _ExprProofs.all_expr_proofs.clear()
-        assert len(Judgment.in_progress_to_derive_sideeffects) == 0, (
-                "Unexpected remnant 'in_progress_to_derive_sideeffects' "
+        assert len(Judgment.in_progress_to_derive_incidentals) == 0, (
+                "Unexpected remnant 'in_progress_to_derive_incidentals' "
                 "items (should have been temporary)")
 
     def __init__(self, expression, assumptions, *, num_lit_gen=0):
@@ -150,7 +150,7 @@ class Judgment:
         
         # Associate the canonical form of the expression
         # with this Judgment.
-        if defaults.sideeffect_automation:
+        if defaults.incidental_automation:
             Judgment.canonical_form_to_proven_exprs.setdefault(
                     expression.canonical_form(), set()).add(expression)
 
@@ -225,33 +225,33 @@ class Judgment:
         obj_ids = re.split(r";|\[|,|\]", unique_rep[:last_rbracket_pos])
         return [obj_id for obj_id in obj_ids if len(obj_id) > 0]
 
-    def derive_side_effects(self):
+    def derive_incidentals(self):
         '''
-        Derive any side-effects that are obvious consequences arising 
+        Derive any incidental effects that are obvious consequences arising 
         from this truth.  Called after the corresponding Proof is 
         complete.
         '''
         from .proof import ProofFailure, UnsatisfiedPrerequisites
         from proveit.decorators import _direct_prover_calls_counter
-        if not defaults.sideeffect_automation:
+        if not defaults.incidental_automation:
             return  # automation disabled
         if Judgment.theorem_being_proven == self:
-            return # No need to derive side-effects now.
-        if self not in Judgment.in_progress_to_derive_sideeffects:
+            return # No need to derive incidentals now.
+        if self not in Judgment.in_progress_to_derive_incidentals:
             # avoid infinite recursion by using
-            # in_progress_to_deduce_sideeffects
-            Judgment.in_progress_to_derive_sideeffects.add(self)
+            # in_progress_to_deduce_incidentals
+            Judgment.in_progress_to_derive_incidentals.add(self)
             try:
                 # Don't count these as top-level prover calls
                 _direct_prover_calls_counter.nested_level += 1
-                for side_effect in self.expr.side_effects(self):
-                    # Attempt each side-effect derivation, specific to 
+                for incidental in self.expr.incidentals(self):
+                    # Attempt each incidental derivation, specific to 
                     # thetype of Expression.
                     try:
                         # use the default assumptions which are 
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
-                        side_effect()
+                        incidental()
                     except (ProofFailure, UnsatisfiedPrerequisites):
                         pass
                     except Exception as e:
@@ -259,11 +259,11 @@ class Judgment:
                             "Side effect failure for %s, while running %s: " %
                             (str(
                                 self.expr),
-                                str(side_effect)) +
+                                str(incidental)) +
                             str(e))
             finally:
                 _direct_prover_calls_counter.nested_level -= 1
-                Judgment.in_progress_to_derive_sideeffects.remove(self)
+                Judgment.in_progress_to_derive_incidentals.remove(self)
 
     def order_of_appearance(self, sub_expressions):
         '''
@@ -423,7 +423,7 @@ class Judgment:
         '''
         Return True iff this Judgment is usable and applicable under 
         the default assumptions.  Also, if it is applicable, make sure
-        the side-effects are derived if sideeffect_automation is on
+        the incidentals are derived if incidental_automation is on
         in case it was off when the Judgment was proven.
         '''
         if assumptions is USE_DEFAULTS:
@@ -431,11 +431,11 @@ class Judgment:
         applicable = (self.is_possibly_usable() and 
                 self.assumptions.issubset(assumptions))
         if applicable:
-            # Make sure the side-effects are derived if sideeffect
+            # Make sure the incidentals are derived if incidental
             # automation is on in case it was off before.  This is
             # a good place to do it since we should check applicability
             # before using a Judgment.
-            self.proof()._derive_side_effects()
+            self.proof()._derive_incidentals()
         return applicable
 
     def as_theorem_or_axiom(self):

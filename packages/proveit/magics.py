@@ -767,6 +767,8 @@ class ProveItMagicCommands:
     def play_game(self):
         import proveit
         from game_data import GameData
+        # Prevent incidental derivations that would slow things down.
+        proveit.defaults.automation = False
         proveit_path = os.path.split(proveit.__file__)[0]
         if not hasattr(self, 'game_data'):
             self.theory = Theory(proveit_path)
@@ -1140,7 +1142,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
             # to force it to regenerate expression notebooks,
             # etc.
             self.theory._theory_folder_storage(kind=kind).unload()
-            if defaults.sideeffect_automation or defaults.conclude_automation:
+            if defaults.incidental_automation or defaults.conclude_automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "
                                 "'common expressions', 'axioms', "

@@ -466,7 +466,7 @@ class QmultCodomainMembership(ClassMembership):
         from . import QmultCodomain
         ClassMembership.__init__(self, element, QmultCodomain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         return # generator yielding nothing
         yield
 
@@ -690,7 +690,7 @@ class QmultCodomainMembership(ClassMembership):
                 # know it is a linear map.
                 if isinstance(op1, Bra):
                     # By proving the bra is in QmultCodomain, we
-                    # get that it is a linear map as a side-effect.
+                    # get that it is a linear map as an incidental.
                     QmultCodomain.membership_object(Qmult(op1)).conclude()
                 
                 # Next, handle the op-ket case.
@@ -776,7 +776,7 @@ class QmultCodomainMembership(ClassMembership):
                     QmultCodomain.membership_object(
                             multi_def.rhs).conclude()
                 binary_membership = binary_membership.prove()
-                # We need to propogate the side-effect memberships.
+                # We need to propogate the incidental memberships.
                 _rhs = multi_def.rhs
                 for _Hspace in yield_known_hilbert_spaces(_rhs):
                     multi_def.sub_left_side_into(InSet(_rhs, _Hspace))
@@ -866,7 +866,7 @@ def containing_hilbert_space_linmap_sets(qobj):
     from proveit.linear_algebra.inner_products.hilbert_spaces import (
             deduce_as_hilbert_space)
     # Prove the membership of qobj in Q* to prove
-    # the side-effect linear map membership as well.
+    # the incidental linear map membership as well.
     #QmultCodomain.membership_object(qobj).conclude()
     for qobj in (qobj, Qmult(qobj)):
         for linmap_membership in InClass.yield_known_memberships(

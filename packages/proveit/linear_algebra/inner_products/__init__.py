@@ -14,7 +14,7 @@ from proveit._core_.theory import TheoryPackage
 sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 
 import proveit
-if proveit.defaults.sideeffect_automation:
+if proveit.defaults.incidental_automation:
     # Import some fundamental theorems without quantifiers
     from . import (rational_set_is_inner_prod_space, 
                    real_set_is_inner_prod_space,

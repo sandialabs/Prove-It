@@ -16,17 +16,17 @@ class DividesRelation(TransitiveRelation):
         self.divisor = self.lhs
         self.dividend = self.rhs
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        In addition to the TransitiveRelation side-effects, also
+        In addition to the TransitiveRelation incidentals, also
         attempt (where applicable) eliminate_dividen_exponent,
         eliminate_common_exponent, and eliminate_common_factor.
         '''
         from proveit.numbers import two, Exp, Mult
 
 
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in TransitiveRelation.incidentals(self, judgment):
+            yield incidental
 
         # For each of the following, use the default assumptions to
         # verify some conditions before yielding the side effect method
@@ -86,10 +86,10 @@ class Divides(DividesRelation):
     )
 
     # map left-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_left_sides = dict()
     # map right-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_right_sides = dict()
 
     def __init__(self, a, b, *, styles=None):
@@ -183,7 +183,7 @@ class Divides(DividesRelation):
                 "Case: (x^n) | (y^n). Does not appear applicable.\n")
 
         """
-        # This case should be handled on the "side-effect" end.
+        # This case should be handled on the "incidental" end.
 
         #-- -------------------------------------------------------- --#
         #-- Case (5): x|y if x^n|y^n (for some small pos nat n)      --#
@@ -284,7 +284,7 @@ class Divides(DividesRelation):
         From k|a^n (self), derive and return k|a if k is prime
         and a and n are integers.  Currently, this is only implement
         for k=2.  This method is called from the
-        DividesRelation.side_effects() method.
+        DividesRelation.incidentals() method.
         '''
         from proveit.numbers import two, Exp
         from . import even__if__power_is_even
@@ -306,7 +306,7 @@ class Divides(DividesRelation):
         '''
         From self of the form (k^n)|(a^n), derive and return k|a.
         k, a, must be integers, with n a positive integer. This method
-        is called from the DividesRelation side_effects() method.
+        is called from the DividesRelation incidentals() method.
         '''
         from proveit.numbers import Exp
         if (isinstance(self.lhs, Exp) and
@@ -488,10 +488,10 @@ class DividesProper(DividesRelation):
     )
 
     # map left-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_left_sides = dict()
     # map right-hand-sides to "Divides" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation.incidentals)
     known_right_sides = dict()
 
     def __init__(self, a, b, *, styles=None):

@@ -12,9 +12,9 @@ class UnionMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Unfold the enumerated set membership as a side-effect.
+        Unfold the enumerated set membership as an incidental.
         '''
         yield self.unfold
 
@@ -82,9 +82,9 @@ class UnionNonmembership(SetNonmembership):
     def __init__(self, element, domain):
         SetNonmembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Currently no side-effects for union nonmembership.
+        Currently no incidentals for union nonmembership.
         '''
         return
         yield

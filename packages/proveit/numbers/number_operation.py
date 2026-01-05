@@ -393,7 +393,7 @@ def readily_provable_number_set(
                                is_irreducible_value)
     from proveit.numbers import Less, LessEq, zero
 
-    # Make sure we derive assumption side-effects first.
+    # Make sure we derive assumption incidentals first.
     #Assumption.make_assumptions()
     
     if not automation:

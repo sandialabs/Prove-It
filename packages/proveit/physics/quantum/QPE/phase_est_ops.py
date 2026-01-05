@@ -159,7 +159,7 @@ class ModAdd(Operation):
                 return interval_membership
             return number_set.deduce_elem_in_set(self)
         if InSet(self, number_set).proven():
-            # proven as a side-effect
+            # proven as an incidental
             return InSet(self, number_set).prove()
         raise NotImplementedError(
                 "Proving %s in %s has not been implemented"

@@ -29,13 +29,13 @@ class QcircuitEquiv(EquivRelation):
         self.a = a
         self.b = b
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        In addition to the TransitiveRelation side-effects, also
+        In addition to the TransitiveRelation incidentals, also
         attempt derive_reversed.
         '''        
-        for side_effect in EquivRelation.side_effects(self, judgment):
-            yield side_effect
+        for incidental in EquivRelation.incidentals(self, judgment):
+            yield incidental
         yield self.derive_reversed
 
     @staticmethod

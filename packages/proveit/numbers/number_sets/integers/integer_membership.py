@@ -17,9 +17,9 @@ class IntegerMembership(NumberMembership):
         NumberMembership.__init__(self, element, Integer)
     
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in Integer' for a given n.
+        Yield incidentals when proving 'n in Integer' for a given n.
         '''
         from proveit.numbers.number_sets.natural_numbers import Natural
         if not InSet(self.element, Natural).proven():
@@ -75,9 +75,9 @@ class IntegerNonZeroMembership(NumberMembership):
         from . import nonzero_int_is_int_nonzero
         return nonzero_int_is_int_nonzero.instantiate({a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerNonZero' for 
+        Yield incidentals when proving 'n in IntegerNonZero' for 
         a given n.
         '''
         from proveit.numbers.number_sets.natural_numbers import (
@@ -158,9 +158,9 @@ class IntegerNegMembership(NumberMembership):
         return neg_int_is_int_neg.instantiate({a:self.element})
 
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerNeg' for a given n.
+        Yield incidentals when proving 'n in IntegerNeg' for a given n.
         '''
         yield self.derive_element_in_integer
         yield self.derive_element_in_integer_non_zero
@@ -235,9 +235,9 @@ class IntegerNonPosMembership(NumberMembership):
         from . import nonpos_int_is_int_nonpos
         return nonpos_int_is_int_nonpos.instantiate({a:self.element})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerNonPos' for
+        Yield incidentals when proving 'n in IntegerNonPos' for
         a given n.
         '''
         yield self.derive_element_in_integer
@@ -353,9 +353,9 @@ class IntegerEvenMembership(NumberMembership):
         _a_sub = self.element
         return double_int_is_even.instantiate({a:_a_sub})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerEven' for 
+        Yield incidentals when proving 'n in IntegerEven' for 
         # a given n:
         (1) An even integer n is an integer (this will then cascade
             to rationals, reals, and complex numbers);
@@ -463,9 +463,9 @@ class IntegerOddMembership(NumberMembership):
         _a_sub = self.element
         return double_int_plus_one_is_odd.instantiate({a:_a_sub})
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerOdd' for 
+        Yield incidentals when proving 'n in IntegerOdd' for 
         # a given n:
         (1) An odd integer n is an integer (this will cascade to
             rationals, reals, and complex numbers);

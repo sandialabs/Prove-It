@@ -36,7 +36,7 @@ fundamental derivation steps (modus ponens, hypothetical reasoning,
 instantiation, generalization, or axiom elimination).  Axioms and theorems
 may be invoked indirectly via convenience methods or automation (methods
 that are automatically invoked when attempting to prove something or
-side-effects when something is proven).  Theorem proofs and their axiom/
+incidentals when something is proven).  Theorem proofs and their axiom/
 theorem dependencies are stored a kind of database (filesystem based).  This
 database is used to prevent circular logic.
 """

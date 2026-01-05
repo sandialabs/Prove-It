@@ -165,7 +165,7 @@ class MonDecFuncsMembership(SetMembership):
         # analogous case for the following?
         # self.field = domain.field
     
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
         Remember known MonDecFuncs memberships.
         '''

@@ -58,9 +58,9 @@ class ComplexNonZeroMembership(NumberMembership):
             {x:self.element})
 
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Yield side-effects when proving 'x in Complex' for a given x.
+        Yield incidentals when proving 'x in Complex' for a given x.
         '''
         from proveit.numbers.number_sets.real_numbers import (
             Real, RealNonZero)

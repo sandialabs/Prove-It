@@ -12,9 +12,9 @@ class IntersectMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Unfold the enumerated set membership as a side-effect.
+        Unfold the enumerated set membership as an incidental.
         '''
         yield self.unfold
 
@@ -85,9 +85,9 @@ class IntersectNonmembership(SetNonmembership):
     def __init__(self, element, domain):
         SetNonmembership.__init__(self, element, domain)
 
-    def side_effects(self, judgment):
+    def incidentals(self, judgment):
         '''
-        Currently non side-effects for intersection nonmembership.
+        Currently non incidentals for intersection nonmembership.
         '''
         return
         yield
