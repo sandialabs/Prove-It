@@ -1903,26 +1903,15 @@ class Instantiation(Proof):
         '''
         mapping, mapping_key_order = Instantiation._generate_mapping(
                 orig_judgment, repl_map, equiv_alt_expansions)
+        '''
+        TODO: reuse instantiations after fixing the 'with_matching_styles'.
+        Does this speed anything up?
+        
         mapping_pairs = tuple(
                 [(key, mapping[key]) for key in mapping_key_order])
-        # Extract default configurationst that are relevant to
-        # the instantiation outcome other than the assumptions.
-        # (If simplify_with_known_evaluations is True, don't
-        # recall or store the instantiation because it will
-        # depend upon what is known).
-        important_default_attrs = ('auto_simplify', 'preserve_all',
-                                   'replacements', 'preserved_exprs')
-        important_configs = [getattr(defaults, attr) for attr
-                             in important_default_attrs]
-        # Make the replacements and preserved_exprs sets hashable.
-        for _k in (2, 3):
-            important_configs[_k] = tuple(
-                sorted(important_configs[_k], key=lambda expr:hash(expr)))
-        important_configs = tuple(important_configs)
         instantiations = Instantiation.instantiations
-        key = (orig_judgment, mapping_pairs, important_configs)
-        if (key in instantiations and
-                not defaults.simplify_with_known_evaluations):
+        key = (orig_judgment, mapping_pairs)
+        if key in instantiations:
             for inst in instantiations[key]:
                 if inst.proven_truth.is_applicable():
                     # Found a known instantiation.  Retrieve it.
@@ -1932,12 +1921,11 @@ class Instantiation(Proof):
                     inst._derive_side_effects()
                     return inst.with_matching_styles(
                         inst.expr, defaults.assumptions)
+        '''
         inst = Instantiation(orig_judgment, repl_map, equiv_alt_expansions,
                              mapping, mapping_key_order)
         assert inst.mapping == mapping
-        #if not defaults.simplify_with_known_evaluations:
-        #    Instantiation.instantiations.setdefault(key, set()).add(inst)
-        
+        #Instantiation.instantiations.setdefault(key, set()).add(inst)
         return inst
 
     @staticmethod
