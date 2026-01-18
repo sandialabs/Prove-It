@@ -11,7 +11,9 @@ class RationalMembership(NumberMembership):
         '''
         Yield incidentals when proving 'q in Rational' for a given q.
         '''
-        yield self.derive_element_in_real
+        from proveit.numbers.number_sets.integers import Integer
+        if not InSet(self.element, Integer).proven():
+            yield self.derive_element_in_real
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -108,8 +110,11 @@ class RationalNonZeroMembership(RationalMembership):
         Yield incidentals when proving 'q in RationalNonZero'
         for a given q.
         '''
-        yield self.derive_element_notzero
-        yield self.derive_element_in_rational
+        from proveit.numbers.number_sets.integers import Integer, IntegerNonZero
+        if not InSet(self.element, Integer).proven():
+            yield self.derive_element_in_rational
+        if not InSet(self.element, IntegerNonZero).proven():
+            yield self.derive_element_notzero
         yield self.derive_element_in_real_nonzero
 
     @relation_prover
@@ -190,10 +195,17 @@ class RationalPosMembership(RationalMembership):
         Yield incidentals when proving 'q in RationalPos'
         for a given q.
         '''
-        yield self.derive_element_lower_bound
-        yield self.derive_element_in_rational
-        yield self.derive_element_in_rational_nonzero
-        yield self.derive_element_in_rational_nonneg
+        from proveit.numbers.number_sets.natural_numbers import (
+            Natural, NaturalPos)
+        from proveit.numbers.number_sets.integers import Integer, IntegerNonZero
+        if not InSet(self.element, Natural).proven():
+            yield self.derive_element_in_rational_nonneg
+        if not InSet(self.element, NaturalPos).proven():
+            yield self.derive_element_lower_bound
+        if not InSet(self.element, Integer).proven():
+            yield self.derive_element_in_rational
+        if not InSet(self.element, IntegerNonZero).proven():
+            yield self.derive_element_in_rational_nonzero
         yield self.derive_element_in_real_pos
 
     @relation_prover
@@ -288,11 +300,16 @@ class RationalNegMembership(RationalMembership):
         Yield incidentals when proving 'q in RationalNeg'
         for a given q.
         '''
-        yield self.derive_element_upper_bound
-        yield self.derive_element_in_rational
-        yield self.derive_element_in_rational_nonzero
-        yield self.derive_element_in_rational_nonpos
-        yield self.derive_element_in_rational_nonpos
+        from proveit.numbers.number_sets.integers import (
+            Integer, IntegerNonZero, IntegerNeg, IntegerNonPos)
+        if not InSet(self.element, Integer).proven():
+            yield self.derive_element_in_rational
+        if not InSet(self.element, IntegerNonZero).proven():
+            yield self.derive_element_in_rational_nonzero
+        if not InSet(self.element, IntegerNeg).proven():
+            yield self.derive_element_upper_bound
+        if not InSet(self.element, IntegerNonPos).proven():
+            yield self.derive_element_in_rational_nonpos
         yield self.derive_element_in_real_neg
 
     @relation_prover
@@ -374,9 +391,11 @@ class RationalNonNegMembership(RationalMembership):
         Yield incidentals when proving 'q in RationalNonNeg'
         for a given q.
         '''
-        yield self.derive_element_lower_bound
-        yield self.derive_element_in_rational
+        from proveit.numbers.number_sets.natural_numbers import Natural
         yield self.derive_element_in_real_nonneg
+        if not InSet(self.element, Natural).proven():
+            yield self.derive_element_in_rational
+            yield self.derive_element_lower_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -443,9 +462,12 @@ class RationalNonPosMembership(RationalMembership):
         Yield incidentals when proving 'q in RationalNonPos'
         for a given q.
         '''
-        yield self.derive_element_upper_bound
-        yield self.derive_element_in_rational
+        from proveit.numbers.number_sets.integers import Integer, IntegerNonPos
+        if not InSet(self.element, Integer).proven():        
+            yield self.derive_element_in_rational
         yield self.derive_element_in_real_nonpos
+        if not InSet(self.element, IntegerNonPos).proven():
+            yield self.derive_element_upper_bound
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
