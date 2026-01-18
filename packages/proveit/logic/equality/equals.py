@@ -863,10 +863,13 @@ class Equals(EquivRelation):
             from proveit.core_expr_types.operations import \
                 operands_substitution, operands_substitution_via_tuple
             _n = lambda_map.parameters.num_elements()
+            empty_expr_tuple = ExprTuple()
             if self.proven() and (
-                    operands_substitution_via_tuple.is_fully_proven_and_usable()):
+                    operands_substitution_via_tuple.is_fully_proven_and_usable()
+                    or empty_expr_tuple in (self.lhs, self.rhs)):
                 # If we know the tuples are equal, use the theorem
-                # with this equality as a prerequisite.
+                # with this equality as a prerequisite if it's fully proven
+                # and usable or if one of the sides is empty.
                 return operands_substitution_via_tuple.instantiate(
                     {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
                     **extra_kwargs)
