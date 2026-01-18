@@ -502,7 +502,7 @@ class And(Operation):
         A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
-        return compose(*self.operands.entries)
+        return compose(*self.operands.entries, auto_simplify=False)
 
     """
     @prover
@@ -932,10 +932,10 @@ def compose(*expressions, **defaults_config):
     Returns [A and B and ...], the And operator applied to the
     collection of given arguments, derived from each separately.
     '''
-    from proveit._core_.expression.composite import (
-            ExprRange, composite_expression)
+    from proveit._core_.expression.composite import composite_expression
     expressions = composite_expression(expressions)
-    if expressions.num_entries() == 0:
+    _N = expressions.num_entries()
+    if _N == 0:
         from proveit.logic.booleans.conjunction import \
             empty_conjunction
         return empty_conjunction
@@ -944,26 +944,20 @@ def compose(*expressions, **defaults_config):
         conj_via_impl = conjunction_intro.instantiate(
             {A: expressions[0], B: expressions[1]}, auto_simplify=False)
         return conj_via_impl.derive_consequent().derive_consequent()
-    elif expressions.contains_range():
-        # If there are ranges, prove these portions separately
-        # (grouped together) and then disassociate.
-        new_expressions = []
-        to_expand = []
-        # Group the ExprRanges and record their entry indices.
-        for _k, entry in enumerate(expressions):
-            if isinstance(entry, ExprRange):
-                new_expressions.append(And(entry))
-                to_expand.append(_k)
-            else:
-                new_expressions.append(entry)
-        # Prove the composition with ExprRanges grouped:
-        composed = compose(*new_expressions)
-        # Disassociate each ExprRange in reverse order so we don't
-        # have to update indices.
-        for _idx in reversed(to_expand):
-            composed = composed.disassociate(_idx)
-        return composed
+    elif expressions.num_entries()==3 and not expressions.contains_range():
+        from . import triple_conjunction
+        conj_via_impl = triple_conjunction.instantiate(
+            {A:expressions[0], B:expressions[1], C:expressions[2]})
+        return conj_via_impl.derive_consequent().derive_consequent().derive_consequent()
+    elif _N >= 2:
+        from . import combine_conjunctions
+        _A = expressions[:_N//2]
+        _B = expressions[_N//2:]
+        _m = _A.num_elements()
+        _n = _B.num_elements()
+        conj_via_impl = combine_conjunctions.instantiate({m:_m, n:_n, A:_A, B:_B})
+        return conj_via_impl.derive_consequent().derive_consequent()
     else:
-        from . import and_if_all
-        _m = expressions.num_elements()
-        return and_if_all.instantiate({m: _m, A: expressions}, auto_simplify=False)
+        # A single expression range
+        assert _N == 1
+        return And(expressions[0]).prove()
