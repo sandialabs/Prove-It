@@ -556,7 +556,7 @@ class Add(NumberOperation):
         a specific zero operand (at the given index) is eliminated.
         '''
         from proveit.numbers import zero
-        from . import elim_zero_left, elim_zero_right, elim_zero_any
+        from . import elim_zero_left, elim_zero_right
 
         if self.operands[idx] != zero:
             raise ValueError(
@@ -568,11 +568,13 @@ class Add(NumberOperation):
                 return elim_zero_left.instantiate({a: self.operands[1]})
             else:
                 return elim_zero_right.instantiate({a: self.operands[0]})
-        _a = self.operands[:idx]
-        _b = self.operands[idx + 1:]
-        _i = _a.num_elements()
-        _j = _b.num_elements()
-        return elim_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
+        else:
+            from . import elim_zero_any
+            _a = self.operands[:idx]
+            _b = self.operands[idx + 1:]
+            _i = _a.num_elements()
+            _j = _b.num_elements()
+            return elim_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -592,14 +594,13 @@ class Add(NumberOperation):
                                      is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
+        from . import empty_addition, unary_add_reduction
 
         if self.operands.num_entries() == 0:
             # [+]() = 0
-            from . import empty_addition
             return empty_addition
 
         if self.operands.is_single():
-            from . import unary_add_reduction
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
 
