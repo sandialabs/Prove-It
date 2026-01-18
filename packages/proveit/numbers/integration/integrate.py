@@ -115,13 +115,12 @@ class Integrate(OperationOverInstances):
             formatted_inner = (
                     self.operator.formatted(format_type) +
                     r'_{' + lower + r'}' + r'^{' + upper + r'} ')
-            explicit_ivars = list(self.explicit_instance_vars())
-            has_explicit_ivars = (len(explicit_ivars) > 0)
-            explicit_conds = list(self.explicit_conditions())
+            explicit_conds = list(self.non_domain_conditions())
             has_explicit_conds = (len(explicit_conds) > 0)
+            for ivar in self.instance_vars:
+                formatted_inner += 'd' + ivar + ' '
             if has_explicit_conds:
-                if has_explicit_ivars:
-                    formatted_inner += " | "
+                formatted_inner += " | "
                 formatted_inner += ', '.join(condition.formatted(format_type)
                                              for condition in explicit_conds)
             formatted_inner += (
