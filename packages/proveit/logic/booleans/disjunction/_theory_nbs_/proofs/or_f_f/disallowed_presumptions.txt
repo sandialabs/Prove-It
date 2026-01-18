@@ -1,6 +1,12 @@
-proveit.logic.booleans.implication.eq_from_iff
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.not_left_if_neither
 proveit.logic.booleans.disjunction.not_right_if_neither
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.sets
+proveit.logic.booleans.disjunction.closure
+proveit.logic.booleans.negation.negation_elim
+proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.disjunction.not_or_if_not_any
+proveit.logic.booleans.disjunction.disjunction_eq_quantification
+proveit.logic.booleans.implication.eq_from_iff

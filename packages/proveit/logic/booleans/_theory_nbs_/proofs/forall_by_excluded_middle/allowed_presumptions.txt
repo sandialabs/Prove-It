@@ -12,3 +12,4 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.from_excluded_middle
+proveit.logic.equality.substitution
