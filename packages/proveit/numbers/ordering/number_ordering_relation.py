@@ -280,7 +280,7 @@ class NumberOrderingRelation(TransitiveRelation):
         
         # Start a sequence of transformation of the similar bound
         # to obtain the desired bound.
-        known_bound = similar_bound.prove()        
+        known_bound = similar_bound.prove()
         with defaults.temporary() as tmp_defaults:
             # We want full control -- no auto-simplification.
             tmp_defaults.auto_simplify = False
@@ -341,14 +341,17 @@ class NumberOrderingRelation(TransitiveRelation):
                 replacements.append(
                         Equals(Add(known_bound.normal_rhs, lhs_diff),
                                self.normal_rhs))
-                # Check and prove the replacments.
-                for _k, replacement in enumerate(replacements):
+                # Check and prove the replacements.
+                proven_replacements = []
+                for replacement in replacements:
                     assert (replacement.normal_lhs.canonical_form() == 
                             replacement.normal_rhs.canonical_form())
-                    replacements[_k] = replacement.prove()
+                    if replacement.lhs == replacement.rhs:
+                        continue # vacuous -- skip
+                    proven_replacements.append(replacement.prove())
                 # Add to both sides.
                 known_bound = known_bound.right_add_both_sides(
-                        lhs_diff, replacements=replacements)
+                        lhs_diff, replacements=proven_replacements)
             else:
                 # Both sides should already be equal (with the same
                 # canonical forms).  Make the substitutions.
@@ -359,7 +362,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 known_bound = known_bound.inner_expr().normal_lhs.substitute(
                         self.normal_lhs)
                 known_bound = known_bound.inner_expr().normal_rhs.substitute(
-                        self.normal_rhs)        
+                        self.normal_rhs)
         return known_bound # Should be done!
     
     def _build_canonical_form(self):
