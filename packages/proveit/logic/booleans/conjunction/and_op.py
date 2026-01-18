@@ -253,7 +253,7 @@ class And(Operation):
 
     def incidentals(self, judgment):
         '''
-        Side-effect derivations to attempt automatically.
+        Incidental derivations to attempt automatically.
         '''
 
         from proveit.logic import Not
@@ -276,7 +276,7 @@ class And(Operation):
 
     def negation_incidentals(self, judgment):
         '''
-        Side-effect derivations to attempt automatically for
+        Incidental derivations to attempt automatically for
         Not(A and B and .. and .. Z).
         '''
         from proveit.logic import Not, Or
@@ -447,10 +447,10 @@ class And(Operation):
                 preserve_expr=self).derive_consequent()
             
         if defaults.incidental_automation:
-            # While we are at it, as an "unofficial" incidental,
+            # While we are at it, as an "unofficial" incidental effect,
             # let's instantatiate forall_{k in {i .. j}} P(k) to derive
             # {k in {i .. j}} |- P(k)
-            # and induce incidentals for P(k).
+            # and induce incidental effects for P(k).
             assumptions = defaults.assumptions + (
                     InSet(_k, Interval(_i, _j)), )
             proven_quantification.instantiate(assumptions=assumptions)

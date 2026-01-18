@@ -106,7 +106,7 @@ class Equals(EquivRelation):
 
     def negation_incidentals(self, judgment):
         '''
-        Side-effect derivations to attempt automatically for a negated
+        Incidental derivations to attempt automatically for a negated
         equation.
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
