@@ -824,7 +824,7 @@ class ProveItMagicCommands:
                                           prefix=prefix, suffix=suffix)
         if num_reproven == 0:
             display(HTML("<h3>Nothing yet.  You're getting started.  You can"
-                         " do this!</h3><p>Hint: if 0 @prover calls are requird "
+                         " do this!</h3><p>Hint: if 0 @prover calls are required "
                          "just type '%qed' in a cell at the end.</p>"))
         # else if only orig_counts[0]==0 have been proven, give a hint about
         # looking at demonstration pages. "navigate to theory 'demonstration'
