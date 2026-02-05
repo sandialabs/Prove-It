@@ -346,6 +346,9 @@ class Proof:
         used_assumptions = set()
         for required_truth in self.required_truths:
             required_assumptions = requirement_assumptions
+            '''
+            # on-the-sly "equality replacements" are deprecated, so this
+            # is moot:
             for _assumption in required_truth.assumptions:
                 if _assumption not in proven_truth.assumptions:
                     # The only way it should be possible for a judgment
@@ -357,11 +360,12 @@ class Proof:
                         # or this is an "equality replacement
                         # requirement", in which case we should
                         # add the assumption.
-                        assert isinstance(self, Instantiation)
+                        assert isinstance(self, Instantiation), type(self)
                         if required_assumptions is requirement_assumptions:
                             required_assumptions = OrderedSet(
                                 required_assumptions) # make a copy
                         required_assumptions.add(_assumption)
+            '''
             required_truth = required_truth.reprove(
                 assumptions=required_assumptions)
             used_assumptions.update(required_truth.assumptions)
@@ -369,7 +373,9 @@ class Proof:
         assumptions = [assumption for assumption in assumptions 
                        if assumption in used_assumptions]
         proven_truth = Judgment(proven_expr, assumptions)
-        return self._regenerate_proof_object(proven_truth, all_requirements)
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = assumptions
+            return self._regenerate_proof_object(proven_truth, all_requirements)
 
     def _regenerate_proof_object(self, proven_truth, requirements):
         raise NotImplementedError("Must be implemented for each Proof "
