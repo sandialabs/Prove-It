@@ -263,7 +263,7 @@ def _make_decorated_prover(func):
             # Perform default replacements
             orig_proven_truth = proven_truth
             for replacement in replacements:
-                from proveit import Relation
+                from proveit import Relation, free_vars
                 assert isinstance(replacement, Judgment)
                 replacement_expr = replacement.expr
                 assert isinstance(replacement_expr, Equals)
@@ -275,8 +275,13 @@ def _make_decorated_prover(func):
                     continue
                 if preserve_lhs_on_auto_simplify and isinstance(
                         proven_truth.expr, Relation):
-                    proven_truth = (
-                        proven_truth.inner_expr().rhs.substitute(replacement))
+                    _lambda_map = proven_truth.inner_expr().rhs.global_repl(
+                        replacement_expr.lhs)
+                    if not free_vars(_lambda_map.body).isdisjoint(
+                            _lambda_map.parameter_vars):
+                        # There are occurrences of the replacement lhs to
+                        # replace with the rhs.
+                        proven_truth = replacement.sub_right_side_into(_lambda_map)
                 else:
                     proven_truth = replacement.sub_right_side_into(proven_truth)
 
