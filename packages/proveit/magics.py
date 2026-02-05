@@ -824,7 +824,7 @@ class ProveItMagicCommands:
                                           prefix=prefix, suffix=suffix)
         if num_reproven == 0:
             display(HTML("<h3>Nothing yet.  You're getting started.  You can"
-                         " do this!</h3><p>Hint: if 0 @prover calls are required "
+                         " do this!</h3><p>Hint: if 0 @prover calls are requird "
                          "just type '%qed' in a cell at the end.</p>"))
         # else if only orig_counts[0]==0 have been proven, give a hint about
         # looking at demonstration pages. "navigate to theory 'demonstration'
@@ -1402,6 +1402,8 @@ def display_assignments(names, beginning_proof=False,
         used_package_literals.discard(Implies._operator_)
         # Equality and FALSE are 'defined' via fundamental axioms.
         used_package_literals.discard(Equals._operator_)
+        # Exists is 'defined' via fundamental axioms.
+        used_package_literals.discard(Exists._operator_)
         used_package_literals.discard(FALSE)
         if len(used_package_literals)==0:
             raise Exception("Not defining any Literals belonging to this "
