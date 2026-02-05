@@ -633,7 +633,7 @@ class InnerExpr:
             gen_equality = equality.generalize(
                     involved_params, conditions=gen_conditions)
             gen_conditions = gen_equality.conditions
-            if gen_conditions.num_entries() == 0:
+            if len(gen_conditions) == 0:
                 lhs_lambda_body = equality.lhs
             else:
                 lhs_lambda_body = Conditional(
@@ -716,7 +716,7 @@ class InnerExpr:
         if cur_inner_expr == TRUE:
             # Determine which parameters, if any, are involved.
             # If no parameters are involved we can use 
-            # substitute_truth for aa simple proof.
+            # substitute_truth for a simple proof.
             if len(self.parameters) > 0:
                 fvars = free_vars(equality_or_replacement)
                 involved_params = [param for param in self.parameters
@@ -733,6 +733,27 @@ class InnerExpr:
                     {P: self.repl_lambda(), x: replacement})
         return self._substitution(equality_or_replacement, 
                                   return_proven_rhs=True)            
+
+    def global_repl(self, sub_expr, assumptions=USE_DEFAULTS):
+        '''
+        Returns the Lambda map for replacing the given sub-Expression
+        everywhere that it occurs within this inner expression in the
+        context of the full expression.
+        '''
+        top_level = self.expr_hierarchy[0]
+        cur_inner_expr = self.expr_hierarchy[-1]
+        inner_global_repl = Lambda.global_repl(
+            cur_inner_expr, sub_expr, assumptions=assumptions,
+            param_var=top_level.safe_dummy_var())
+        # Build the expression with replacement parameters from
+        # the inside out.
+        with defaults.temporary() as temp_defaults:
+            # Don't auto-simplify anything when creating the replacement
+            # map.
+            temp_defaults.auto_simplify = False
+            lambda_body = self._rebuild(inner_global_repl.body,
+                                        skip_innermost=False)
+        return Lambda(inner_global_repl.parameters, lambda_body)        
 
     def _expr_rep(self):
         '''

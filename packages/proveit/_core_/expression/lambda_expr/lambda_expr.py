@@ -1252,7 +1252,9 @@ class Lambda(Expression):
     
 
 
-    def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
+    def global_repl(master_expr, sub_expr, *, assumptions=USE_DEFAULTS,
+                    param_var=None):
+                    
         '''
         Returns the Lambda map for replacing the given sub-Expression
         everywhere that it occurs in the master Expression.
@@ -1270,7 +1272,7 @@ class Lambda(Expression):
         operands (which may contain ranges themselves) in this latter
         process.
         '''
-        from proveit import ExprTuple, Operation
+        from proveit import ExprTuple, Operation, Judgment
 
         with defaults.temporary() as temp_defaults:
             # Don't auto-simplify anything when creating our lambda
@@ -1278,6 +1280,10 @@ class Lambda(Expression):
             temp_defaults.auto_simplify = False
             if assumptions is not USE_DEFAULTS:
                 temp_defaults.assumptions = assumptions
+            if param_var is None:
+                if isinstance(master_expr, Judgment):
+                    master_expr = master_expr.expr
+                param_var = safe_dummy_var(master_expr)
             if isinstance(sub_expr, ExprTuple):
                 # If we are replacing an ExprTuple which are operands
                 # that transform to a single operand, we need to instead
@@ -1286,20 +1292,18 @@ class Lambda(Expression):
                     if (isinstance(inner_expr, Operation) and
                             inner_expr.operands == sub_expr):
                         # We should use a multi-parameter map
-                        from proveit import safe_dummy_var, var_range
+                        from proveit import var_range
                         from proveit.numbers import one
                         n = sub_expr.num_elements()
                         parameters = ExprTuple(
-                                var_range(safe_dummy_var(master_expr),
-                                          one, n))
+                                var_range(param_var, one, n))
                         body = master_expr.basic_replaced(
                                 {sub_expr: parameters})
                         return Lambda(parameters, body)
 
             # Just make a single parameter replacement map.
-            lambda_param = master_expr.safe_dummy_var()
-            return Lambda(lambda_param, master_expr.basic_replaced(
-                {sub_expr: lambda_param}))
+            return Lambda(param_var, master_expr.basic_replaced(
+                {sub_expr: param_var}))
 
     @staticmethod
     def _free_var_ranges_static(parameters, parameter_vars, body,
