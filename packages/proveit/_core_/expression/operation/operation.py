@@ -766,8 +766,13 @@ class Operation(Expression):
             # already checked.
             return self.shallow_simplification(_no_eval_check=True)
         else:
-            simplification = reduction.rhs.shallow_simplification(
-                replacements=[reduction])
+            # I don't know why 'replacements=[reduction]' would be necessary
+            # or could possibly have any effect. Was this a mistake from the
+            # beginning, did it become obsolete over time, or am I missing
+            # something?
+            #simplification = reduction.rhs.shallow_simplification(
+            #    replacements=[reduction])
+            simplification = reduction.rhs.shallow_simplification()
             return reduction.apply_transitivity(simplification,
                                                 auto_simplify=False)
     
