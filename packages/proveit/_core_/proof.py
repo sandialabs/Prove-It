@@ -390,7 +390,7 @@ class Proof:
             if key in Proof.incidental_processed.get(expr, tuple()):
                 return # has already been processed
 
-            # Don't bother with side effects if this proof was born 
+            # Don't bother with incidentals if this proof was born 
             # obsolete or unusable.  May derive any incidentals that 
             # are obvious consequences arising from this truth
             # (if it has not already been processed):

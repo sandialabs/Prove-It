@@ -122,9 +122,8 @@ class InClass(Relation):
         
     def incidentals(self, judgment):
         '''
-        If the domain has a 'membership_object' method, side effects
-        will also be generated from the 'incidentals' object that it
-        generates.
+        If the domain has a 'membership_object' method, its incidentals
+        will also be generated.
         '''
         if hasattr(self, 'membership_object'):
             for incidental in self.membership_object.incidentals(judgment):

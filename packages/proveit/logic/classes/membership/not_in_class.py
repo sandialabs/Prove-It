@@ -89,9 +89,8 @@ class NotInClass(Relation):
     def incidentals(self, judgment):
         '''
         Unfold x not-in S as Not(x in S) as an automatic incidental.
-        If the domain has a 'nonmembership_object' method, side effects
-        will also be generated from the 'incidentals' object that it
-        generates.
+        If the domain has a 'nonmembership_object' method, its incidentals
+        will also be generated.
         '''
         yield self.unfold_not_in
         if hasattr(self, 'nonmembership_object'):

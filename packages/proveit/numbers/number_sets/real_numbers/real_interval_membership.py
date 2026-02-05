@@ -350,7 +350,7 @@ class RealIntervalNonmembership(SetNonmembership):
 
     def incidentals(self, judgment):
         '''
-        Yield some possible side effects of real IntervalXX set
+        Yield some possible incidentals of real IntervalXX set
         nonmembership:
         (1) If element is real, deduce some possible bounds on it;
         (2) Deduce that the nonmembership claim is Boolean

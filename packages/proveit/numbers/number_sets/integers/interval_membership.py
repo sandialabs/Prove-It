@@ -228,7 +228,7 @@ class IntervalNonmembership(SetNonmembership):
 
     def incidentals(self, judgment):
         '''
-        Yield some possible side effects of Interval set nonmembership:
+        Yield some possible incidentals of Interval set nonmembership:
         (1) if element is an integer, deduce some possible bounds on it;
         '''
         if InSet(self.element, Integer).readily_provable():

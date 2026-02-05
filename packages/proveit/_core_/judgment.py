@@ -97,7 +97,7 @@ class Judgment:
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_incidentals is in progress, tracked to 
-    # prevent infinite recursion when deducing side effects after 
+    # prevent infinite recursion when deducing incidentals after 
     # something is proven.
     in_progress_to_derive_incidentals = set()
 
@@ -256,7 +256,7 @@ class Judgment:
                         pass
                     except Exception as e:
                         raise Exception(
-                            "Side effect failure for %s, while running %s: " %
+                            "Incidental derivation failure for %s, while running %s: " %
                             (str(
                                 self.expr),
                                 str(incidental)) +

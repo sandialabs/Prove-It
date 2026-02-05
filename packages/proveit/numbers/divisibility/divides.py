@@ -29,7 +29,7 @@ class DividesRelation(TransitiveRelation):
             yield incidental
 
         # For each of the following, use the default assumptions to
-        # verify some conditions before yielding the side effect method
+        # verify some conditions before yielding the incidental method
         # (i.e. check using .readily_provable())
 
         # for 2|(b^n), derive 2|b.
