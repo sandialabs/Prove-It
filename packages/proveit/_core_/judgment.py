@@ -97,7 +97,7 @@ class Judgment:
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_incidentals is in progress, tracked to 
-    # prevent infinite recursion when deducing incidentals after 
+    # prevent infinite recursion when deducing incidentals after
     # something is proven.
     in_progress_to_derive_incidentals = set()
 
@@ -1032,7 +1032,12 @@ class Judgment:
             elif not isinstance(judgment.expr, Forall):
                 raise ValueError("'num_forall_eliminations' too big")
             has_compact_condition = judgment.has_compact_condition()
-            _repl_map = dict()
+            if num_forall_eliminations == 1:
+                # Finish all replacements, including relabeling
+                # (not just instantiations).
+                _repl_map = processed_repl_map
+            else:
+                _repl_map = dict()
             for _var in judgment.expr.operand.parameter_vars:
                 _orig_var = all_iparam_vars[iparam_index]
                 iparam_index += 1
