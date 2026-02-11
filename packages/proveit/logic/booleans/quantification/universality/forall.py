@@ -75,7 +75,7 @@ class Forall(OperationOverInstances):
         if (hasattr(self, 'instance_param') and self.has_domain()
                 and hasattr(self.domain, 'unfold_forall')):
 
-            if self.conditions.num_entries() == 0:
+            if len(self.conditions) == 0:
                 # derive an unfolded version (dependent upon the domain)
                 yield self.unfold
 
@@ -250,7 +250,7 @@ class Forall(OperationOverInstances):
         proven_inst_expr = None
         inner_assumptions = defaults.assumptions
         while isinstance(expr, Forall):
-            new_params = expr.instance_params()
+            new_params = expr.instance_params
             new_vars = expr.instance_vars
             instance_param_lists.append(list(new_params))
             # Can't use assumptions involving instance variables
@@ -258,7 +258,7 @@ class Forall(OperationOverInstances):
             inner_assumptions = \
                 [assumption for assumption in inner_assumptions if
                  free_vars(assumption).isdisjoint(new_vars)]
-            if expr.has_stylized_condition():
+            if expr.has_compact_condition():
                 inner_assumptions.append(expr.condition)
                 conditions += expr.conditions
             expr = expr.instance_expr

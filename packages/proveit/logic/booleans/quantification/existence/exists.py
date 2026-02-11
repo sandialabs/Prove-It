@@ -69,14 +69,14 @@ class Exists(OperationOverInstances):
         from proveit import Operation, free_vars
         from proveit.logic import Equals, Forall
         if self.instance_params.is_single() and (
-                self.conditions.num_entries() == 0 and
+                len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Equals) and
                 self.instance_expr.lhs == self.instance_param and
                 self.instance_param not in free_vars(self.instance_expr.rhs)):
             # Existential for a conservative definition.
             return True
         elif self.instance_params.is_single() and (
-                self.conditions.num_entries() == 0 and
+                len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Forall) and
                 isinstance(self.instance_expr.instance_expr, Equals) and
                 isinstance(self.instance_expr.instance_expr.lhs, Operation) and
@@ -94,7 +94,7 @@ class Exists(OperationOverInstances):
         from proveit import Operation, free_vars
         from proveit.logic import Forall, Equals, SubsetEq
         if self.instance_params.is_single() and (
-                self.conditions.num_entries() == 0 and
+                len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Equals) and
                 self.instance_expr.lhs == self.instance_param and
                 self.instance_param not in free_vars(self.instance_expr.rhs)):
@@ -102,8 +102,10 @@ class Exists(OperationOverInstances):
             from . import conservative_def_existence
             return conservative_def_existence.instantiate(
                 {x:self.instance_param, y:self.instance_expr.rhs})
+        elif self.equivalent_universal_quantification().readily_provable():
+            return self.conclude_as_folded()
         elif self.instance_params.is_single() and (
-                self.conditions.num_entries() == 0 and
+                len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Forall) and
                 isinstance(self.instance_expr.instance_expr, Equals) and
                 isinstance(self.instance_expr.instance_expr.lhs, Operation) and
@@ -319,29 +321,36 @@ class Exists(OperationOverInstances):
             |- Not(Forall(x, P(x)))
 
         '''
-        from proveit.logic import Not, TRUE
-        from proveit.logic.booleans.quantification.existence import (
-                exists_not_unfolding, exists_unfolding)
-        _x = _y = self.instance_params
-        _n = _x.num_elements()
-
-        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
-        _case_not = False
-        if isinstance(self.instance_expr, Not):
-            _case_not = True
-            _P = Lambda(_x, self.instance_expr.operand)
+        from proveit.logic import Not
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
+            else:
+                _Q = None
+            if isinstance(self.instance_expr, Not):
+                _P = Lambda(_x, self.instance_expr.operand)
+                if _Q is None:
+                    from . import exists_not_unfolding
+                    thm = exists_not_unfolding
+                else:
+                    from . import conditional_exists_not_unfolding
+                    thm = conditional_exists_not_unfolding
+            else:
+                _P = Lambda(_x, self.instance_expr)
+                if _Q is None:
+                    from . import exists_unfolding
+                    thm = exists_unfolding
+                else:
+                    from . import conditional_exists_unfolding
+                    thm = conditional_exists_unfolding
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P}).derive_consequent()
+            else:
+                return thm.instantiate({x:_x, y:_y, P:_P, Q:_Q}).derive_consequent()            
         else:
-            _P = Lambda(_x, self.instance_expr)
-        # distinguish between cases with and w/out conditions
-        if hasattr(self, 'condition'):
-            _Q = Lambda(_x, self.condition)
-        else:
-            _Q = Lambda(_x, TRUE)
-        if _case_not:
-            return exists_not_unfolding.instantiate(
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
-        return exists_unfolding.instantiate(
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
+            raise NotImplementedError("multi-parameter existence unfolding will"
+                                      " be implemented later.")
 
     @prover
     def definition(self, **defaults_config):
@@ -356,35 +365,41 @@ class Exists(OperationOverInstances):
             Not(Forall(x, Not(P(x))) and Not(Forall(x, P(x))),
         respectively.
         '''
-        from proveit import defaults
-        from proveit.logic import Forall, Not
-        from proveit.logic.booleans.quantification.existence import (
-            exists_definition, exists_not_definition)
-        _case_not = False
-        _x = _y = self.instance_param
-        if isinstance(self.instance_expr, Not):
-            _case_not = True
-            _P = Lambda(_x, self.instance_expr.operand)
-        else:
-            _P = Lambda(_x, self.instance_expr)
-        if _case_not:
-            rhs_to_preserve = (
-                Not(Forall(_x, self.instance_expr.operand)))
-        else:
-            rhs_to_preserve = (
-                Not(Forall(_x, Not(self.instance_expr))))
-        with defaults.temporary() as temp_defaults:
-            temp_defaults.preserved_exprs = {self, rhs_to_preserve}
-            if _case_not:
-                return exists_not_definition.instantiate({P: _P, x: _x, y: _y})
+        from proveit.logic import Not
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
             else:
-                return exists_definition.instantiate({P: _P, x: _x, y: _y})
-            
-        
+                _Q = None
+            if isinstance(self.instance_expr, Not):
+                _P = Lambda(_x, self.instance_expr.operand)
+                if _Q is None:
+                    from . import exists_not_def
+                    thm = exists_not_def
+                else:
+                    from . import conditional_exists_not_def
+                    thm = conditional_exists_not_def
+            else:
+                _P = Lambda(_x, self.instance_expr)
+                if _Q is None:
+                    from . import exists_def
+                    thm = exists_def
+                else:
+                    from . import conditional_exists_def
+                    thm = conditional_exists_def
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P})
+            else:
+                return thm.instantiate({x:_x, y:_y, P:_P, Q:_Q})
+        else:
+            raise NotImplementedError("multi-parameter existence definition will"
+                                      " be implemented later.")
+
         '''
         # TODO: Work on generalizations later.
         from proveit.logic.booleans.quantification.existence import (
-            exists_definition, exists_not_eq_not_forall)
+            exists_def, exists_not_eq_not_forall)
         _x = _y = self.instance_params
         _n = _x.num_elements()
 
@@ -433,7 +448,7 @@ class Exists(OperationOverInstances):
                 return exists_not_eq_not_forall.instantiate(
                     {n: _n, P: _P, Q: _Q, x: _x, y: _y})
             else:
-                return exists_definition.instantiate(
+                return exists_def.instantiate(
                     {n: _n, P: _P, Q: _Q, x: _x, y: _y})
         '''
 
@@ -451,6 +466,62 @@ class Exists(OperationOverInstances):
             conditions=self.conditions)
         return not_exists_expr.conclude_as_folded()
 
+    def equivalent_universal_quantification(self):
+        from proveit.logic import Forall, Not
+        if self.instance_params.is_single():
+            _x = self.instance_params[0]
+            if isinstance(self.instance_expr, Not):
+                _P = self.instance_expr.operand
+            else:
+                _P = Not(self.instance_expr)
+            if hasattr(self, 'condition'):
+                _Q = self.condition
+            else:
+                _Q = None
+            
+            if _Q is None:
+                return Not(Forall(_x, _P))
+            else:
+                return Not(Forall(_x, _P, condition=_Q))
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        '''
+        Conclude this existential quantification from an equivalent
+        universal quantification.
+        '''
+        from proveit.logic import Not
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
+            else:
+                _Q = None
+            if isinstance(self.instance_expr, Not):
+                _P = Lambda(_x, self.instance_expr.operand)
+                if _Q is None:
+                    from . import exists_not_folding
+                    thm = exists_not_folding
+                else:
+                    from . import conditional_exists_not_folding
+                    thm = conditional_exists_not_folding
+            else:
+                _P = Lambda(_x, self.instance_expr)
+                if _Q is None:
+                    from . import exists_folding
+                    thm = exists_folding
+                else:
+                    from . import conditional_exists_folding
+                    thm = conditional_exists_folding
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P}).derive_consequent()
+            else:
+                return thm.instantiate({x:_x, y:_y, P:_P, Q:_Q}).derive_consequent()
+        else:
+            raise NotImplementedError("multi-parameter existence folding will"
+                                      " be implemented later.")
+
+
     @prover
     def conclude_via_example(self, example_instance, **defaults_config):
         '''
@@ -459,23 +530,36 @@ class Exists(OperationOverInstances):
         from P(y_1, ..., y_n) and Q(y_1, ..., y_n)
         where y_1, ..., y_n is the given example_instance.
         '''
-        from . import existence_by_basic_example, existence_by_example
-        from . import existence_by_example_with_conditions
-        if self.instance_params.is_single() and (not hasattr(self, 'condition')):
-            _x = example_instance
-            _y = self.instance_params[0]
-            _P = Lambda(_y, self.instance_expr)
-            return existence_by_basic_example.instantiate(
-                {P: Lambda(_y, self.instance_expr), x: _x, y: _y})
-        _x = self.instance_params
-        _n = _x.num_elements()
-        _P = Lambda(_x, self.instance_expr)
-        _y = composite_expression(example_instance)
-        if hasattr(self, 'condition'):
-            _Q = Lambda(_x, self.condition)
-            return existence_by_example_with_conditions.instantiate(
-                {n: _n, x: _x, y: _y, P: _P, Q: _Q})
-        return existence_by_example.instantiate({n: _n, x: _x, y: _y, P: _P})
+        from . import existence_by_example
+        if self.instance_params.is_single():
+            if hasattr(self, 'condition'):
+                from . import conditional_existence_by_example
+                _x = example_instance
+                _y = self.instance_params[0]
+                _P = Lambda(_y, self.instance_expr)
+                _Q = Lambda(_y, self.condition)
+                return conditional_existence_by_example.instantiate(
+                    {P:_P, Q:_Q, x:_x, y:_y})
+            else:
+                _x = example_instance
+                _y = self.instance_params[0]
+                _P = Lambda(_y, self.instance_expr)
+                return existence_by_example.instantiate(
+                    {P: Lambda(_y, self.instance_expr), x: _x, y: _y})
+        else:
+            _x = self.instance_params
+            _n = _x.num_elements()
+            _P = Lambda(_x, self.instance_expr)
+            _y = composite_expression(example_instance)
+            if hasattr(self, 'condition'):
+                from . import general_existence_by_example
+                _Q = Lambda(_x, self.condition)
+                return general_existence_by_example.instantiate(
+                    {n: _n, x: _x, y: _y, P: _P, Q: _Q})
+            else:
+                from . import multiparam_existence_by_example
+                return multiparam_existence_by_example.instantiate(
+                    {n: _n, x: _x, y: _y, P: _P})
 
     @prover
     def conclude_via_domain_inclusion(self, subset_domain,
@@ -536,7 +620,7 @@ class Exists(OperationOverInstances):
         from . import exists_in_superset
         _x = self.instance_params
         _P = Lambda(_x, self.instance_expr)
-        if self.conditions.num_entries() == 1:
+        if len(self.conditions) == 1:
             _Q = Lambda(_x, self.condition)
         else:
             _Q = Lambda(_x, And(self.conditions[1:]))
@@ -576,7 +660,7 @@ class Exists(OperationOverInstances):
         _x = self.instance_params
         _P = Lambda(_x, self.instance_expr)
         _n = _x.num_elements()
-        if self.conditions.num_entries() == 0:
+        if len(self.conditions) == 0:
             return exists_is_bool.instantiate(
                 {n: _n, P: _P, x: _x})
         _Q = Lambda(_x, self.condition)
@@ -622,8 +706,7 @@ class Exists(OperationOverInstances):
                     "The first condition of the 'universality' must match the instance expression of the Exists operation having instances substituted",
                     self,
                     universality)
-            if (universality.instance_vars.num_entries() !=
-                    self.instance_vars.num_entries()):
+            if (len(universality.instance_vars) != len(self.instance_vars)):
                 raise InstanceSubstitutionException(
                     "'universality' must have the same number of variables as the Exists operation having instances substituted",
                     self,
