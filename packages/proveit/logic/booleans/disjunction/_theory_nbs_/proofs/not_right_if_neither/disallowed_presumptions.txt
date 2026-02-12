@@ -1,2 +1,3 @@
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.disjunction.or_if_any
+proveit.logic.sets

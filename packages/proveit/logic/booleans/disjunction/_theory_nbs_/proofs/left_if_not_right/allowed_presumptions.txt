@@ -18,3 +18,4 @@ proveit.logic.booleans.disjunction.neither_intro
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.implication.not_iff_via_not_right_impl
 proveit.logic.booleans.implication.negated_reflex
+proveit.logic.booleans.negation.double_negation_intro

@@ -19,3 +19,5 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.booleans.implication.implies_f_t
 proveit.logic.booleans.negation.not_t
 proveit.logic.booleans.negation.double_negation_elim
+proveit.logic.booleans.disjunction.or_if_right
+proveit.logic.equality.rhs_via_equality

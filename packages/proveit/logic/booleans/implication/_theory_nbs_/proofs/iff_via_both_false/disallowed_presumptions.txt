@@ -10,3 +10,4 @@ proveit.logic.booleans.implication.eq_from_mutual_impl
 proveit.logic.sets
 proveit.numbers
 proveit.logic.booleans.implication.negated_true_antecedent_implication
+proveit.logic.booleans.implication.untrue_antecedent_implication

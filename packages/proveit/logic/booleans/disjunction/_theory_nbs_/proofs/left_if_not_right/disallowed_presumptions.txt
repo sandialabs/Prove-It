@@ -6,3 +6,4 @@ proveit.logic.booleans.disjunction.not_right_if_neither
 proveit.logic.booleans.disjunction.disjunction_eq_quantification
 proveit.logic.booleans.disjunction.not_or_if_not_any
 proveit.logic.booleans.negation.negation_elim
+proveit.logic.sets

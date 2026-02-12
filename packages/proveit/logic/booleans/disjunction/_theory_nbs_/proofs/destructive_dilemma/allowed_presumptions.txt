@@ -15,3 +15,5 @@ proveit.logic.booleans.negation.unfold_negation
 proveit.logic.booleans.negation.fold_negation
 proveit.logic.booleans.disjunction.not_left_if_neither
 proveit.logic.booleans.disjunction.not_right_if_neither
+proveit.logic.booleans.disjunction.or_if_left
+proveit.logic.booleans.disjunction.or_if_right

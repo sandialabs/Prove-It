@@ -17,3 +17,4 @@ proveit.logic.booleans.negation.negation_intro
 proveit.logic.equality.equals_transitivity
 proveit.logic.equality.equals_transitivity_via_implications
 proveit.logic.booleans.negation.not_t
+proveit.logic.booleans.negation.negation_contradiction

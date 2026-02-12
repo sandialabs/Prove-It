@@ -4,3 +4,4 @@ proveit.logic.booleans.disjunction.or_if_any
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.sets

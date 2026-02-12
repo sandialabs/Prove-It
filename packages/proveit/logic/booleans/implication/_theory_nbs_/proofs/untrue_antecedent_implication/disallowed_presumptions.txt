@@ -4,3 +4,5 @@ proveit.logic.sets
 proveit.numbers
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.equality.fold_not_equals
+proveit.logic.booleans.negation.negation_elim

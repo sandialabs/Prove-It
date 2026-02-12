@@ -4,3 +4,5 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.conjunction.conjunction_eq_quantification
 proveit.logic.booleans.implication.eq_from_mutual_impl
 proveit.logic.booleans.implication.iff_symmetry
+proveit.logic.sets
+proveit.logic.booleans.conjunction.closure

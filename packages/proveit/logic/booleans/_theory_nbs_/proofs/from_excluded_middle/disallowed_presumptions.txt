@@ -1,2 +1,3 @@
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.singular_constructive_multi_dilemma
+proveit.logic.sets
