@@ -2,6 +2,25 @@
 Interface into the data for "gamified" Prove-It.  Specifally, information
 about all fully proven theorems with the goal of the game to regenerate
 these proofs with a preference to use few direct @prover method calls.
+
+From the top Prove-It level where everything that is necessary has been built:
+1. "find . -path '*/__pv_it/*' -type f ! -name '*.txt' ! -name 'proof.pv_it' ! -name 'complete' ! -name 'proof.ipynb' | tar -czf pv_it.tar.gz -T -"
+2. "python game_data.py packages/proveit"
+Clone a new repository and from that directory:
+2. "git checkout master" (or any desired starting branch)
+3. "git checkout -b gamified-update" (will be renamed "gamified" later)
+4. move over the 'pv_it.tar.gz' from step 1
+5. move over the 'game_data_file.txt' from step 2
+6. "tar -xzf pv_it.tar.gz"
+7. "python -m install --editable ." in this gamified-update branch folder
+8. "python hide_theorem_proofs.py"
+9. "python build.py --theorems"
+10. "git add -f pv_it.tar.gz game_data_file.txt"
+11. "git commit -a -m 'gamified branch preparation'"
+12. "git push -f origin gamified-update:gamified"
+From the original Prove-It folder
+13. "python -m install --editable ."
+14. "git branch -D gamified-update"
 '''
 
 import sys
