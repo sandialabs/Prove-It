@@ -2,3 +2,6 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.sets
+proveit.logic.booleans.disjunction.or_if_left
+proveit.logic.booleans.disjunction.or_if_right
+proveit.logic.booleans.disjunction.closure

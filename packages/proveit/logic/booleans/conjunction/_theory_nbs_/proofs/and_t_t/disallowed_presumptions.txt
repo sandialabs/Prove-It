@@ -4,4 +4,8 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_in_true
 proveit.logic.booleans.conjunction.true_and_true
-proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.implication.invalid_implication
+proveit.logic.booleans.negation.negation_elim
+proveit.logic.booleans.negation.closure
+proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.not_iff_via_not_right_impl

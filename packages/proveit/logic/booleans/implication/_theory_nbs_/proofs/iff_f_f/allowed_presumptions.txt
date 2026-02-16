@@ -11,3 +11,5 @@ proveit.logic.booleans.negation.unfold_negation
 proveit.logic.booleans.negation.fold_negation
 proveit.logic.booleans.implication.iff_via_both_false
 proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.implication.iff_def_quantified
+proveit.logic.booleans.implication.iff_intro
