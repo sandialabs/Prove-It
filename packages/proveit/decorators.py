@@ -170,6 +170,8 @@ def _make_decorated_prover(func):
                         "The @prover method %s beginning with 'conclude' "
                         "expected to be a method for an Expression type "
                         "or the object must have an 'expr' attribute."%func)
+            # no simplifying after calling the conclude method
+            preserve_all = True
         
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
