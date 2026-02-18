@@ -69,14 +69,14 @@ class BooleanSet(Literal):
                 if true_case_val == TRUE and false_case_val == TRUE:
                     # both cases are TRUE, so the forall over the
                     # boolean set is TRUE
-                    compose([eval_true_instance.derive_via_boolean_equality(), 
-                             eval_false_instance.derive_via_boolean_equality()])
+                    compose(eval_true_instance.derive_via_boolean_equality(), 
+                            eval_false_instance.derive_via_boolean_equality())
                     return forall_bool_eval_true.instantiate(
                             {P_op: instance_expr, A: instance_var})
                 else:
                     # one case is FALSE, so the forall over the boolean set is
                     # FALSE
-                    compose([eval_true_instance, eval_false_instance])
+                    compose(eval_true_instance, eval_false_instance)
                     if true_case_val == FALSE and false_case_val == FALSE:
                         impl = forall_bool_eval_false_via_f_f.instantiate(
                             {P_op: instance_expr, A: instance_var})
@@ -109,6 +109,43 @@ class BooleanSet(Literal):
         return unfold_forall_over_bool.instantiate(
             {Px: _Px, A: _A}).derive_consequent()
 
+    def readily_provable_by_cases(self, forall_stmt):
+        from proveit.logic import Forall, And, Implies, TRUE, FALSE
+        from . import Boolean
+        if not isinstance(forall_stmt, Forall):
+            return False
+        if not (forall_stmt.has_domain() and forall_stmt.domain == Boolean):
+            return False
+        
+        _x = forall_stmt.instance_param
+        if len(forall_stmt.conditions) > 1:
+            if len(forall_stmt.conditions) == 2:
+                condition = forall_stmt.conditions[1]
+            else:
+                condition = And(*forall_stmt.conditions[1:].entries)
+            for _val in (TRUE, FALSE):
+                repl_map = {_x:_val}
+                _Qx = condition.basic_replaced(repl_map)
+                _Px = forall_stmt.instance_expr.basic_replaced(repl_map)
+                kwargs = dict()
+                if isinstance(_Px, Forall):
+                    # Avoid an exponential blow-up (true to 'readily')
+                    kwargs['consider_proof_by_cases'] = False
+                if not _Px.readily_provable(defaults.assumptions + (_Qx,),
+                                            **kwargs):
+                    return FALSE
+            return True
+        for _val in (TRUE, FALSE):
+            repl_map = {_x:_val}
+            _Px = forall_stmt.instance_expr.basic_replaced(repl_map)  
+            kwargs = dict()
+            if isinstance(_Px, Forall):
+                # Avoid an exponential blow-up (true to 'readily')
+                kwargs['consider_proof_by_cases'] = False
+            if not _Px.readily_provable(**kwargs):
+                return FALSE
+        return True
+
     @prover
     def prove_by_cases(self, forall_stmt, **defaults_config):
         '''
@@ -118,14 +155,16 @@ class BooleanSet(Literal):
         from proveit.logic import Forall, And
         from . import forall_over_bool_by_cases, conditioned_forall_over_bool_by_cases
         from . import Boolean
-        assert(isinstance(forall_stmt, Forall)), (
+        if not isinstance(forall_stmt, Forall):
+            raise ValueError(
                 "May only apply prove_by_cases method of Boolean to a "
                 "forall statement")
-        assert(forall_stmt.domain == Boolean), (
+        if not (forall_stmt.has_domain() and forall_stmt.domain == Boolean):
+            raise ValueError(
                 "May only apply prove_by_cases method of Boolean "
                 "to a forall statement with the Boolean domain")
-        if forall_stmt.conditions.num_entries() > 1:
-            if forall_stmt.conditions.is_double():
+        if len(forall_stmt.conditions) > 1:
+            if len(forall_stmt.conditions) == 2:
                 condition = forall_stmt.conditions[1]
             else:
                 condition = And(*forall_stmt.conditions[1:].entries)

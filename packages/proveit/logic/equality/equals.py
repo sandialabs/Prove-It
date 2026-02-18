@@ -794,7 +794,7 @@ class Equals(EquivRelation):
         except UnsatisfiedPrerequisites:
             pass
         if self.rhs == TRUE:
-            return eq_true_intro.instantiate({A: self.lhs})
+            return eq_true_intro.instantiate({A: self.lhs}, preserve_all=True)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
                 evaluation = self.lhs.evaluation()
@@ -804,7 +804,7 @@ class Equals(EquivRelation):
                 return Not(self.lhs).equate_negated_to_false()
         elif self.lhs == TRUE or self.lhs == FALSE:
             return Equals(self.rhs, self.lhs).conclude_boolean_equality(
-                ).derive_reversed()
+                ).derive_reversed(preserve_all=True)
         raise ProofFailure(
             self,
             defaults.assumptions,
