@@ -460,7 +460,7 @@ class Forall(OperationOverInstances):
             raise EvaluationError(self)
         
         if hasattr(self, 'instance_param'):
-            if hasattr(self.domain, 'forall_evaluation'):
+            if self.has_domain() and hasattr(self.domain, 'forall_evaluation'):
                 # Use the domain's forall_evaluation method
                 return self.domain.forall_evaluation(self)
 
