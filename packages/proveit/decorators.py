@@ -223,14 +223,17 @@ def _make_decorated_prover(func):
                         internal_kwargs['markers_and_marked_expr'] = (
                             markers_and_marked_expr)
                     '''
-                    temp_defaults.preserve_all=True
+                    
                     temp_defaults.preserved_exprs = set()
                     if is_simplification_method:
-                        internal_kwargs['preserved_exprs'] = preserved_exprs
+                        temp_defaults.preserved_exprs = preserved_exprs
                         internal_kwargs['simplify_only_where_marked'] = (
                             simplify_only_where_marked)
                         internal_kwargs['markers_and_marked_expr'] = (
                             markers_and_marked_expr)
+                    else:
+                        temp_defaults.preserve_all=True
+                        temp_defaults.preserved_exprs = set()
                     proven_truth = checked_truth(func(*args, **internal_kwargs))
 
         else:
