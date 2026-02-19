@@ -13,3 +13,5 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.implication.self_implication
 proveit.logic.booleans.disjunction.excluded_middle
 proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

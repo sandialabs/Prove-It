@@ -5,3 +5,5 @@ proveit.logic.booleans.disjunction.not_or_if_not_any
 proveit.logic.booleans.negation.negation_elim
 proveit.logic.booleans.quantification.universality.bundling
 proveit.numbers
+proveit.logic.booleans.disjunction.not_left_if_neither
+proveit.logic.booleans.disjunction.or_if_left

@@ -20,7 +20,5 @@ proveit.logic.booleans.disjunction.neither_intro
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.implication.not_iff_via_not_right_impl
 proveit.logic.booleans.implication.negated_reflex
-proveit.logic.booleans.disjunction.not_left_if_neither
 proveit.logic.booleans.disjunction.not_right_if_neither
-proveit.logic.booleans.disjunction.or_if_left
 proveit.logic.booleans.disjunction.or_if_right
