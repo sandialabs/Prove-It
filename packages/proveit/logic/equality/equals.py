@@ -97,7 +97,9 @@ class Equals(EquivRelation):
             # if self.lhs.proven(): # If lhs is proven using default assumptions.
             #    # derive FALSE given lhs=FALSE and lhs.
             #    yield self.derive_contradiction
-        if self.rhs in (TRUE, FALSE):
+            if not self.lhs.disproven():
+                yield self.derive_via_boolean_equality
+        if self.rhs == TRUE and not self.lhs.proven():
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.derive_via_boolean_equality
         if hasattr(self.lhs, 'equality_incidentals'):

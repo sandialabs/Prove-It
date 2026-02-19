@@ -239,7 +239,7 @@ class BooleanMembership(SetMembership):
         element = self.element
         # if the element is already proven or disproven, use in_bool_if_true or
         # in_bool_if_false
-        if element.proven():
+        if element.readily_provable():
             return in_bool_if_true.instantiate({A: element})
         if element.disproven():
             return in_bool_if_false.instantiate({A: element})
