@@ -502,7 +502,7 @@ class And(Operation):
         A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
-        return compose(*self.operands.entries, auto_simplify=False)
+        return compose(*self.operands.entries, preserve_all=True)
 
     """
     @prover
@@ -670,8 +670,7 @@ class And(Operation):
         from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
                                    is_irreducible_value)
         # load in truth-table evaluations
-        from . import (and_t_t, and_t_f, and_f_t, and_f_f,
-                       conjunction_eq_quantification)
+        from . import (and_t_t, and_t_f, and_f_t, and_f_f)
         
         for truth_table_thm in (and_t_t, and_t_f, and_f_t, and_f_f):
             if self == truth_table_thm.expr.lhs:
@@ -704,6 +703,7 @@ class And(Operation):
 
         if must_evaluate:
             if self.operands.contains_range():
+                from . import conjunction_eq_quantification
                 if self.operands.num_entries() == 1:
                     # Conjunction of a single ExprRange.  Convert
                     # to a universal quantification and evaluate that.

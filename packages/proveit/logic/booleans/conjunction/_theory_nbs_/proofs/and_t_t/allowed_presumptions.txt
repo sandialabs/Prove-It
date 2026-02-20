@@ -5,4 +5,9 @@ proveit.logic.equality.substitution
 proveit.logic.booleans.implication.implies_t_f
 proveit.logic.booleans.negation.not_t
 proveit.logic.booleans.negation.not_f
+proveit.logic.booleans.conjunction.conjunction_introproveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.implication.negated_reflex
 proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.negation.negation_intro

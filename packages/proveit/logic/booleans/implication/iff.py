@@ -34,15 +34,23 @@ class Iff(TransitiveRelation):
         and known_right_sides).  Also derive the left and right implications,
         derive the reversed version and attempt to derive equality.
         '''
+        from proveit.logic import in_bool, Equals
         for incidental in TransitiveRelation.incidentals(self, judgment):
             yield incidental
         # (A=>B and B=>A) from A<=>B:
         yield self.derive_conjunction_of_implications
-        yield self.derive_left_implication  # B=>A given A<=>B
-        yield self.derive_right_implication  # A=>B given A<=>B
+        if self.B.readily_provable():
+            yield self.derive_left_implication  # B=>A given A<=>B
+        if self.A.readily_provable():
+            yield self.derive_right_implication  # A=>B given A<=>B
         yield self.derive_reversed  # B<=>A given A<=>B
         # A=B given A<=>B (assuming A and B are in booleans)
-        yield self.derive_equality
+        if self.A != self.B and (
+                not (self.A.proven() and self.B.proven()) # don't bother
+                and not Equals(self.A, self.B).proven()
+                and in_bool(self.A).readily_provable() 
+                and in_bool(self.B).readily_in_bool()):
+            yield self.derive_equality
 
     def _readily_provable(self):
         '''
@@ -278,9 +286,6 @@ class Iff(TransitiveRelation):
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         from . import eq_from_iff, eq_from_mutual_impl
-        # We must be able to prove this Iff to do this derivation --
-        # then either eq_from_iff or eq_from_mutual_impl can be used.
-        self.prove()
         # eq_from_mutual_impl may make for a shorter proof; do it both 
         # ways (if both are usable)
         if not eq_from_iff.is_fully_proven_and_usable():

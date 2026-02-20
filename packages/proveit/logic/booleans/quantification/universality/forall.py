@@ -84,15 +84,41 @@ class Forall(OperationOverInstances):
         # problematic.
         yield self._instantiate_generically
         
-    def _readily_provable(self):
+    def _readily_provable(self, *, consider_proof_by_cases=True):
         '''
-        The universal quantification is readily probable if the
+        The universal quantification is readily provable if the
         instance expression is readily probably under appropriate
         assumptions of if another universal quantification has
         been proven with a more inclusive domain.
         '''
+        from proveit.logic import Not
+
         if self._readily_provable_via_generalization():
             return True
+
+        # Is this readily provable by cases?
+        # Avoid an exponential blow-up when doing this *readily* provable
+        # check via the 'consider_proof_by_cases' keyword argument.
+        if not consider_proof_by_cases:
+            return False
+        if not self.instance_params.is_single():
+            # We could do something fancy here, but we want to avoid an
+            # exponential blow-up.
+            return False
+
+        if self.has_domain() and hasattr(self.domain, 'readily_provable_by_cases'):
+            return self.domain.readily_provable_by_cases(self)
+        else:
+            # Consider forall_by_excluded_middle, but avoid an exponential
+            # blow-up by setting consider_proof_by_cases to False.
+            instance_expr = self.with_expanded_condition().instance_expr
+            for condition in (self.instance_param, Not(self.instance_param)):
+                forall_case = Forall(self.instance_param, instance_expr,
+                                     condition=condition)
+                if not forall_case.readily_provable(consider_proof_by_cases=False):
+                    return False
+            return True
+
         return False
         #TODO, OTHER CASES
     
@@ -165,7 +191,7 @@ class Forall(OperationOverInstances):
                 for known_forall in known_foralls:
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
-                            and known_forall.conditions.is_single()):
+                            and len(known_forall.conditions)==1):
                         if known_forall.is_applicable():
                             known_domains.add(known_forall.domain)
             if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
@@ -302,9 +328,13 @@ class Forall(OperationOverInstances):
             # an explicit domain (but implicitly for effectively Boolean
             # cases of True and not True).
             from proveit.logic.booleans import forall_by_excluded_middle
-            _P = Lambda(self.instance_param, self.instance_expr)
-            return forall_by_excluded_middle.instantiate(
-                {P:_P, A:self.instance_param, B:self.instance_param}).derive_consequent()
+            instance_expr = self.with_expanded_condition().instance_expr
+            _P = Lambda(self.instance_param, instance_expr)
+            consequent = forall_by_excluded_middle.instantiate(
+                {P:_P, A:self.instance_param, B:self.instance_param},
+                preserve_all=True).derive_consequent(preserve_all=True)
+            return consequent.with_matching_styles(
+                self, assumptions=defaults.assumptions)
     
     @prover
     def conclude_via_domain_inclusion(self, superset_domain,
@@ -430,7 +460,7 @@ class Forall(OperationOverInstances):
             raise EvaluationError(self)
         
         if hasattr(self, 'instance_param'):
-            if hasattr(self.domain, 'forall_evaluation'):
+            if self.has_domain() and hasattr(self.domain, 'forall_evaluation'):
                 # Use the domain's forall_evaluation method
                 return self.domain.forall_evaluation(self)
 

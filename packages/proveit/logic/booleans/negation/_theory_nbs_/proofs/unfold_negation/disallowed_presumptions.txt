@@ -6,3 +6,4 @@ proveit.logic.equality.substitute_in_true
 proveit.logic.booleans.negation.fold_negation
 proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.negation_contradiction

@@ -773,6 +773,18 @@ class OperationOverInstances(Operation):
         else:
             # Show the condition with the 'expanded' style.
             return self.operand.body
+    
+    def _all_instance_exprs(self):
+        expr = self
+        while hasattr(expr, 'instance_expr'):
+            yield expr.instance_expr
+            expr = expr.instance_expr
+
+    def all_instance_exprs(self):
+        '''
+        Return a list of all nested instance expressions.
+        '''
+        return list(self._all_instance_exprs())
 
     @property
     def domain(self):

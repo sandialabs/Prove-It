@@ -97,7 +97,9 @@ class Equals(EquivRelation):
             # if self.lhs.proven(): # If lhs is proven using default assumptions.
             #    # derive FALSE given lhs=FALSE and lhs.
             #    yield self.derive_contradiction
-        if self.rhs in (TRUE, FALSE):
+            if not self.lhs.disproven():
+                yield self.derive_via_boolean_equality
+        if self.rhs == TRUE and not self.lhs.proven():
             # automatically derive A from A=TRUE or Not(A) from A=FALSE
             yield self.derive_via_boolean_equality
         if hasattr(self.lhs, 'equality_incidentals'):
@@ -794,7 +796,7 @@ class Equals(EquivRelation):
         except UnsatisfiedPrerequisites:
             pass
         if self.rhs == TRUE:
-            return eq_true_intro.instantiate({A: self.lhs})
+            return eq_true_intro.instantiate({A: self.lhs}, preserve_all=True)
         elif self.rhs == FALSE:
             if isinstance(self.lhs, Not):
                 evaluation = self.lhs.evaluation()
@@ -804,7 +806,7 @@ class Equals(EquivRelation):
                 return Not(self.lhs).equate_negated_to_false()
         elif self.lhs == TRUE or self.lhs == FALSE:
             return Equals(self.rhs, self.lhs).conclude_boolean_equality(
-                ).derive_reversed()
+                ).derive_reversed(preserve_all=True)
         raise ProofFailure(
             self,
             defaults.assumptions,
