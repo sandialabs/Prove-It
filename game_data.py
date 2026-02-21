@@ -3,8 +3,31 @@ Interface into the data for "gamified" Prove-It.  Specifally, information
 about all fully proven theorems with the goal of the game to regenerate
 these proofs with a preference to use few direct @prover method calls.
 
+
+To update the 'gamified' and 'gamified_database' branches.
+
+From an up-to-date Prove-It directory
+1. "python game_data.py packages/proveit"
+2. "find . -path '*/__pv_it/*' -type f ! -name 'proof.pv_it' ! -name 'proof_counts.txt' ! -name 'used_*.txt' ! -name 'eliminated_*.txt' ! -name 'complete' ! -path '*/used_by/*' ! -name 'proof.ipynb' | tar -czf pv_it.tar.gz -T -"
+From the gamified Prove-It directory
+3. "git pull origin <branch-with-updates>"
+4. "git switch --orphan gamified-database-update"
+5. move over the 'pv_it.tar.gz' from step 1
+6. "git commit pv_it.tar.gz -m 'gamified branch database for player convenience'"
+7. "git push -f origin gamified-database-update:gamified-database"
+8. "git checkout gamified"
+9. "git branch -D gamified-database-update"
+10. move over the 'game_data_file.txt' from step 2
+11. "python hide_theorem_proofs.py"
+12. "python build.py --theorems"
+13. "git add --all"
+14. "git git commit -a -m 'gamified branch preparation'"
+15. "git push origin gamified"
+
+
+STARTING FRESH:
 From the top Prove-It level where everything that is necessary has been built:
-1. "find . -path '*/__pv_it/*' -type f ! -name '*.txt' ! -name 'proof.pv_it' ! -name 'complete' ! -name 'proof.ipynb' | tar -czf pv_it.tar.gz -T -"
+1. "find . -path '*/__pv_it/*' -type f ! -name 'proof.pv_it' ! -name 'proof_counts.txt' ! -name 'used_*.txt' ! -name 'eliminated_*.txt' ! -name 'complete' ! -path '*/used_by/*' ! -name 'proof.ipynb' | tar -czf pv_it.tar.gz -T -"
 2. "python game_data.py packages/proveit"
 Clone a new repository and from that directory:
 2. "git checkout master" (or any desired starting branch)
