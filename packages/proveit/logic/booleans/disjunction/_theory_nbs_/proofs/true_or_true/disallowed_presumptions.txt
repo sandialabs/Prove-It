@@ -2,3 +2,5 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.or_if_any
 proveit.logic.sets
 proveit.logic.booleans.disjunction.excluded_middle
+proveit.logic.booleans.negation.double_negation_intro
+proveit.logic.booleans.implication.untrue_antecedent_implication
