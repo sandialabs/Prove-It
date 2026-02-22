@@ -608,7 +608,7 @@ def record_presuming_info(theorem, proof_notebook_path):
     finally:
         os.chdir(__owd)
 
-def extract_tar_with_limitations(filename, paths, prefix="Prove-It-master-full"):
+def extract_tar_with_limitations(filename, paths):
     '''
     Extract the given tar file into the directory of this 'build.py'
     script.  There are some limitations.  Other than files in the
@@ -639,12 +639,6 @@ def extract_tar_with_limitations(filename, paths, prefix="Prove-It-master-full")
             # Divy up the work when multiple cores are used.
             if k%nranks != rank:
                 continue
-            # drop the first part of the path
-            if prefix != "":
-                assert tar_member.name.startswith(prefix), (
-                        "Expecting tar member names to start with %s"
-                        %prefix)
-            tar_member.name = tar_member.name[len(prefix)+1:]
             member_path = os.path.normpath(tar_member.name)
             is_contained_in_a_theory_path = False
             for _path in paths:
@@ -1371,7 +1365,7 @@ if __name__ == '__main__':
     if nranks > 1:
         tar_file = comm.bcast(tar_file, root=0)
     if tar_file != "":
-        extract_tar_with_limitations(tar_file, paths, prefix='')
+        extract_tar_with_limitations(tar_file, paths)
         #extract_tar_test(tar_file, paths)
     
     if args.download and rank == 0:
