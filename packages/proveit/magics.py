@@ -1305,6 +1305,10 @@ def display_assignments(names, beginning_proof=False,
                     right_side, wrap_expr_range_in_tuple=False)
             except BaseException:
                 pass
+            if not isinstance(right_side, Expression):
+                # Only display the assigments if all of the assignments
+                # are expressions and/or judgments.
+                return
         processed_right_sides.append(right_side)
     names = list(names)
     right_sides = processed_right_sides
