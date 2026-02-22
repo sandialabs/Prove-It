@@ -1373,4 +1373,7 @@ if __name__ == '__main__':
     if tar_file != "":
         extract_tar_with_limitations(tar_file, paths, prefix='')
         #extract_tar_test(tar_file, paths)
-        
+    
+    if args.download and rank == 0:
+        print("Removing pv_it.tar.gz")
+        os.remove('pv_it.tar.gz')
