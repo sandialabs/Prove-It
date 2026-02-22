@@ -608,7 +608,7 @@ def record_presuming_info(theorem, proof_notebook_path):
     finally:
         os.chdir(__owd)
 
-def extract_tar_with_limitations(filename, paths):
+def extract_tar_with_limitations(filename, paths, prefix="Prove-It-master-full"):
     '''
     Extract the given tar file into the directory of this 'build.py'
     script.  There are some limitations.  Other than files in the
@@ -633,7 +633,6 @@ def extract_tar_with_limitations(filename, paths):
     # extract into the directory of this 'build.py'
     extract_to_path = os.path.dirname(os.path.realpath(__file__))
     print("Extracting tarball into %s" % extract_to_path)
-    prefix = "Prove-It-master-full"
     paths = [os.path.normpath(_path) for _path in paths]
     def tar_member_generator():
         for k, tar_member in enumerate(tar.getmembers()):
@@ -641,9 +640,10 @@ def extract_tar_with_limitations(filename, paths):
             if k%nranks != rank:
                 continue
             # drop the first part of the path
-            assert tar_member.name.startswith(prefix), (
-                    "Expecting tar member names to start with %s"
-                    %prefix)
+            if prefix != "":
+                assert tar_member.name.startswith(prefix), (
+                        "Expecting tar member names to start with %s"
+                        %prefix)
             tar_member.name = tar_member.name[len(prefix)+1:]
             member_path = os.path.normpath(tar_member.name)
             is_contained_in_a_theory_path = False
@@ -707,7 +707,8 @@ def extract_tar_with_limitations(filename, paths):
                               (unique_rep, new_unique_rep))    
                 if (not in_database_folder and ext == '.ipynb'):
                     git_clear_notebook(member_fullpath)
-    tar.extractall(path=extract_to_path, members=tar_member_generator())
+    tar.extractall(path=extract_to_path, members=tar_member_generator(),
+                   filter='fully_trusted')
 
 """
 def extract_tar_test(filename, paths):
@@ -1352,26 +1353,17 @@ if __name__ == '__main__':
     tar_file = args.tar
     if args.download:
         '''
-        Download and extract the tarball of __pv_it directories as well
-        as notebook outputs and html versions.
+        Download and extract the tarball of __pv_it directories
+        minimally for the gamified branch to function properly.
         '''
-        url = ("https://github.com/sandialabs/Prove-It/archive/"
-               "gh-pages.tar.gz")
+        print("Transfering pv_it.tar.gz file from gamified-database branch")
         if rank == 0:
-            if not sure_you_want_to_extract(paths):
-                print('Quitting')
-                tar_file = ''
-            else:
-                print("Downloading '%s'" % url)
-                try:
-                    tar_file = urllib.request.urlretrieve(
-                        url, filename=None)[0]  # Comment in for Python 3
-                except urllib.error.URLError as e:
-                    print(str(e))
-                    raise Exception(
-                        "Unable to download %s; there may be a firewall "
-                        "issue.\nIn any case, you can try downloading this "
-                        "file manually and then use '--extract'."%url)        
+            process = subprocess.Popen(['git', 'fetch', 'origin', 'gamified-database'])
+            process.wait()
+            process = subprocess.Popen(['git', 'checkout', 'gamified-database',
+                                        '--', 'pv_it.tar.gz'])
+            process.wait()
+            tar_file = 'pv_it.tar.gz'
     elif tar_file != "":
         if rank == 0 and not sure_you_want_to_extract(paths):
             print('Quitting')
@@ -1379,6 +1371,6 @@ if __name__ == '__main__':
     if nranks > 1:
         tar_file = comm.bcast(tar_file, root=0)
     if tar_file != "":
-        extract_tar_with_limitations(tar_file, paths)
+        extract_tar_with_limitations(tar_file, paths, prefix='')
         #extract_tar_test(tar_file, paths)
         
