@@ -30,20 +30,18 @@ From the top Prove-It level where everything that is necessary has been built:
 1. "python game_data.py packages/proveit"
 Clone a new repository and from that directory:
 2. "git checkout master" (or any desired starting branch)
-3. "git checkout -b gamified-update" (will be renamed "gamified" later)
+3. "git checkout -b gamified"
 4. move over the 'game_data_file.txt' from step 1
-5. "python -m install --editable ." in this gamified-update branch folder
+5. "python -m install --editable ." in this gamified branch folder
 6. commit build.py version that downloads from gamified-database branch
 7. "python hide_theorem_proofs.py"
 8. "git commit -a -m 'gamified branch: hide game theorem proofs'"
 9. "python build.py --theorems"
 10. "git commit -a -m 'gamified branch: empty game theorem proofs'"
-11. "git push -f origin gamified-update:gamified"
-12. "git checkout origin gamified"
-13. "git branch -D gamified-update"
+11. "git push -f origin gamified"
 From the original Prove-It folder
-14. "python -m install --editable ."
-15. "Follow update instructions to create and upload pv_it.tar.gz"
+12. "python -m install --editable ."
+13. "Follow update instructions to create and upload pv_it.tar.gz"
 '''
 
 import sys
