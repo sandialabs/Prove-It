@@ -12,12 +12,12 @@ From an up-to-date Prove-It directory
 From the gamified Prove-It directory
 3. "git pull origin <branch-with-updates>"
 4. "git switch --orphan gamified-database-update"
-5. move over the 'pv_it.tar.gz' from step 1
+5. move over the 'pv_it.tar.gz' from step 2
 6. "git commit pv_it.tar.gz -m 'gamified branch database for player convenience'"
 7. "git push -f origin gamified-database-update:gamified-database"
 8. "git checkout gamified"
 9. "git branch -D gamified-database-update"
-10. move over the 'game_data_file.txt' from step 2
+10. move over the 'game_data_file.txt' from step 1
 11. "python hide_theorem_proofs.py"
 12. "python build.py --theorems"
 13. "git add --all"
@@ -27,23 +27,22 @@ From the gamified Prove-It directory
 
 STARTING FRESH:
 From the top Prove-It level where everything that is necessary has been built:
-1. "find . -path '*/__pv_it/*' -type f ! -name 'proof.pv_it' ! -name 'proof_counts.txt' ! -name 'used_*.txt' ! -name 'eliminated_*.txt' ! -name 'complete' ! -path '*/used_by/*' ! -name 'proof.ipynb' | tar -czf pv_it.tar.gz -T -"
-2. "python game_data.py packages/proveit"
+1. "python game_data.py packages/proveit"
 Clone a new repository and from that directory:
 2. "git checkout master" (or any desired starting branch)
 3. "git checkout -b gamified-update" (will be renamed "gamified" later)
-4. move over the 'pv_it.tar.gz' from step 1
-5. move over the 'game_data_file.txt' from step 2
-6. "tar -xzf pv_it.tar.gz"
-7. "python -m install --editable ." in this gamified-update branch folder
-8. "python hide_theorem_proofs.py"
-9. "python build.py --theorems"
-10. "git add -f pv_it.tar.gz game_data_file.txt"
-11. "git commit -a -m 'gamified branch preparation'"
-12. "git push -f origin gamified-update:gamified"
+4. move over the 'game_data_file.txt' from step 1
+5. "python -m install --editable ." in this gamified-update branch folder
+6. "python hide_theorem_proofs.py"
+7. "git commit -a -m 'gamified branch: hide game theorem proofs'"
+8. "python build.py --theorems"
+9. "git commit -a -m 'gamified branch: empty game theorem proofs'"
+10. "git push -f origin gamified-update:gamified"
+11. "git checkout origin gamified"
+12. "git branch -D gamified-update"
 From the original Prove-It folder
 13. "python -m install --editable ."
-14. "git branch -D gamified-update"
+14. "Follow update instructions to create and upload pv_it.tar.gz"
 '''
 
 import sys
