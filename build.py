@@ -964,13 +964,27 @@ def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
         for theory_path in find_theory_paths(path):
             theory = Theory(theory_path)
+            def_existence_names = set()
+            def_extension_names = set()
             for name in theory.get_defining_property_names():
-                name = theory.get_definition_existence(name).name
+                try:
+                    name = theory.get_definition_existence(name).name
+                except:
+                    continue
                 if name in def_existence_names:
                     continue
                 def_existence_names.add(name)
                 yield os.path.join(theory._storage.directory, '_theory_nbs_',
                                    'def_existence_proofs', name, 'thm_proof.ipynb')
+                try:
+                    name = theory.get_definition_extension(name).name
+                except:
+                    continue
+                if name in def_extension_names:
+                    continue
+                def_extension_names.add(name)
+                yield os.path.join(theory._storage.directory, '_theory_nbs_',
+                                   'def_extension_proofs', name, 'thm_proof.ipynb')
             for theorem_name in theory.get_theorem_names():
                 yield os.path.join(theory._storage.directory, '_theory_nbs_',
                                    'proofs', theorem_name, 'thm_proof.ipynb')
@@ -1182,6 +1196,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     paths = args.path
     save_notebooks = args.save_notebooks
+    if save_notebooks:
+        raise NotImplementedError("save_notebooks feature requires a fix -- it saves extra gc.collect junk")
 
     # Get all the theories of the given top-level paths
     # in the order indicated in _sub_theory_.txt files.
