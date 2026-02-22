@@ -43,7 +43,7 @@ You can also read our [introductory paper](https://github.com/PyProveIt/Prove-It
 
 Instructions for **gamified** mode.
 
-Gamified mode is designed to be a fun way to learn the Prove-It system.  Eventually we'd like the gamified version to be web-based, but to try it out now you'll have to clone the repository and checkout the 'gamified' branch.  Follow steps 1 and 2 of the installations below and then execute "python build.py --download" in the top-level folder (in Windows you can use "git bash" to do this).  Then launch "game.ipynb" using jupyter notebook.  Run that notebook to generate a list of theorems that you may prove.  Re-run the cell to show any new theorems you may prove as well as the theorems you have proven.
+Gamified mode is designed to be a fun way to learn the Prove-It system.  Eventually we'd like the gamified version to be web-based, but to try it out now you'll have to clone the repository and checkout the 'gamified' branch.  Follow steps 1 and 2 of the installations below and then execute "python build.py --download" in the top-level folder (in Windows you can use "git bash" to do this).  This 'build' will take several minutes.  Then launch "game.ipynb" using jupyter notebook.  Run that notebook to generate a list of theorems that you may prove.  Re-run the cell to show any new theorems you may prove as well as the theorems you have proven.
 
 Some tips and comments about **gamified** mode:
 * The gamified branch uses a redesign of Prove-It that has not made it into the master branch yet.  The redesign will use solid mathematical foundations based on ZFC set theory but is still in progress.
