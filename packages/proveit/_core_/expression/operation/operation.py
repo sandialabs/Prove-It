@@ -68,12 +68,6 @@ class Operation(Expression):
                 else:
                     self.operands = ExprTuple(operand_or_operands)
 
-        def raise_bad_operator_type(operator):
-            raise TypeError("An operator may not be an explicit Lambda map "
-                            "like %s; this is necessary to avoid a Curry's "
-                            "paradox." % str(operator))
-        if isinstance(self.operator, Lambda):
-            raise_bad_operator_type(self.operator)
         if (isinstance(self.operands, ExprTuple) and 
                 self.operands.is_single()):
             # This is a single operand.
