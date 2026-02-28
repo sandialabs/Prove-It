@@ -68,12 +68,6 @@ class Operation(Expression):
                 else:
                     self.operands = ExprTuple(operand_or_operands)
 
-        def raise_bad_operator_type(operator):
-            raise TypeError("An operator may not be an explicit Lambda map "
-                            "like %s; this is necessary to avoid a Curry's "
-                            "paradox." % str(operator))
-        if isinstance(self.operator, Lambda):
-            raise_bad_operator_type(self.operator)
         if (isinstance(self.operands, ExprTuple) and 
                 self.operands.is_single()):
             # This is a single operand.
@@ -848,6 +842,25 @@ class Operation(Expression):
                             simplify_only_where_marked=simplify_only_where_marked,
                             markers_and_marked_expr=sub_markers_and_marked_expr))
         return eq.relation
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False, 
+                               **defaults_config):
+        '''
+        Attempt to simplify 'self' under the assumption that it's
+        operands (sub-expressions) have already been simplified.
+        Returns the simplification as a Judgment equality with 'self'
+        on the left side.
+        
+        The Operation default will check for a 'application_simplification'
+        method of the operator andotherwise call
+        Expression.shallow_simplification.  Override for
+        Operation-class-specific simplification.
+        '''
+        if hasattr(self.operator, 'application_simplification'):
+            return self.operator.application_simplification(
+                self.operands, must_evaluate=must_evaluate)
+        return Expression.shallow_simplification(must_evaluate=must_evaluate)
 
     @equality_prover('operator_substituted', 'operator_substitute')
     def operator_substitution(self, equality, **defaults_config):

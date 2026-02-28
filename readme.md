@@ -41,18 +41,33 @@ You can also read our [introductory paper](https://github.com/PyProveIt/Prove-It
 
 ***
 
+Instructions for **gamified** mode.
+
+Gamified mode is designed to be a fun way to learn the Prove-It system.  Eventually we'd like the gamified version to be web-based, but to try it out now you'll have to clone the repository and checkout the 'gamified' branch.  Follow steps 1 and 2 of the installations below and then execute "python build.py --download" in the top-level folder (in Windows you can use "git bash" to do this).  This 'build' will take several minutes.  Then launch "game.ipynb" using jupyter notebook.  Run that notebook to generate a list of theorems that you may prove.  Re-run the cell to show any new theorems you may prove as well as the theorems you have proven.
+
+Some tips and comments about **gamified** mode:
+* The gamified branch uses a redesign of Prove-It that has not made it into the master branch yet.  The redesign will use solid mathematical foundations based on ZFC set theory but is still in progress.
+* This branch will continue to be updated.  To pull updates, you'll probably want to use "--theirs" for any merge conflicts and re-execute "tar -xzf pv_it.tar.gz".  Merge conflicts shouldn't be an issue (too often) if you are only updating the generic theorem proof notebooks as intended.
+* Prove-It does not currently have great tutorials (what is there is likley out-dated), so it's more of a monkey-see monkey-do approach for now.  But there are "demonstration" pages corresponding to each theory package where you can learn how different "@prover" methods and automation strategies work.  Smiley faces appear next to each judgment that has been "unlocked" in your gameplay (this means that the full proof down to axioms has been generated for that judgment).
+* You can cheat as needed!  Simply modify "thm_proof.ipynb" to "_thm_proof.ipynb" in your navigation bar to peak at a pre-existing proof.  On par (having the same count as the pre-existing solution) is doing great!  If you do better, wow!  Let us know if you do.
+* In the course of interacting with the theorem proof notebook, you may be asked whether a particular theorem should be allowed or disallowed.  Your best option, unless you really know what you are doing, is to "allow" if the message tells you it is safe to allow and disallow otherwise.
+* You are judged against these pre-existing proofs, first and foremost by the number of @prover method calls but also in the number of formal proofs steps.
+* The number of @prover method calls of the pre-existing solution is displayed in the listing of "Ready-to-prove theorems".  Hint: if that number is zero, you should be able to prove it with the "%qed" command.
+
+We should set up a forum for users to communicate and help each other out.  Any suggestions?
+
+***
+
 Installation instructions
 
 1) Make sure you have the required packages installed:
     - Python3.7 (installing a distribution such as Anaconda is recommended)
     - Jupyter (included in a distribution such as Anaconda)
     - LaTeX distribution (e.g. MiKTeX or TeX Live)
-    - The qcircuit LaTeX package which may be acquired from CTAN
-      (or disable the quantum theory package in Prove-It).
 
 2) Run:
 
-       python setup.py develop
+       python -m pip install --editable .
    
    to install a link to the source tree in your python path.  We only
    support this "develop" installation at this time because of the way 
