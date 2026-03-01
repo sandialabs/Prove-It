@@ -1,16 +1,17 @@
 # Arithmetic and number theory concepts.
 
 from .number_sets import (
-    ZeroSet, Natural, NaturalPos,
-    Integer, IntegerEven, IntegerNonZero, IntegerNeg, IntegerNonPos,
-    IntegerOdd, Rational, RationalNonZero, RationalPos, RationalNeg,
+    ZeroSet, Natural, NaturalPos, Integer, IntegerEven,
+    IntegerNonZero, IntegerNeg, IntegerNonPos, IntegerOdd,
+    Prime, Rational, RationalNonZero, RationalPos, RationalNeg,
     RationalNonNeg, RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
     Complex, ComplexNonZero, Conjugate,
     complex_polar_coordinates, 
     unit_length_complex_polar_angle)
 
-from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
+from .number_sets import (
+        Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC)
 from .number_sets import e, pi, i, infinity
 from .number_operation import (NumberOperation, readily_factorable,
                                deduce_in_number_set,
@@ -36,7 +37,8 @@ from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        less_eq_numeric_rationals,
                        not_equal_numeric_rationals,
                        deduce_not_equal_numeric_rationals)
-from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
+from .numerals import (zero, one, two, three, four, five, six, seven,
+        eight, nine, hexa, hexb, hexc, hexd, hexe, hexf)
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
