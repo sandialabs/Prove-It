@@ -155,17 +155,79 @@ class Qmult(Operation):
                     expr.operands.num_entries() > 1 and 
                     InSet(expr.operands[0], Complex).proven()):
                 expr = eq.update(expr.scalar_mult_factorization())
-        
+        if must_evaluate==True:
+            if isinstance(expr,ScalarMult):
+                try:
+                    expr = eq.update(expr.inner_expr().scaled.projection())
+                    expr = eq.update(expr.evaluation())
+                except ValueError:
+                    pass
+            else:
+                try:
+                    if hasattr(expr, 'projection'):
+                        expr = eq.update(expr.projection())
+                    expr = eq.update(expr.evaluation())
+                except ValueError:
+                    pass
+                
+            #expr = eq.update(expr.evaluation())        
         return eq.relation
+    #
+    @equality_prover('adjoint_distributed', 'adjoint_distribute')
+    def adjoint_distribution(self,**defaults_config):
+        if self.operands.is_double():
+            _A = self.operands[0]
+            _B = self.operands[1]
+            for linmap in containing_hilbert_space_linmap_sets(_B):
+                _Hspace, _X = linmap.from_vspace, linmap.to_vspace
+                for linmap in containing_hilbert_space_linmap_sets(_A):
+                    _Y = linmap.to_vspace
+                    return adjoint_binary_distribution.instantiate({Hspace:_Hspace,X:_X,Y:_Y,A:_A,B:_B})
+        else:
+            raise NotImplementedError("We only treat adjoint distribution when there are two operands")
+        
+    @equality_prover('projected', 'project')
+    def projection(self,**defaults_config):
+        from . import qmult_op_ket, ket_self_projection
+        from proveit.physics.quantum import (
+                Bra, Ket, HilbertSpaces, var_ket_psi,psi)
+        from proveit.logic import Equals
+        if not self.operands.is_double():
+            raise ValueError("'projection' method only works when there are two operands")
+        M,ket = self.operands
+        #try:
+        linmap_eq = Qmult(M).linmap_reduction()
+       # except ValueError:
+        #    pass
+        yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
+        for _Hspace in yield_known_hilbert_spaces(ket):
+            if isinstance(M, Bra) and M.operand==ket.operand and ket_self_projection.is_usable():
+            #if M.operand==ket.operand:
+                #print("same")
+                self_proj_eq=ket_self_projection.instantiate({Hspace: _Hspace, psi:ket.operand})
+                #print(self_proj_eq)
+                #return linmap_eq.sub_right_side_into(self_proj_eq.inner_expr().rhs.operator)
+                return self_proj_eq
+            #bra_eq=bra_def.instantiate({varphi:bra.operand, Hspace: _Hspace})
+            #return bra_eq.sub_right_side_into(qmult_eq.inner_expr().rhs.operator)
+            else:
+                #print("different")
+                qmult_eq=qmult_op_ket.instantiate({A:M, Hspace: _Hspace, X: Complex, var_ket_psi: ket})
+                #print(qmult_eq)
+                return linmap_eq.sub_right_side_into(qmult_eq.inner_expr().rhs.operator)
 
     @equality_prover('linmap_reduced', 'linmap_reduce')
     def linmap_reduction(self, **defaults_config):
         '''
         Equate the Qmult to a linear map, if possible.
         '''
+        from proveit.physics.quantum import QmultCodomain
+        # In the process of proving that 'self' is in QmultCodomain,
+        # it will prove it is a linear map if it can.
+        QmultCodomain.membership_object(self).conclude()
         from proveit.physics.quantum import (
                 Bra, Ket, HilbertSpaces, varphi)
-        from proveit.physics.quantum.algebra import Hspace
+        #from proveit.physics.quantum.algebra import Hspace
         from . import qmult_of_matrix, qmult_of_bra_as_map
 
         yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
@@ -190,6 +252,7 @@ class Qmult(Operation):
             raise NotImplementedError(
                     "'linmap_reduction' currently only impoemented "
                     "for a unary Qmult")
+        raise ValueError("%s does not evaluate to a linear map"%self)
 
     @relation_prover
     def deduce_in_vec_space(self, vec_space=None, *, field,

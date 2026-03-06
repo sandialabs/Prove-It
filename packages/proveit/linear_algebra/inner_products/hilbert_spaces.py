@@ -16,6 +16,10 @@ class HilbertSpacesLiteral(Literal):
             self, string_format='HilbertSpaces', 
             latex_format=r'\textrm{HilbertSpaces}',
             styles=styles)
+        
+    @property
+    def field(self):
+        return Complex
     
     def membership_object(self, element):
         return HilbertSpacesMembership(element, self)

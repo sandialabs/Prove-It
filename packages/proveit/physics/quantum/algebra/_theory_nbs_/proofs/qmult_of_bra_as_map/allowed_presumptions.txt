@@ -1,0 +1,3 @@
+proveit.physics.quantum.algebra.qmult_of_bra
+proveit.linear_algebra.inner_products.complex_vec_set_is_hilbert_space
+proveit.logic.equality.sub_left_side_into
