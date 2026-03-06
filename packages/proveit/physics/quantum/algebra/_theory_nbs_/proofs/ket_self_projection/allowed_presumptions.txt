@@ -1,0 +1,6 @@
+proveit.core_expr_types
+proveit.linear_algebra
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.algebra.qmult_bra_is_linmap
+proveit.physics.quantum.algebra.qmult_of_bra_as_map

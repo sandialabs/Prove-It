@@ -199,9 +199,12 @@ class Exists(OperationOverInstances):
             # Although the generalization to further match theorem
             # details can be handled through automation, it can reduce
             # computations to explicitly handle it here right now:
+            condition = _Q.apply(*skolem_constants)
+            if isinstance(condition, And): conditions = condition.operands
+            else: conditions = [condition]
             P_implies_alpha.generalize(
                     skolem_constants,
-                    conditions=[_Q.apply(*skolem_constants)])
+                    conditions=conditions)
     
             return skolem_elim.instantiate(
                 {n: _n, P: _P, Q: _Q, alpha: _alpha,

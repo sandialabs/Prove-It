@@ -1,4 +1,4 @@
-from proveit import Function, Literal
+from proveit import Function, Literal,equality_prover
 
 class Adj(Function):
 
@@ -18,3 +18,8 @@ class Adj(Function):
 
     def latex(self, **kwargs):
         return self.operand.string(fence=True) + r'^{\dagger}'
+    ##### newly added
+    @equality_prover('distributed', 'distribute')
+    def distribution(self,**defaults_config):
+        if hasattr(self.operand, 'adjoint_distribution'):
+            return self.operand.adjoint_distribution()

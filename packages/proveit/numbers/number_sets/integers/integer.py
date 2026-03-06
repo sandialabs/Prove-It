@@ -304,10 +304,21 @@ class IntegerOddSet(NumberSet):
         return IntegerOddMembership(element)
 
 
+class PrimeSet(NumberSet):
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'PRIMES', r'\mathbb{P}', 
+                           theory=__file__, styles=styles)
+
+    def membership_object(self, element):
+        from .integer_membership import PrimeMembership    
+        return PrimeMembership(element)
+
+
 if proveit.defaults.running_theory_notebook is None:
     # Import some fundamental theorems without quantifiers when not 
     # running an common/axioms/theorems theory notebook.
     from . import (zero_set_within_int, zero_set_within_nonpos_int,
+                   prime_within_int,
                    nat_within_int,
                    nat_pos_within_int,
                    nat_pos_within_nonzero_int,
