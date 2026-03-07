@@ -776,7 +776,7 @@ class Operation(Expression):
         if hasattr(self.operator, 'application_simplification'):
             return self.operator.application_simplification(
                 self.operands, must_evaluate=must_evaluate)
-        return Expression.shallow_simplification(must_evaluate=must_evaluate)
+        return Expression.shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('operator_substituted', 'operator_substitute')
     def operator_substitution(self, equality, **defaults_config):
