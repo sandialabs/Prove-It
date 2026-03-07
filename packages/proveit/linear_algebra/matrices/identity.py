@@ -1,5 +1,14 @@
 from proveit import Function, Literal
 
+class IdentityLiteral(Literal):
+    def __init__(self, *, styles):
+        Literal.__init__(self, string_format='1', latex_format=r'\mathbbm{1}',
+                         styles=styles, theory=__file__)
+
+    def _config_latex_tool(self, lt):
+        if 'bbm' not in lt.packages:
+            lt.packages.append('bbm')
+
 class Identity(Function):
     '''
     Represents the n x n identity matrix associated with the identity
@@ -7,8 +16,7 @@ class Identity(Function):
     any any element of a vector space to itself.
     '''
 
-    _operator_ = Literal(string_format='1',
-            latex_format=r'\mathbbm{1}', theory=__file__)
+    _operator_ = IdentityLiteral(styles=None)
 
     def _config_latex_tool(self, lt):
         if 'bbm' not in lt.packages:
