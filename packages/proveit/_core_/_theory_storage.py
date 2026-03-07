@@ -1927,7 +1927,7 @@ class TheoryFolderStorage:
                 # prepend the constructor with the module
                 # -- assume it is in the same module as the class
                 constructor = ('.'.join(full_class_name.split('.')[:-1]) +
-                               constructor)
+                               '.' + constructor)
             return constructor
         if isinstance(expr, NamedExprs):
             # convert to (name, value) tuple form
