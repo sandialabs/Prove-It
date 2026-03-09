@@ -3,7 +3,7 @@ from proveit import (Operation, Literal, Lambda, ExprTuple, ExprRange,
                      prover, equality_prover, relation_prover)
 from proveit import (a, b, c, f, i, j, l, m, n, A, B, C, M, Q, U, X, Y,
                      alpha)
-from proveit.relation import TransRelUpdater
+from proveit.relations import TransRelUpdater
 from proveit.logic import Equals, InSet, ClassMembership, InClass, CartExp
 from proveit.numbers import Complex, subtract, one, two, Exp
 from proveit.abstract_algebra.generic_methods import (

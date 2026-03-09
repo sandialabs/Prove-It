@@ -1,11 +1,11 @@
-from proveit import (Literal, defaults, USE_DEFAULTS, equality_prover, 
-                     ProofFailure, prover, relation_prover)
+from proveit import (Literal, defaults, USE_DEFAULTS, UnusableProof,
+                     ProofFailure, equality_prover, prover, relation_prover)
 from proveit import x, S
-from proveit.relation import Relation
-from proveit.logic.classes import NotInClass, ClassNonmembership
+from proveit.relations import Relation
+from proveit.classes import ClassMembership
 
 
-class NotInSet(NotInClass):
+class NotInSet(Relation):
     '''
     Set nonmembership is a special case of class nonmembership, so we'll
     derive from NotInClass for code re-use.  The operators are distinct 
@@ -19,9 +19,69 @@ class NotInSet(NotInClass):
     notinset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        NotInSet.notinset_expressions[(element, domain)] = self
-        NotInClass.__init__(self, element, domain, operator=NotInSet._operator_,
+        Relation.__init__(self, NotInSet._operator_, element, domain,
                           styles=styles)
+        element = self.element
+        domain = self.domain = self.operands[1]
+        NotInSet.notinset_expressions[(element, domain)] = self
+        if hasattr(domain, 'nonmembership_object'):
+            self.nonmembership_object = self.domain.nonmembership_object(
+                element)
+            if not isinstance(self.nonmembership_object, SetNonmembership):
+                raise TypeError(
+                    "The 'nonmembership_object' of %s is a %s which "
+                    "is not derived from %s as it should be." %
+                    (self.domain, self.nonmembership_object.__class__,
+                     SetNonmembership))
+
+    def __dir__(self):
+        '''
+        If the domain has a 'nonmembership_object' method,
+        include methods from the object it generates (also
+        'unfold' which defaults as 'unfold_not_in' if it isn't
+        defined in 'nonmembership_object').
+        '''
+        if 'nonmembership_object' in self.__dict__:
+            return sorted(set(list(self.__dict__.keys()) +
+                              dir(self.membership_object)))
+        else:
+            return sorted(list(self.__dict__.keys()) + 'unfold')
+
+    def __getattr__(self, attr):
+        '''
+        If the domain has a 'nonmembership_object' method,
+        include methods from the object it generates (also
+        'unfold' defaults as 'unfold_not_in' if it isn't
+        defined in 'nonmembership_object').
+        '''
+        if attr in ('lhs', 'rhs'):
+            return Relation.__getattr__(self, attr)
+        if 'nonmembership_object' in self.__dict__:
+            return getattr(self.nonmembership_object, attr)
+        elif attr == 'unfold':
+            return self.unfold_not_in  # the default 'unfold' method
+        raise AttributeError
+
+    def side_effects(self, judgment):
+        '''
+        Unfold x not-in S as Not(x in S) as an automatic side-effect.
+        If the domain has a 'nonmembership_object' method, side effects
+        will also be generated from the 'side_effects' object that it
+        generates.
+        '''
+        yield self.unfold_not_in
+        if hasattr(self, 'nonmembership_object'):
+            for side_effect in self.nonmembership_object.side_effects(
+                    judgment):
+                yield side_effect
+
+    def negated(self):
+        '''
+        Return the negated membership expression,
+        element not in domain.
+        '''
+        from .not_in_set import NotInSet
+        return NotInSet(self.element, self.domain)
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -56,18 +116,30 @@ class NotInSet(NotInClass):
         return unfold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, auto_simplify=False)
 
-    def _readily_provable(self):
+    def _readily_provable(self, check_directly_known_elem_equality=True):
         '''
         This membership is readily provable if the membership
         object indicates that it is readily provable or there is a 
         known as-strong membership (with known equal elements and the
         domain a subset of the desired domain).
         '''
-        if NotInClass._readily_provable(self):
+        if hasattr(self, 'nonmembership_object'):
+            if self.nonmembership_object._readily_provable():
+                return True            
+        if ClassMembership._readily_provable(
+                self, check_directly_known_elem_equality=(
+                        check_directly_known_elem_equality)):
             return True
         if self.as_strong_known_nonmembership() is not None:
             return True
         return False
+
+    def _readily_disprovable(self):
+        '''
+        This membership is readily disprovable if the corresponding
+        nonmembership is readily provable.
+        '''
+        return self.negated().readily_provable()
 
     @prover
     def conclude(self, **defaults_config):
@@ -87,11 +159,32 @@ class NotInSet(NotInClass):
         # See if the element, or something known to be equal to
         # the element, is known to be a nonmember of the domain or a 
         # superset of the domain.
-        as_strong_nonmembership = self.as_strong_known_nonmembership()
+        as_strong_nonmembership = self.as_strong_known_nonmembership(
+                include_canonical_forms=False)
         if as_strong_nonmembership is not None:
+            if as_strong_nonmembership.domain == self.domain:
+                try:
+                    # Use a known nonmembership from an equivalent member.
+                    return self.conclude_from_as_strong_nonmembership(
+                            as_strong_nonmembership)
+                except UnusableProof:
+                    pass
+
+        if hasattr(self, 'nonmembership_object') and (
+                self.nonmembership_object._readily_provable()):
+            # Don't bother with a fancy, indirect approach if
+            # we can readily conclude membership via the membership
+            # object.
+            return self.nonmembership_object.conclude()
+
+        as_strong_nonmembership = self.as_strong_known_nonmembership(
+                include_canonical_forms=True)
+        if as_strong_nonmembership is not None:
+            # Use a known nonmembership that is at least as strong.
             return self.conclude_from_as_strong_nonmembership(
                     as_strong_nonmembership)
-        return NotInClass.conclude(self)
+
+        return Relation.conclude(self)
 
     @prover
     def conclude_as_folded(self, **defaults_config):
@@ -138,7 +231,7 @@ class NotInSet(NotInClass):
                 except ProofFailure:
                     # May have been blocked to avoid infinite
                     # recursion.
-                    return NotInClass.conclude(self)
+                    return Relation.conclude(self)
                 elem_sub_notin_domain = sub_rel.derive_subset_nonmembership(
                         elem_sub)
         if elem_sub == self.element:
@@ -148,7 +241,7 @@ class NotInSet(NotInClass):
         return elem_sub_notin_domain.inner_expr().element.substitute(
                 self.element)
 
-    def as_strong_known_nonmembership(self):
+    def as_strong_known_nonmembership(self, include_canonical_forms=True):
         '''
         If there is a known nonmembership that is as strong as this 
         one, where the element is equal to this one's element and the 
@@ -157,7 +250,9 @@ class NotInSet(NotInClass):
         '''
         from proveit.logic import Equals, SubsetEq
         known_nonmemberships = list(
-                NotInClass.yield_known_nonmemberships(self.element))
+                NotInSet.yield_known_memberships(
+                    self.element,
+                    include_canonical_forms=include_canonical_forms))
         # First see of there is a known nonmembership with the same domain.
         for known_nonmembership in known_nonmemberships:
             if known_nonmembership.domain == self.domain:
@@ -177,15 +272,88 @@ class NotInSet(NotInClass):
                 return known_nonmembership
         return None # No match found.
 
-class SetNonmembership(ClassNonmembership):
+class SetNonmembership:
     def __init__(self, element, domain):
         '''
         Base class for any 'membership object' returned by a domain's
         'membership_object' method.
         '''
+        self.element = element
+        self.domain = domain
         # The expression represented by this Membership.
         if (element, domain) in NotInSet.notinset_expressions:
-            expr = NotInSet.notinset_expressions[(element, domain)]
+            self.expr = NotInSet.notinset_expressions[(element, domain)]
         else:
-            expr = NotInSet(element, domain)
-        ClassNonmembership.__init__(self, element, domain, expr=expr)
+            self.expr = NotInSet(element, domain)
+
+    def side_effects(self, judgment):
+        return # No side-effects by default
+        yield
+
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this nonmembership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        try:
+            return self.as_defined().canonical_form()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, use the default
+            # method of building the canonical form.
+            return Relation._build_canonical_form(self.expr)
+
+    def _readily_provable(self):
+        '''
+        By default, we will determine if this nonmembership is
+        readily provable if its "as_defined()" expression is
+        readily provable.
+        '''
+        try:
+            return self.as_defined().readily_provable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    def _readily_disprovable(self):
+        '''
+        By default, we will determine if this nonmembership is
+        readily disprovable if its "as_defined()" expression is
+        readily disprovable.
+        '''
+        try:
+            return self.as_defined().readily_disprovable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    @prover
+    def conclude(self, **defaults_config):
+        raise NotImplementedError(
+            "Nonmembership object has no 'conclude' method implemented")
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        raise NotImplementedError(
+            "Nonmembership object has no 'definition' method implemented")
+
+    def as_defined(self):
+        '''
+        Returns the expression that defines the nonmembership.
+        '''
+        raise NotImplementedError(
+            "Nonmembership object, %s, has no 'as_defined' method implemented" 
+            % str(self.__class__))
+
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Unless this is overridden, we won't presume that the membership
+        is readily provable to be boolean.
+        '''
+        return False
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        raise NotImplementedError(
+            "Nonmembership object has no 'deduce_in_bool' method implemented")

@@ -72,7 +72,7 @@ class TensorProdMembership(SetMembership):
             2. k*x in A⊗B⊗...⊗Z if x in A⊗B⊗...⊗Z and k is in its field.
             3. sum_i x_i in A⊗B⊗...⊗Z if all x_i in A⊗B⊗...⊗Z 
         '''
-        from proveit.linear_algebra import VecSpaces
+        from proveit.linear_algebra import IsVecSpace
         if isinstance(self.element, TensorProd):
             try:
                 cond = And(*ExprTuple.map_elements_together(
@@ -85,7 +85,7 @@ class TensorProdMembership(SetMembership):
             return cond.readily_provable()
         elif isinstance(self.element, ScalarMult):
             scalar = self.element.scalar
-            field = VecSpaces.known_field(self.domain)
+            field = IsVecSpace.known_field(self.domain)
             if not InSet(scalar, field).readily_provable():
                 return False
             return InSet(self.element.scaled, self.domain).readily_provable()
@@ -101,13 +101,13 @@ class TensorProdMembership(SetMembership):
         '''
         if isinstance(self.element, TensorProd):
             from . import tensor_prod_is_in_tensor_prod_space
-            from proveit.linear_algebra import VecSpaces
+            from proveit.linear_algebra import IsVecSpace
             # we will need the domain acknowledged as a VecSpace
             # so we can later get its underlying field
             self.domain.deduce_as_vec_space()
             _a_sub = self.element.operands
             _i_sub = _a_sub.num_elements()
-            _K_sub = VecSpaces.known_field(self.domain)
+            _K_sub = IsVecSpace.known_field(self.domain)
             vec_spaces = self.domain.operands
             return tensor_prod_is_in_tensor_prod_space.instantiate(
                     {a: _a_sub, i: _i_sub, K: _K_sub,  V: vec_spaces})
@@ -115,10 +115,10 @@ class TensorProdMembership(SetMembership):
         if isinstance(self.element, ScalarMult):
             from proveit.linear_algebra.scalar_multiplication import (
                     scalar_mult_closure)
-            from proveit.linear_algebra import VecSpaces
+            from proveit.linear_algebra import IsVecSpace
             self.domain.deduce_as_vec_space()
             _V_sub = self.domain
-            _K_sub = VecSpaces.known_field(_V_sub)
+            _K_sub = IsVecSpace.known_field(_V_sub)
             _a_sub = self.element.scalar
             _x_sub = self.element.scaled
             return scalar_mult_closure.instantiate(
@@ -126,13 +126,13 @@ class TensorProdMembership(SetMembership):
 
         if isinstance(self.element, VecSum):
             from proveit.linear_algebra.addition import summation_closure
-            from proveit.linear_algebra import VecSpaces
+            from proveit.linear_algebra import IsVecSpace
             self.domain.deduce_as_vec_space()
             # might want to change the following to use
             # vec_space_membership = self.element.summand.deduce_in_vec_space()
             # then _V_sub = vec_space_membership.domain
             _V_sub = self.domain
-            _K_sub = VecSpaces.known_field(_V_sub)
+            _K_sub = IsVecSpace.known_field(_V_sub)
             _b_sub = self.element.indices
             _j_sub = _b_sub.num_elements()
             _f_sub = Lambda(self.element.indices, self.element.summand)

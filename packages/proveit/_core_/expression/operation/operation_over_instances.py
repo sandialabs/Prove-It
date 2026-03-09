@@ -19,14 +19,14 @@ def _extract_domain_from_condition(ivar, condition):
     return the domain (e.g., "S").  Return None if the condition is not
     a "domain" condition for the given instance variable(s).
     '''
-    from proveit.logic import InClass
+    from proveit.logic import InSet
     if isinstance(ivar, ExprRange):
         # See if the condition is a range of domain conditions
         # matching the instance variable range.
         # For example, x_1, ..., x_n as the instance variable
         # range matching x_1 in S_1, ..., x_n in S_n.
         if (isinstance(condition, ExprRange)
-                and isinstance(condition.body, InClass)
+                and isinstance(condition.body, InSet)
                 and condition.true_start_index == ivar.true_start_index
                 and condition.true_end_index == ivar.true_end_index):
             # Replace the condition parameter with the ivar parameter
@@ -42,7 +42,7 @@ def _extract_domain_from_condition(ivar, condition):
                         condition.parameter, condition.body.domain,
                         condition.true_start_index, condition.true_end_index)
             return condition.body.domain
-    elif isinstance(condition, InClass) and condition.element == ivar:
+    elif isinstance(condition, InSet) and condition.element == ivar:
         return condition.domain
     return None
 
@@ -97,7 +97,7 @@ class OperationOverInstances(Operation):
         _lambda_map is used internally for efficiently rebuilding an
         OperationOverInstances expression.
         '''
-        from proveit.logic import InSet, InClass
+        from proveit.logic import InSet
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
 
         if condition is not None:
@@ -168,14 +168,8 @@ class OperationOverInstances(Operation):
                             "of them can be the None value")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
-                    # If the domain is a proper class, indicated via
-                    # an 'is_proper_class' attribute, use InClass
-                    # instead of InSet.
-                    if (hasattr(domain, 'is_proper_class')
-                            and domain.is_proper_class):
-                        in_class = InClass
-                    else:
-                        in_class = InSet
+                    # InClass no longer exists
+                    in_class = InSet
                     if isinstance(iparam, ExprRange):
                         if isinstance(domain, ExprRange):
                             if ((iparam.true_start_index != domain.true_start_index) or
@@ -433,7 +427,7 @@ class OperationOverInstances(Operation):
         This override Expression._build_canonical_form to make
         sure that the domain conditions are kept in their proper place.
         '''
-        from proveit.logic import And, InClass
+        from proveit.logic import And, InSet
         canonical_operator = self.operator.canonical_form()
         assert self.operands.num_entries()==1
         lambda_map = self.operands[0]
@@ -458,7 +452,7 @@ class OperationOverInstances(Operation):
             # For domain conditions, just use the canonical form
             # for the domain.
             def processed_domain_cond(domain_cond):
-                assert isinstance(domain_cond, InClass)
+                assert isinstance(domain_cond, InSet)
                 return type(domain_cond)(
                         domain_cond.element,
                         domain_cond.domain.canonical_form())
@@ -811,7 +805,7 @@ class OperationOverInstances(Operation):
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
-        from proveit.logic import InSet, InClass
+        from proveit.logic import InSet
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
@@ -840,14 +834,14 @@ class OperationOverInstances(Operation):
         domain_conditions = ExprTuple(*self.domain_conditions())
         # domain_membership_op will be the InSet operator if all
         # of the domain conditions are the InSet type, or the InClass
-        # operator otherwise.
+        # operator otherwise - InClass is now obsolete.
         domain_membership_op = InSet._operator_
         for domain_condition in domain_conditions:
             if ((isinstance(domain_condition, ExprRange) and
                  not isinstance(domain_condition.body, InSet)) or (
                          not isinstance(domain_condition, ExprRange)
                          and not isinstance(domain_condition, InSet))):
-                domain_membership_op = InClass._operator_
+                domain_membership_op = InSet._operator_
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
@@ -1044,7 +1038,7 @@ def bundle(expr, bundle_thm, num_levels=2, **defaults_config):
     proveit.logic.booleans.quantification.bundling or
     proveit.logic.booleans.quantification.bundling_equality.
     '''
-    from proveit.relation import TransRelUpdater
+    from proveit.relations import TransRelUpdater
     from proveit.logic import Implies, Equals
     # Make a TransRelUpdater only if the bundle_thm yield an
     # equation, in which case we'll want the result to be an equation.
@@ -1151,7 +1145,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
     proveit.logic.booleans.quantification.unbundling or
     proveit.logic.booleans.quantification.bundling_equality.
     '''
-    from proveit.relation import TransRelUpdater
+    from proveit.relations import TransRelUpdater
     from proveit.logic import Implies, Equals, And
     # Make a TransRelUpdater only if the bundle_thm yield an
     # equation, in which case we'll want the result to be an equation.

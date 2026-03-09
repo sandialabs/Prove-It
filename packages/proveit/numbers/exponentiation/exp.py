@@ -274,7 +274,7 @@ class Exp(NumberOperation):
             * If factor_numeric_rational is True:
                 a^{x+b} = a^b a^x if a and b are numeric rationals.
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
         from proveit.numbers import (zero, one, two, Add, Neg, Mult, Div,

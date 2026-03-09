@@ -1,10 +1,10 @@
 from proveit import (Literal, defaults, USE_DEFAULTS, ProofFailure,
                      UnusableProof, single_or_composite_expression,
                      prover, equality_prover, relation_prover)
-from proveit.relation import Relation
-from proveit.logic.classes import InClass, ClassMembership
+from proveit.relations import Relation
+from proveit.classes import ClassMembership
 
-class InSet(InClass):
+class InSet(Relation):
     '''
     Set membership is a special case of class membership, so we'll
     derive from InClass for code re-use.  The operators are distinct
@@ -18,17 +18,62 @@ class InSet(InClass):
     inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        element = single_or_composite_expression(element)
-        domain = single_or_composite_expression(domain)
-        if (hasattr(domain, 'is_proper_class') and domain.is_proper_class):
-            raise ValueError(
-                    f"The domain {domain} is a proper class (as specified "
-                    f"by its 'is_proper_class' attribute) and thus "
-                    f"should use the 'InClass()' constructor instead "
-                    f"of the 'InSet()' constructor.")
+        Relation.__init__(self, InSet._operator_, element, domain,
+                          styles=styles)
+        element = self.element
+        domain = self.domain = self.operands[1]
         InSet.inset_expressions[(element, domain)] = self
-        InClass.__init__(self, element, domain, operator=InSet._operator_,
-                         styles=styles)
+        if hasattr(domain, 'membership_object'):
+            self.membership_object = domain.membership_object(element)
+            if not isinstance(self.membership_object, SetMembership):
+                raise TypeError(
+                    "The 'membership_object' of %s is a %s which "
+                    "is not derived from %s as it should be." %
+                    (self.domain, self.membership_object.__class__, 
+                     SetMembership))
+
+    def __dir__(self):
+        '''
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
+        '''
+        if 'membership_object' in self.__dict__:
+            return sorted(set(list(self.__dict__.keys()) +
+                              dir(self.membership_object)))
+        else:
+            return sorted(self.__dict__.keys())
+
+    def __getattr__(self, attr):
+        '''
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
+        '''
+        if attr in ('lhs', 'rhs'):
+            return Relation.__getattr__(self, attr)
+        if 'membership_object' in self.__dict__:
+            return getattr(self.membership_object, attr)
+        raise AttributeError
+
+    @staticmethod
+    def reversed_operator_str(formatType):
+        r'''
+        Reversing \in gives \ni.  Reversing "in" gives "contains".
+        '''
+        if formatType=='latex':
+            return r'\ni'
+        else:
+            return 'contains'
+
+    def side_effects(self, judgment):
+        '''
+        If the domain has a 'membership_object' method, side effects
+        will also be generated from the 'side_effects' object that it
+        generates.
+        '''
+        if hasattr(self, 'membership_object'):
+            for side_effect in self.membership_object.side_effects(
+                    judgment):
+                yield side_effect
 
     def negated(self):
         '''
@@ -45,7 +90,10 @@ class InSet(InClass):
         known as-strong membership (with known equal elements and the
         domain a subset of the desired domain).
         '''
-        if InClass._readily_provable(
+        if hasattr(self, 'membership_object'):
+            if self.membership_object._readily_provable():
+                return True            
+        if ClassMembership._readily_provable(
                 self, check_directly_known_elem_equality=(
                         check_directly_known_elem_equality)):
             return True
@@ -53,6 +101,13 @@ class InSet(InClass):
             return True
         return False
 
+    def _readily_disprovable(self):
+        '''
+        This membership is readily disprovable if the corresponding
+        nonmembership is readily provable.
+        '''
+        return self.negated().readily_provable()
+    
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -73,7 +128,7 @@ class InSet(InClass):
         if as_strong_membership is not None:
             if as_strong_membership.domain == self.domain:
                 try:
-                    # Use an equivalent known membership.
+                    # Use a known membership from an equivalent member.
                     return self.conclude_from_as_strong_membership(
                             as_strong_membership)
                 except UnusableProof:
@@ -93,7 +148,7 @@ class InSet(InClass):
             return self.conclude_from_as_strong_membership(
                     as_strong_membership)
 
-        return InClass.conclude(self)
+        return Relation.conclude(self)
     
     @prover
     def conclude_from_as_strong_membership(self, as_strong_membership,
@@ -120,7 +175,7 @@ class InSet(InClass):
                 except ProofFailure:
                     # May have been blocked to avoid infinite
                     # recursion.
-                    return InClass.conclude(self)
+                    return Relation.conclude(self)
                 elem_sub_in_domain = sub_rel.derive_superset_membership(
                         elem_sub)
         if elem_sub == self.element:
@@ -138,9 +193,9 @@ class InSet(InClass):
         '''
         from proveit.logic import Equals, SubsetEq
         known_memberships = list(
-                InClass.yield_known_memberships(
-                        self.element, 
-                        include_canonical_forms=include_canonical_forms))
+                InSet.yield_known_memberships(
+                    self.element,
+                    include_canonical_forms=include_canonical_forms))
         # First see of there is a known membership with the same domain.
         for known_membership in known_memberships:
             if known_membership.domain == self.domain:
@@ -152,7 +207,7 @@ class InSet(InClass):
             eq_rel = Equals(known_membership.domain, self.domain)
             if eq_rel.readily_provable():
                 return known_membership
-        # Finaly see of there is a known membership with a domain
+        # Finally see of there is a known membership with a domain
         # readily provable to be a subset of to this domain.
         for known_membership in known_memberships:
             sub_rel = SubsetEq(known_membership.domain, self.domain)
@@ -160,15 +215,104 @@ class InSet(InClass):
                 return known_membership
         return None # No match found.
 
-class SetMembership(ClassMembership):
+class SetMembership:
     def __init__(self, element, domain):
         '''
         Base class for any 'membership object' returned by a domain's
         'membership_object' method.
         '''
+        self.element = element
+        self.domain = domain
         # The expression represented by this Membership.
         if (element, domain) in InSet.inset_expressions:
-            expr = InSet.inset_expressions[(element, domain)]
+            self.expr = InSet.inset_expressions[(element, domain)]
         else:
-            expr = InSet(element, domain)
-        ClassMembership.__init__(self, element, domain, expr=expr)
+            self.expr = InSet(element, domain)
+
+    def side_effects(self, judgment):
+        return # No side-effects by default
+        yield
+
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        try:
+            return self.as_defined().canonical_form()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, use the default
+            # method of building the canonical form.
+            return Relation._build_canonical_form(self.expr)
+
+    def _readily_provable(self):
+        '''
+        By default, we will determine if this membership is
+        readily provable if its "as_defined()" expression is
+        readily provable.
+        '''
+        try:
+            return self.as_defined().readily_provable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    def _readily_disprovable(self):
+        '''
+        By default, we will determine if this membership is
+        readily disprovable if its "as_defined()" expression is
+        readily disprovable.
+        '''
+        try:
+            return self.as_defined().readily_disprovable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    @prover
+    def conclude(self, **defaults_config):
+        raise NotImplementedError(
+            "Membership object, %s, has no 'conclude' method implemented" % str(
+                self.__class__))
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        Prove the membership equal to an expression that defines the
+        membership.
+        '''
+        raise NotImplementedError(
+            "Membership object, %s, has no 'definition' method implemented" % str(
+                self.__class__))
+    
+    def as_defined(self):
+        '''
+        Returns the expression that defines the membership.
+        '''
+        raise NotImplementedError(
+            "Membership object, %s, has no 'as_defined' method implemented" % str(
+                self.__class__))
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Equate 'self' to the 'rhs' via the definition.  Raises 
+        NotImplementedError if 'definition' is not implemented.
+        '''
+        definition = self.definition()
+        def_eq_rhs = definition.deduce_canonically_equal(rhs)
+        return definition.apply_transitivity(def_eq_rhs)
+        
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Unless this is overridden, we won't presume that the membership
+        is readily provable to be boolean.
+        '''
+        return False
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        raise NotImplementedError(
+            "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
+                self.__class__))

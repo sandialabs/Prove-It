@@ -1,7 +1,7 @@
 from proveit import (as_expression, defaults, USE_DEFAULTS, UnusableProof,
                      ProofFailure, equality_prover, prover, relation_prover)
 from proveit import Literal
-from proveit.relation import EquivRelation, TransitivityException
+from proveit.relations import EquivRelation, TransitivityException
 from proveit.util import OrderedSet
 from proveit.logic.irreducible_value import (
         IrreducibleValue, is_irreducible_value)

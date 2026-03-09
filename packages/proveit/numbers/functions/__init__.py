@@ -1,4 +1,5 @@
-from .mon_dec_funcs import MonDecFuncs, deduce_as_mon_dec_func
+from .is_mon_dec_func import IsMonDecFunc
+from .is_even_func import IsEvenFunc
 from .delta import KroneckerDelta
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
