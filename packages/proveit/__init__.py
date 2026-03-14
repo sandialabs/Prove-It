@@ -37,7 +37,9 @@ from .decorators import (prover, relation_prover, equality_prover,
                          auto_prover, auto_relation_prover,
                          auto_equality_prover, display_provers)
 
-from .relation import (
+from .classes import ClassMembership
+
+from .relations import (
     TransitiveRelation,
     TransitivityException,
     TransRelUpdater,

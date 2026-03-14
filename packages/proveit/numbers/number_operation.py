@@ -4,7 +4,7 @@ from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
                      prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.logic import Equals
-from proveit.relation import TransRelUpdater
+from proveit.relations import TransRelUpdater
 from proveit.abstract_algebra.generic_methods import (
         deduce_equality_via_commutation)
 from .number_sets import (

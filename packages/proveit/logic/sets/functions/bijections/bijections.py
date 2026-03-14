@@ -24,3 +24,9 @@ class Bijections(Function):
         return (r'\left[' + domain_str 
                         + r' \xrightarrow[\text{onto}]{\text{1-to-1}} '
                         + codomain_str + r'\right]')
+
+    def string(self, **kwargs):
+        domain_str = self.domain.latex(fence=True)
+        codomain_str = self.codomain.latex(fence=True)
+        return ('[' + domain_str + ' 1-to-1->onto '
+                + codomain_str + '\right]')

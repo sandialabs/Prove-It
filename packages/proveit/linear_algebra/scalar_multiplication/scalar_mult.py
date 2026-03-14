@@ -6,7 +6,7 @@ from proveit.logic import InSet, Equals
 from proveit.numbers import one, Complex, Mult
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import (
-        VecSpaces, VecOperation, deduce_canonically_equal)
+        IsVecSpace, VecOperation, deduce_canonically_equal)
 
 class ScalarMult(VecOperation):
     '''
@@ -105,17 +105,17 @@ class ScalarMult(VecOperation):
                              "for a doubly nested ScalarMult")
         # Reduce doubly-nested ScalarMult
         _x = self.scaled.scaled
-        # _V = VecSpaces.known_vec_space(_x)
+        # _V = IsVecSpace.known_vec_space(_x)
         # the following is a little klunky, but trying to avoid the
         # use of a default field=Real if we're actually dealing with
         # complex scalars somewhere in the vector
         from proveit import free_vars
         if any([InSet(elem, Complex).proven() for
                 elem in free_vars(self)]):
-            _V = VecSpaces.known_vec_space(self, field=Complex)
+            _V = IsVecSpace.known_vec_space(self, field=Complex)
         else:
-            _V = VecSpaces.known_vec_space(self)
-        _K = VecSpaces.known_field(_V)
+            _V = IsVecSpace.known_vec_space(self)
+        _K = IsVecSpace.known_field(_V)
         _alpha = self.scalar
         _beta =  self.scaled.scalar
         return doubly_scaled_as_singly_scaled.instantiate(
@@ -129,7 +129,7 @@ class ScalarMult(VecOperation):
         For example, letting v denote a vector element of some VecSpace,
         then ScalarMult(one, v).scalar_one_elimination() would return
             |- ScalarMult(one, v) = v
-        Will need to know that v is in VecSpaces(K) and that the
+        Will need to know that IsVecSpace(v, K) and that the
         multiplicative identity 1 is in the field K. This might require
         assumptions or pre-proving of a VecSpace that contains the
         vector appearing in the ScalarMult expression.
@@ -156,11 +156,11 @@ class ScalarMult(VecOperation):
 
         # Find a containing vector space V in the theorem.
         # This may fail!
-        _V_sub = list(VecSpaces.yield_known_vec_spaces(_v_sub))[0]
+        _V_sub = list(IsVecSpace.yield_known_vec_spaces(_v_sub))[0]
 
         # Find a vec space field, hopefully one that contains the mult
         # identity 1. This may fail!
-        _K_sub = list(VecSpaces.yield_known_fields(_V_sub))[0]
+        _K_sub = list(IsVecSpace.yield_known_fields(_V_sub))[0]
 
         # If we made it this far, can probably instantiate the theorem
         # (although it could still fail if 1 is not in the field _K_sub)
@@ -191,9 +191,9 @@ class ScalarMult(VecOperation):
             # No vector space given, so we'll have to look for
             # a known membership of 'scaled' in a vector space.
             # This may be arbitrarily chosen.
-            vec_space = VecSpaces.known_vec_space(
+            vec_space = IsVecSpace.known_vec_space(
                         self.scaled, field=field)
-            field = VecSpaces.known_field(vec_space)
+            field = IsVecSpace.known_field(vec_space)
         return scalar_mult_closure.instantiate(
                 {K:field, V:vec_space, a:self.scalar, x:self.scaled})
     
@@ -203,8 +203,8 @@ class ScalarMult(VecOperation):
         Proves ‖a v‖ = |a| ‖v‖.
         '''
         from proveit.linear_algebra.inner_products import scaled_norm
-        vec_space = VecSpaces.known_vec_space(self.scaled)
-        field = VecSpaces.known_field(vec_space)
+        vec_space = IsVecSpace.known_vec_space(self.scaled)
+        field = IsVecSpace.known_field(vec_space)
         return scaled_norm.instantiate(
                 {K:field, H:vec_space, alpha:self.scalar, x:self.scaled})
 

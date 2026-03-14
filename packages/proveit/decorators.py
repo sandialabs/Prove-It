@@ -179,7 +179,7 @@ def _make_decorated_prover(func, automatic=False):
                 orig_proven_truth = proven_truth
                 if preserve_lhs:
                     from proveit import safe_dummy_var
-                    from proveit.relation import Relation
+                    from proveit.relations import Relation
                     _expr = proven_truth.expr
                     if not isinstance(_expr, Relation):
                         raise TypeError(
@@ -255,7 +255,7 @@ def _make_decorated_relation_prover(func, automatic=False):
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
         from proveit._core_.expression.composite import ExprRange, ExprTuple
-        from proveit.relation import Relation  
+        from proveit.relations import Relation  
         
         # 'preserve' the 'self' or 'self.expr' expression so it will 
         # be on the left side without simplification.
@@ -539,7 +539,7 @@ def equality_prover(past_tense, present_tense):
                 owner, name, past_tense, present_tense)        
 
         def __call__(self, *args, **kwargs):
-            from proveit.relation import TransitiveRelation
+            from proveit.relations import TransitiveRelation
             # 'preserve' it so it will be on the left side without
             # simplification.
             print(self.func, args, kwargs)

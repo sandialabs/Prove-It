@@ -8,7 +8,7 @@ from proveit import a, b, c, f, i, j, k, v, K, Q, V
 from proveit.logic import InSet
 from proveit.numbers import zero, one, Interval, Mult
 from proveit.abstract_algebra import GroupSum 
-from proveit.linear_algebra import VecSpaces, VecOperation
+from proveit.linear_algebra import IsVecSpace, VecOperation
 
 class VecSum(GroupSum, VecOperation):
     '''
@@ -147,7 +147,7 @@ class VecSum(GroupSum, VecOperation):
                 field=field,
                 assumptions = defaults.assumptions + expr.conditions.entries)
             _V_sub = vec_space_membership.domain
-            _K_sub = VecSpaces.known_field(_V_sub)
+            _K_sub = IsVecSpace.known_field(_V_sub)
             _j_sub = expr.condition.domain.lower_bound
             _k_sub = expr.condition.domain.upper_bound
             _v_sub = expr.summand
@@ -173,11 +173,11 @@ class VecSum(GroupSum, VecOperation):
             with defaults.temporary() as tmp_defaults:
                 tmp_defaults.assumptions = (defaults.assumptions + 
                                             self.conditions.entries)
-                vec_space = VecSpaces.known_vec_space(self.summand, 
-                                                      field=field)
+                vec_space = IsVecSpace.known_vec_space(self.summand, 
+                                                       field=field)
 
         _V = vec_space
-        _K = VecSpaces.known_field(_V)
+        _K = IsVecSpace.known_field(_V)
         _b = self.indices
         _j = _b.num_elements()
         _f = Lambda(self.indices, self.summand)
@@ -503,8 +503,8 @@ class VecSum(GroupSum, VecOperation):
                                  "independent of the indices"%(the_factor, 
                                                                self))
 
-        _V = vec_space = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(vec_space)
+        _V = vec_space = IsVecSpace.known_vec_space(self, field=field)
+        _K = IsVecSpace.known_field(vec_space)
         summand = self.summand
         _j = self.indices.num_elements()
         _Q = Lambda(self.indices, self.condition)
@@ -655,7 +655,7 @@ class VecSum(GroupSum, VecOperation):
                 summand_in_vec_space = expr.summand.deduce_in_vec_space(
                         field=field, assumptions=assumptions_with_conditions)
                 _V_sub = summand_in_vec_space.domain
-                _K_sub = VecSpaces.known_field(_V_sub)
+                _K_sub = IsVecSpace.known_field(_V_sub)
                 _b_sub = expr.indices
                 _j_sub = _b_sub.num_elements()
                 _f_sub = Lambda(expr.indices, expr.summand.scaled)
@@ -713,14 +713,14 @@ class VecSum(GroupSum, VecOperation):
                         from proveit.linear_algebra.scalar_multiplication import (
                                 distribution_over_vec_sum_with_scalar_mult)
                         # Mult._simplification_directives_.ungroup = False
-                        # _V_sub = VecSpaces.known_vec_space(expr, field=field)
+                        # _V_sub = IsVecSpace.known_vec_space(expr, field=field)
                         summand_in_vec_space = (
                                 expr.summand.deduce_in_vec_space(
                                         field = field,
                                         assumptions =
                                         assumptions_with_conditions))
                         _V_sub = summand_in_vec_space.domain
-                        _K_sub = VecSpaces.known_field(_V_sub)
+                        _K_sub = IsVecSpace.known_field(_V_sub)
                         _b_sub = expr.indices
                         _j_sub = _b_sub.num_elements()
                         _f_sub = Lambda(expr.indices, expr.summand.scaled)
@@ -944,7 +944,7 @@ class VecSum(GroupSum, VecOperation):
             assumptions = defaults.assumptions + expr.conditions.entries)
         _V_sub = vec_space_membership.domain
         # Substitutions regardless of Case
-        _K_sub = VecSpaces.known_field(_V_sub)
+        _K_sub = IsVecSpace.known_field(_V_sub)
         _b_sub = expr.indices
         _j_sub = _b_sub.num_elements()
         _Q_sub = Lambda(expr.indices, expr.condition)

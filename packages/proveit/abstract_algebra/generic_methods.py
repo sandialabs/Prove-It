@@ -394,7 +394,7 @@ def prove_via_grouping_ranges(expr, prover_fn):
     return the resulting judgment after disassociating.
     '''
     from proveit import Judgment, ExprRange
-    from proveit.relation import Relation
+    from proveit.relations import Relation
     range_indices = [
             _k for _k, operand in enumerate(expr.operands)
             if isinstance(operand, ExprRange)]

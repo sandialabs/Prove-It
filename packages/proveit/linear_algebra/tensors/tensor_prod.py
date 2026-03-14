@@ -4,12 +4,12 @@ from proveit import (Judgment, defaults, ExprRange, relation_prover,
                      UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
-from proveit.logic import Equals, InClass, SetMembership, SubsetEq
+from proveit.logic import Equals, SubsetEq
 from proveit.numbers import one
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (
-        VecSpaces, ScalarMult, VecOperation, VecAdd, VecSum,
+        IsVecSpace, ScalarMult, VecOperation, VecAdd, VecSum,
         deduce_as_vec_space, deduce_canonically_equal)
 
 pkg = __package__
@@ -79,8 +79,8 @@ class TensorProd(VecOperation):
 
         if self.operands.is_single():
             from . import unary_tensor_prod_def
-            _V = VecSpaces.known_vec_space(self.operand)
-            _K = VecSpaces.known_field(_V)
+            _V = IsVecSpace.known_vec_space(self.operand)
+            _K = IsVecSpace.known_field(_V)
             return unary_tensor_prod_def.instantiate(
                 {K:_K, V:_V, A:self.operands[0]}, preserve_all=True)
 
@@ -105,7 +105,7 @@ class TensorProd(VecOperation):
         if TensorProd._simplification_directives_.factor_scalars:
             # Next, pull out scalar factors
             try:
-                VecSpaces.known_vec_space(self)
+                IsVecSpace.known_vec_space(self)
             except (ValueError, UnsatisfiedPrerequisites):
                 # Don't pull out scalar factors if the operands aren't
                 # known to be in vector spaces (e.g., maybe the operands
@@ -126,8 +126,8 @@ class TensorProd(VecOperation):
         from . import tensor_prod_is_in_tensor_prod_space
         _a = self.operands
         _i = _a.num_elements()
-        _K = VecSpaces.get_field(field)
-        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=_K)
+        _K = IsVecSpace.get_field(field)
+        vec_spaces = IsVecSpace.known_vec_spaces(self.operands, field=_K)
         membership = tensor_prod_is_in_tensor_prod_space.instantiate(
                 {K: _K, i: _i, V: vec_spaces, a: _a})      
         if vec_space is not None and membership.domain != vec_space:
@@ -182,15 +182,15 @@ class TensorProd(VecOperation):
         
         For this to work in the vectors case, the vector operands must
         be known to be in vector spaces of a common field.  If the
-        field is not specified, then VecSpaces.default_field is used.
+        field is not specified, then IsVecSpace.default_field is used.
         For this to work in the case of CartExp operands, all operands
         must be (recursively) CartExps and each must be known to be
         a vector space.
         '''
         # ORIGINAL BELOW before augmenting for CartExp cases
         # from . import tensor_prod_association
-        # _V = VecSpaces.known_vec_space(self, field=field)
-        # _K = VecSpaces.known_field(_V)
+        # _V = IsVecSpace.known_vec_space(self, field=field)
+        # _K = IsVecSpace.known_field(_V)
         # eq = apply_association_thm(
         #     self, start_idx, length, tensor_prod_association,
         #     repl_map_extras={K:_K, V:_V}).derive_consequent()
@@ -198,13 +198,13 @@ class TensorProd(VecOperation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_association
-            _vspace = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_vspace)
-            _U = VecSpaces.known_vec_spaces(self.factors[:start_idx], 
+            _vspace = IsVecSpace.known_vec_space(self, field=field)
+            _K = IsVecSpace.known_field(_vspace)
+            _U = IsVecSpace.known_vec_spaces(self.factors[:start_idx], 
                                             field=_K)
-            _V = VecSpaces.known_vec_spaces(
+            _V = IsVecSpace.known_vec_spaces(
                 self.factors[start_idx:start_idx+length], field=_K)
-            _W = VecSpaces.known_vec_spaces(
+            _W = IsVecSpace.known_vec_spaces(
                 self.factors[start_idx+length:], field=_K)
             eq = apply_association_thm(
                 self, start_idx, length, tensor_prod_association,
@@ -213,7 +213,7 @@ class TensorProd(VecOperation):
         else:
             from . import tensor_prod_vec_space_association
             if field is None:
-                _K = VecSpaces.known_field(self.operands[0])
+                _K = IsVecSpace.known_field(self.operands[0])
             else:
                 _K = field
             eq = apply_association_thm(
@@ -238,15 +238,15 @@ class TensorProd(VecOperation):
         
         For this to work in the vectors case, the vector operands must
         be known to be in vector spaces of a common field.  If the
-        field is not specified, then VecSpaces.default_field is used.
+        field is not specified, then IsVecSpace.default_field is used.
         For this to work in the case of CartExp operands, all operands
         must be (recursively) CartExps and each must be known to be
         a vector space.
         '''
         # ORIGINAL BELOW before augmenting for CartExp cases
         # from . import tensor_prod_disassociation
-        # _V = VecSpaces.known_vec_space(self, field=field)
-        # _K = VecSpaces.known_field(_V)
+        # _V = IsVecSpace.known_vec_space(self, field=field)
+        # _K = IsVecSpace.known_field(_V)
         # eq = apply_disassociation_thm(
         #         self, idx, tensor_prod_disassociation,
         #         repl_map_extras={K:_K, V:_V}).derive_consequent()
@@ -254,18 +254,18 @@ class TensorProd(VecOperation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_disassociation
-            _vspace = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_vspace)
-            _U = VecSpaces.known_vec_spaces(self.factors[:idx], 
+            _vspace = IsVecSpace.known_vec_space(self, field=field)
+            _K = IsVecSpace.known_field(_vspace)
+            _U = IsVecSpace.known_vec_spaces(self.factors[:idx], 
                                             field=_K)
             nested_group = self.operands[idx]
             if not isinstance(nested_group, TensorProd):
                 raise ValueError(
                     "Cannot disassociate index %d from %s."
                     %(idx, self))
-            _V = VecSpaces.known_vec_spaces(
+            _V = IsVecSpace.known_vec_spaces(
                 nested_group.factors, field=_K)
-            _W = VecSpaces.known_vec_spaces(
+            _W = IsVecSpace.known_vec_spaces(
                 self.factors[idx+1:], field=_K)
             eq = apply_disassociation_thm(
                     self, idx, tensor_prod_disassociation,
@@ -274,7 +274,7 @@ class TensorProd(VecOperation):
         else:
             from . import tensor_prod_vec_space_disassociation
             if field is None:
-                _K = VecSpaces.known_field(self.operands[0])
+                _K = IsVecSpace.known_field(self.operands[0])
             else:
                 _K = field
             eq = apply_disassociation_thm(
@@ -297,8 +297,8 @@ class TensorProd(VecOperation):
         '''
         from . import (tensor_prod_distribution_over_add,
                        tensor_prod_distribution_over_summation)
-        _V = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_V)
+        _V = IsVecSpace.known_vec_space(self, field=field)
+        _K = IsVecSpace.known_field(_V)
         sum_factor = self.operands[idx]
         _a = self.operands[:idx]
         _c = self.operands[idx+1:]
@@ -306,7 +306,7 @@ class TensorProd(VecOperation):
         _k = _c.num_elements()
         if isinstance(sum_factor, VecAdd):
             _b = sum_factor.operands
-            _V = VecSpaces.known_vec_space(self, field=field)
+            _V = IsVecSpace.known_vec_space(self, field=field)
             _j = _b.num_elements()
             # use preserve_all=True in the following instantiation
             # because the instantiation is an intermediate step;
@@ -377,7 +377,7 @@ class TensorProd(VecOperation):
         As a prerequisite, the operands must be known to be vectors in
         vector spaces over a common field which contains the scalar
         multiplier being factored.  If the field is not specified,
-        then VecSpaces.default_field is used.
+        then IsVecSpace.default_field is used.
         '''
         from . import factor_scalar_from_tensor_prod
         if idx is None:
@@ -391,17 +391,17 @@ class TensorProd(VecOperation):
         if not isinstance(self.operands[idx], ScalarMult):
             raise TypeError("Expected the 'operand' and 'operand_idx' to be "
                             "a ScalarMult")            
-        _vspace = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_vspace)
+        _vspace = IsVecSpace.known_vec_space(self, field=field)
+        _K = IsVecSpace.known_field(_vspace)
         _alpha = self.operands[idx].scalar
         _a = self.operands[:idx]
         _b = self.operands[idx].scaled
         _c = self.operands[idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        _U = VecSpaces.known_vec_spaces(_a, field=_K)
-        _V = VecSpaces.known_vec_space(_b, field=_K)
-        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        _U = IsVecSpace.known_vec_spaces(_a, field=_K)
+        _V = IsVecSpace.known_vec_space(_b, field=_K)
+        _W = IsVecSpace.known_vec_spaces(_c, field=_K)
         inst = factor_scalar_from_tensor_prod.instantiate(
             {K:_K, alpha:_alpha, i:_i, k:_k, U:_U, V:_V, W:_W,
              a:_a, b:_b, c:_c})
@@ -490,7 +490,7 @@ class TensorProd(VecOperation):
             raise ValueError("Unable to factor %s from %s"%(the_factor, self))
         canonical_factor_scaled = factor_scaled.canonical_form()
         if isinstance(canonical_factor_scaled, TensorProd):
-            num_to_factor = fanonical_factor_scaled.factors.num_entries()
+            num_to_factor = canonical_factor_scaled.factors.num_entries()
             if num_to_factor > num_tensor_entries:
                 raise_not_factorable() 
             canonical_factors = canonical_factor_scaled.factors.entries
@@ -629,12 +629,12 @@ class TensorProd(VecOperation):
         _f = tensor_equality.rhs.operands[rhs_idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        vec_space = VecSpaces.known_vec_space(tensor_equality.lhs, 
+        vec_space = IsVecSpace.known_vec_space(tensor_equality.lhs, 
                                               field=field)
-        _K = VecSpaces.known_field(vec_space)
-        _U = VecSpaces.known_vec_spaces(_a, field=_K)
-        _V = VecSpaces.known_vec_space(_b, field=_K)
-        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        _K = IsVecSpace.known_field(vec_space)
+        _U = IsVecSpace.known_vec_spaces(_a, field=_K)
+        _V = IsVecSpace.known_vec_space(_b, field=_K)
+        _W = IsVecSpace.known_vec_spaces(_c, field=_K)
         impl = remove_vec_on_both_sides_of_equality.instantiate(
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
                  a:_a, b:_b, c:_c, d:_d, e:_e, f:_f})
@@ -671,12 +671,12 @@ class TensorProd(VecOperation):
         _e = tensor_equality.rhs.operands[rhs_idx:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        vec_space = VecSpaces.known_vec_space(tensor_equality.lhs, 
+        vec_space = IsVecSpace.known_vec_space(tensor_equality.lhs, 
                                               field=field)
-        _K = VecSpaces.known_field(vec_space)
-        _U = VecSpaces.known_vec_spaces(_a, field=_K)
-        _V = VecSpaces.known_vec_space(_b, field=_K)
-        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        _K = IsVecSpace.known_field(vec_space)
+        _U = IsVecSpace.known_vec_spaces(_a, field=_K)
+        _V = IsVecSpace.known_vec_space(_b, field=_K)
+        _W = IsVecSpace.known_vec_spaces(_c, field=_K)
         impl = insert_vec_on_both_sides_of_equality.instantiate(
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
                  a:_a, b:_b, c:_c, d:_d, e:_e})
@@ -715,8 +715,8 @@ class TensorProd(VecOperation):
         from . import norm_of_tensor_prod, norm_preserving_tensor_prod
         _a = self.operands
         _i = _a.num_elements()
-        _K = VecSpaces.get_field(field)
-        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=_K)
+        _K = IsVecSpace.get_field(field)
+        vec_spaces = IsVecSpace.known_vec_spaces(self.operands, field=_K)
         
         # See if all of the operand normalizations evaluate to one.
         all_norm_one = True

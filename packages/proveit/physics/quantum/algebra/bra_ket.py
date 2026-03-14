@@ -3,7 +3,7 @@ from proveit import (Function, Literal,
 from proveit import b, n, j, k, x
 from proveit.logic import Equals, NotEquals, deduce_equal_or_not
 from proveit.numbers import one, Complex
-from proveit.relation import TransRelUpdater
+from proveit.relations import TransRelUpdater
 
 class Bra(Function):
     '''
