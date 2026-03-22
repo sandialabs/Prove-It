@@ -356,10 +356,12 @@ class Implies(TransitiveRelation):
         Depending upon the form of self with respect to negation of the antecedent and/or consequent,
         will derive from self and return as follows:
 
-        * From [not(A) => not(B)], derive [B => A] assuming A in \mathcal{B}.
-        * From [not(A) => B], derive [not(B) => A] assuming A in \mathcal{B}, B in \mathcal{B}.
-        * From [A => not(B)], derive [B => not(A)] assuming A in \mathcal{B}.
-        * From [A => B], derive [not(B) => not(A)]` assuming A in \mathcal{B}, B in \mathcal{B}.
+        * From [not(A) => not(B)], derive [B => A] assuming A is Boolean.
+        * From [not(A) => B], derive [not(B) => A]
+        *             assuming A and B are Boolean.
+        * From [A => not(B)], derive [B => not(A)] assuming A is Boolean.
+        * From [A => B], derive [not(B) => not(A)]
+        *             assuming A and B are Boolean.
         '''
         from . import from_contraposition, to_contraposition, contrapose_neg_consequent, contrapose_neg_antecedent
         from proveit.logic import Not
