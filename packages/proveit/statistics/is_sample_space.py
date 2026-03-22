@@ -13,3 +13,9 @@ class IsSampleSpace(ClassMembership):
     def __init__(self, space, *, styles=None):
         ClassMembership.__init__(self, IsSampleSpace._operator_, 
                                  space, styles=styles)
+
+    def formatted_class(self, format_type):
+        if format_type == 'latex':
+            return r'{\rm SampleSpace}'
+        return r'SampleSpace'
+    
