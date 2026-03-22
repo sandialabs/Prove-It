@@ -222,12 +222,13 @@ class Relation(ClassMembership):
             lhs, rhs = self.lhs, self.rhs
             lhs_cf = lhs.canonical_form()
             rhs_cf = rhs.canonical_form()
-            if lhs_cf in InSet.known_memberships_by_canonical_form:
-                known_memberships.update(
-                        InSet.known_memberships_by_canonical_form[lhs_cf])
-            elif rhs_cf in InSet.known_memberships_by_canonical_form:
-                known_memberships.update(
-                        InSet.known_memberships_by_canonical_form[rhs_cf])
+            # The type-specific memberships are InSet memberships
+            # (not proper class memberships).
+            for known_membership in InSet.yield_known_memberships(lhs_cf):
+                known_memberships.add(known_membership)
+            for known_membership in InSet.yield_known_memberships(rhs_cf):
+                known_memberships.add(known_membership)
+            print('known_memberships', known_memberships)
             # These classes may contain '_both_sides' methods that could
             # be applied via the Relation (also attach corresponding
             # domains as applicable):
