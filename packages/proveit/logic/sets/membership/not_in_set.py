@@ -7,9 +7,8 @@ from proveit.classes import ClassMembership
 
 class NotInSet(Relation):
     '''
-    Set nonmembership is a special case of class nonmembership, so we'll
-    derive from NotInClass for code re-use.  The operators are distinct 
-    (though the formatting is the same).
+    Set nonmembership is a relation which is a special case of
+    class membership (the collection of everything not in the set).
     '''
     # operator of the NotInSet operation
     _operator_ = Literal(string_format='not-in', latex_format=r'\notin',
@@ -75,14 +74,44 @@ class NotInSet(Relation):
                     judgment):
                 yield side_effect
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        Prove and return this set non-membership equal to an expression
+        that essentially defines this nonmembership.
+        '''
+        if hasattr(self, 'nonmembership_object'):
+            return self.nonmembership_object.definition()
+        else:
+            raise NotImplementedError("No 'definition' of %s because it has no "
+                                      "nonmembership_object"%self)
+
+    def as_defined(self):
+        '''
+        Return an expression that is the essential definition for
+        this non-membership.
+        '''
+        if hasattr(self, 'nonmembership_object'):
+            return self.nonmembership_object.as_defined()
+        else:
+            raise NotImplementedError("No 'as_defined' of %s because it has no "
+                                      "nonmembership_object"%self)      
+
     def negated(self):
         '''
         Return the negated membership expression,
         element not in domain.
         '''
-        from .not_in_set import NotInSet
-        return NotInSet(self.element, self.domain)
+        from .in_set import InSet
+        return InSet(self.element, self.domain)
 
+    @prover
+    def deduce_in(self, **defaults_config):
+        r'''
+        Deduce x ∈ S where self = (x ∉ S).
+        '''
+        return self.negated().prove()
+    
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
@@ -147,10 +176,7 @@ class NotInSet(Relation):
         Attempt to conclude that the element is not in the domain. 
         First see if the corresponding membership has been disproven. 
         Then see if there is a as-strong known nonmembership to use.  
-        If not, use the NotInClass conclude strategies (which uses the
-        Relation conclude strategies that simplify both sides and then 
-        uses the domain-specific conclude method of the membership
-        object as a last resort).
+        If not, use the Relation conclude strategies as a last resort.
         '''
         # Has the membership been disproven?
         if self.negated().disproven(): # don't use readily_disprovable
@@ -275,12 +301,12 @@ class NotInSet(Relation):
 class SetNonmembership:
     def __init__(self, element, domain):
         '''
-        Base class for any 'membership object' returned by a domain's
-        'membership_object' method.
+        Base class for any 'non-membership object' returned by a domain's
+        'nonmembership_object' method.
         '''
         self.element = element
         self.domain = domain
-        # The expression represented by this Membership.
+        # The expression represented by this non-membership.
         if (element, domain) in NotInSet.notinset_expressions:
             self.expr = NotInSet.notinset_expressions[(element, domain)]
         else:
@@ -340,11 +366,11 @@ class SetNonmembership:
 
     def as_defined(self):
         '''
-        Returns the expression that defines the nonmembership.
+        Returns the expression that defines the nonmembership.  By default,
+        this is just the negation of the corresponding membership.
         '''
-        raise NotImplementedError(
-            "Nonmembership object, %s, has no 'as_defined' method implemented" 
-            % str(self.__class__))
+        from proveit.logic import Not
+        return Not(self.expr.negated().as_defined())
 
     def readily_in_bool(self, **defaults_config):
         '''
