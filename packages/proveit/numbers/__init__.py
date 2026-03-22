@@ -80,7 +80,7 @@ if proveit.defaults.running_theory_notebook is None: # might include here 2 is e
     from .number_sets.complex_numbers import (
             i_is_complex, i_is_complex_nonzero)
     from proveit.abstract_algebra.fields import (
-            rational_field, real_field, complex_field)
+            is_rational_field, is_real_field, is_complex_field)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

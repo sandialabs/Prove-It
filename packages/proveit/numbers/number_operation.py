@@ -389,7 +389,7 @@ def readily_provable_number_set(
     _check_order_against_zero is set to False internally to avoid infinite
     recursion.
     '''
-    from proveit.logic import (InClass, Equals, NotEquals, 
+    from proveit.logic import (InSet, Equals, NotEquals, 
                                is_irreducible_value)
     from proveit.numbers import Less, LessEq, zero
 
@@ -412,7 +412,7 @@ def readily_provable_number_set(
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
     known_number_sets = set()
-    for known_membership in InClass.yield_known_memberships(
+    for known_membership in InSet.yield_known_memberships(
             expr, include_canonical_forms=not must_be_direct):
         if known_membership.domain in standard_number_sets:
             known_number_sets.add(known_membership.domain)
