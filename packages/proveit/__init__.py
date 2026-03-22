@@ -33,7 +33,8 @@ from ._core_ import (
 
 # @prover and @equality_prover are useful decorators for many
 # Expression class methods:
-from .decorators import (prover, relation_prover, equality_prover, 
+from .decorators import (prover, class_membership_prover,
+                         relation_prover, equality_prover, 
                          auto_prover, auto_relation_prover,
                          auto_equality_prover, display_provers)
 
@@ -74,12 +75,19 @@ def reset():
     from ._core_.expression import Expression
     from ._core_.judgment import Judgment
     from ._core_.theory import UnsetCommonExpressionPlaceholder
+    from .classes import ClassMembership
     Expression._clear_()
     Literal._clear_()
     Operation._clear_()
     Judgment._clear_()
     Proof._clear_()
     Theory._clear_()
+    
+    # Since ClassMembership is import in this __init__.py
+    # and it stores 'known membership' information, this will
+    # need to be cleared:
+    ClassMembership._clear_()
+    
     defaults.reset()
     _equality_prover_fn_to_tenses.clear()
     _equality_prover_fn_to_tenses.update(_basic_equality_prover_fn_to_tenses)
@@ -93,7 +101,7 @@ def reset():
     # Regenerate the Theory for this package.
     proveit_module = sys.modules[__name__]
     proveit_module.sys.modules[__name__]._theory = Theory(__file__)
-    # Rorce a reload of the common expressions, axioms, and theorems
+    # Force a reload of the common expressions, axioms, and theorems
     # of the proveit theory package.
     for key, val in proveit_module.__dict__.items():
         if (isinstance(val, Judgment) or isinstance(val, Expression) or 

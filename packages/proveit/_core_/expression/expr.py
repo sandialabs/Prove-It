@@ -208,8 +208,7 @@ class Expression(metaclass=ExprType):
     def _clear_():
         '''
         Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
+        the Expression jurisdiction.
         '''
         assert len(Expression.in_progress_to_conclude) == 0, (
                 "Unexpected remnant 'in_progress_to_conclude' items "

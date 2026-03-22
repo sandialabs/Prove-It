@@ -20,12 +20,13 @@ class ClassMembership(Operation):
     only require predicate definitions.
     '''
 
-    # maps members to their known InClass Judgments.
+    # maps members to their known ClassMembership Judgments.
     known_memberships = dict()
-    # maps domain types and members to their known InClass Judgements.
+    # maps domain types and members to their known ClassMembership
+    # Judgements.
     # A domain type is specified as an operator of a domain Operation.
     known_predicate_specific_memberships =  dict()
-    # maps canonical forms of elements to InClass Judgments.
+    # maps canonical forms of elements to ClassMembership Judgments.
     # For example, map x to (1*x in S) if (1*x in S) is a Judgment.
     known_memberships_by_canonical_form = dict()
     known_predicate_specific_memberships_by_canonical_form =  dict()
@@ -41,6 +42,14 @@ class ClassMembership(Operation):
                            styles=styles)
         self.element = self.operands[0]
         self.predicate = operator
+
+    @staticmethod
+    def _clear_():
+        CM = ClassMembership
+        CM.known_memberships.clear()
+        CM.known_predicate_specific_memberships.clear()
+        CM.known_memberships_by_canonical_form.clear()
+        CM.known_predicate_specific_memberships_by_canonical_form.clear()
 
     def formatted(self, format_type, **kwargs):
         '''
@@ -98,8 +107,8 @@ class ClassMembership(Operation):
 
     def _readily_provable(self, check_directly_known_elem_equality=True):
         '''
-        This membership is readily provable if the membership
-        object indicates that it is readily provable.
+        Use 'as_defined' to see if it is readily provable 
+        by definition.
         
         If check_directly_known_elem_equality is True and all else 
         fails, we will check the first expression directly known to
@@ -139,11 +148,15 @@ class ClassMembership(Operation):
             # Check the first directly known equality of the element to
             # see if this equal expression's membership is readily 
             # provable.
+            from proveit.logic import InSet, NotInSet
             for eq_expr in Equals.yield_directly_known_eq_exprs(
                     element, include_canonical_forms=False):
                 try:
+                    kwargs = dict()
+                    if isinstance(self, InSet) or isinstance(self, NotInSet):
+                        kwargs['check_directly_known_elem_equality']=False
                     if type(self)(eq_expr, *self.operands[1:]).readily_provable(
-                            check_directly_known_elem_equality=False):
+                            **kwargs):
                         return True
                 except:
                     pass
@@ -167,14 +180,21 @@ class ClassMembership(Operation):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Attempt to conclude that the element is in the domain.  Try
-        standard relation strategies (evaluate or somplify both sides).
-        If that doesn't work, try using the domain-specific 'conclude' 
-        method of the membership object.
+        Attempt to conclude this class membership predicate.
         '''
-        from proveit.logic import Equals, is_irreducible_value
+        from proveit.logic import (Equals, is_irreducible_value,
+                                   InSet, NotInSet)
 
         element = self.element
+
+        try:
+            if self.as_defined().readily_provable():
+                # Proof by definition.
+                definition = self.definition()
+                return definition.derive_left_via_equality()
+        except NotImplementedError:
+            # The 'as_defined' is not implemented.
+            pass
 
         # check if this is readily provable from the element side;
         # if so, call 'deduce_belonging' on the element.
@@ -201,8 +221,10 @@ class ClassMembership(Operation):
                 element, include_canonical_forms=False):
             membership_of_eq_expr = type(self)(eq_expr, *self.operands[1:])
             # Avoid applying this check recursively.
-            if membership_of_eq_expr.readily_provable(
-                    check_directly_known_elem_equality=False):
+            kwargs = dict()
+            if isinstance(self, InSet) or isinstance(self, NotInSet):
+                kwargs['check_directly_known_elem_equality']=False
+            if membership_of_eq_expr.readily_provable(**kwargs):
                 membership_of_eq_expr = membership_of_eq_expr.prove()
                 return membership_of_eq_expr.inner_expr().element.substitute(
                         element)
@@ -269,7 +291,7 @@ class ClassMembership(Operation):
         '''
         if predicate is None and hasattr(cls, '_operator_'):
             predicate = cls._operator_
-        for membership in ClassMembership.yield_known_memberships(
+        for membership in ClassMembership._yield_known_memberships(
                 element, include_canonical_forms=include_canonical_forms,
                 predicate=predicate, assumptions=assumptions):
             yield membership
@@ -290,11 +312,10 @@ class ClassMembership(Operation):
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
         '''
-        Attempt to evaluate whether some x ∊ S is TRUE or FALSE
-        using the 'definition' method of the domain's
-        'membership_object' if there is one.
+        Simplify this ClassMembership according to its
+        'definition' method if there is one.
         '''
-        from proveit.logic import TRUE, EvaluationError
+        from proveit.logic import Equals, TRUE, FALSE, EvaluationError
 
         try:
             definition = self.definition()
@@ -324,8 +345,8 @@ class ClassMembership(Operation):
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        Prove the membership equal to an expression that defines the
-        membership.
+        Prove and return the membership equal to an expression that
+        defines the membership.
         '''
         raise NotImplementedError(
             "%s, has no 'definition' method implemented" % str(
@@ -336,7 +357,7 @@ class ClassMembership(Operation):
         Returns the expression that defines the membership.
         '''
         raise NotImplementedError(
-            "Membership object, %s, has no 'as_defined' method implemented" % str(
+            "%s, has no 'as_defined' method implemented" % str(
                 self.__class__))
 
     @equality_prover('canonical_equated', 'canonical_equate')
@@ -348,7 +369,7 @@ class ClassMembership(Operation):
         try:
             definition = self.definition()
         except NotImplementedError:
-            return Operation._deduce_canonically_equal(rhs)
+            return Operation._deduce_canonically_equal(self, rhs)
         def_eq_rhs = definition.deduce_canonically_equal(rhs)
         return definition.apply_transitivity(def_eq_rhs)
 
