@@ -43,8 +43,9 @@ class IsVecSpace(ClassMembership):
         if format_type == 'latex':
             return r'{\rm VecSpace}(%s)'%formatted_field
         return r'VecSpace(%s)'%formatted_field
-    
-    def conclude(self):
+
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Attempt to conclude this membership in a class of vector
         spaces.
@@ -94,7 +95,7 @@ class IsVecSpace(ClassMembership):
                 if vec_space is None:
                     try:
                         vec_space_membership = deduce_as_vec_space(domain)
-                        if vec_space_membership.domain.field == field:
+                        if vec_space_membership.field == field:
                             vec_space = vec_space_membership.element
                     except NotImplementedError:
                         pass
@@ -109,7 +110,7 @@ class IsVecSpace(ClassMembership):
         Given a vector space, yield its known fields.
         '''
         for membership in IsVecSpace.yield_known_memberships(vec_space):
-            yield membership.domain.field
+            yield membership.field
 
     @staticmethod
     def known_vec_space(vec, *, field=None):
@@ -270,7 +271,7 @@ def deduce_as_vec_space(expr, *, field=None, **defaults_config):
     if membership is not None:
         ClassMembership.check_proven_class_membership(
             membership, expr, IsVecSpace._operator_)
-        if field is not None and membership.domain.field != field:
+        if field is not None and membership.field != field:
             raise ValueError("'deduce_as_vec_space' proved membership in "
                              "vector spaces over %s, not over the requested "
                              "%s field"%(membership.domain.field, field))

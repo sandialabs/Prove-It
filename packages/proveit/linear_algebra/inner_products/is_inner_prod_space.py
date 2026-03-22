@@ -53,8 +53,9 @@ class IsInnerProdSpace(ClassMembership):
         from . import inner_prod_space_is_vec_space
         return inner_prod_space_is_vec_space.instantiate(
                 {K:self.field, H:self.space})
-        
-    def conclude(self):
+
+    @prover
+    def conclude(self, **defaults_config): 
         '''
         Attempt to conclude this membership in a class of inner product
         spaces.

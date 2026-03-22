@@ -1,4 +1,5 @@
-from proveit import (Judgment, defaults, ExprRange, relation_prover, 
+from proveit import (Judgment, defaults, ExprRange,
+                     class_membership_prover, relation_prover, 
                      equality_prover, auto_equality_prover,
                      Literal, Operation, Lambda, 
                      UnsatisfiedPrerequisites,
@@ -135,7 +136,7 @@ class TensorProd(VecOperation):
             return sub_rel.derive_superset_membership(self)
         return membership
         
-    @relation_prover
+    @class_membership_prover
     def deduce_as_vec_space(self, **defaults_config):
         '''
         Deduce that the tensor product of vector spaces is a vector
@@ -155,7 +156,7 @@ class TensorProd(VecOperation):
                         operand.body, assumptions=assumptions)
             else:
                 class_membership = deduce_as_vec_space(operand)
-            field = class_membership.expr.domain.field
+            field = class_membership.expr.field
             if _K is None:
                 _K = field
             elif _K != field:

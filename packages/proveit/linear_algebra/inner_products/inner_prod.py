@@ -32,19 +32,19 @@ class InnerProd(Operation):
         <x + y, z> = <x, z> + <y, z>
         <x, y + z> = <x, y> + <x, z>
         '''
-        from proveit.linear_algebra import VecSpaces, ScalarMult, VecAdd
+        from proveit.linear_algebra import IsVecSpace, ScalarMult, VecAdd
         from proveit.linear_algebra.inner_products import (
                 inner_prod_scalar_mult_left, inner_prod_scalar_mult_right,
                 inner_prod_vec_add_left, inner_prod_vec_add_right)
         _u, _v = self.operands
         try:
-            vec_space = VecSpaces.common_known_vec_space((_u, _v))
+            vec_space = IsVecSpace.common_known_vec_space((_u, _v))
         except UnsatisfiedPrerequisites:
             # No known common vectors space for the operands, so
             # we have no specific shallow_simplication we can do here.
             return Operation.shallow_simplification(
                     self, must_evaluate=must_evaluate)
-        field = VecSpaces.known_field(vec_space)
+        field = IsVecSpace.known_field(vec_space)
         simp = None
         if isinstance(_u, ScalarMult):
             simp = inner_prod_scalar_mult_left.instantiate(
@@ -75,11 +75,11 @@ class InnerProd(Operation):
         should return: |- <v, w> in Complex.
         '''
         from . import inner_prod_field_membership,inner_prod_complex_membership
-        from proveit.linear_algebra import InnerProdSpaces
+        from proveit.linear_algebra import IsInnerProdSpace
         from proveit.numbers import Complex
         _x, _y = self.operands
         yield_spaces = (
-                InnerProdSpaces.yield_readily_provable_inner_prod_spaces)
+                IsInnerProdSpace.yield_readily_provable_inner_prod_spaces)
         for _inner_prod_space in yield_spaces((_x, _y), field=field):
             if field == Complex:
                 return (inner_prod_complex_membership.
@@ -95,10 +95,10 @@ class InnerProd(Operation):
         Return True iff we can readily prove that this InnerProd
         evaluates to something in field set K.
         '''
-        from proveit.linear_algebra import InnerProdSpaces
+        from proveit.linear_algebra import IsInnerProdSpace
         _x, _y = self.operands
         inner_prod_spaces = (
-                InnerProdSpaces.
+                IsInnerProdSpace.
                 yield_readily_provable_inner_prod_spaces((_x, _y), field=K))
         fields = set()
         for inner_prod_space in inner_prod_spaces:

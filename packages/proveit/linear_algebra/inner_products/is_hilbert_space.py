@@ -18,6 +18,7 @@ class IsHilbertSpace(ClassMembership):
     def __init__(self, space, *, styles=None):
         ClassMembership.__init__(self, IsHilbertSpace._operator_,
                                  space, styles=styles)
+        self.space = space
 
     def formatted_class(self, format_type):
         if format_type == 'latex':
@@ -56,8 +57,8 @@ class IsHilbertSpace(ClassMembership):
         from . import hilbert_space_is_vec_space
         return hilbert_space_is_vec_space.instantiate(
                 {Hspace:self.space})
-    
-    def conclude(self):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Attempt to conclude this membership in a class of inner product
         spaces.
@@ -70,7 +71,6 @@ class IsHilbertSpace(ClassMembership):
         Given a vector expression, vec, yield any Hilbert spaces
         known to contain vec.
         '''
-        from . import HilbertSpaces
         from proveit.linear_algebra import IsVecSpace
         for vec_space in IsVecSpace.yield_known_vec_spaces(vec, field=Complex):
             if IsHilbertSpace(vec_space).proven():
@@ -126,10 +126,10 @@ def deduce_as_hilbert_space(expr, **defaults_config):
     spaces over some field.
     '''
     from proveit.logic import CartExp
-    from . import HilbertSpaces, hilbert_space_def
+    from . import hilbert_space_def
     if IsHilbertSpace(expr).proven():
         # Already known as an appropriate vector space.
-        return IsHilbertSpaces(expr).prove()
+        return IsHilbertSpace(expr).prove()
     if isinstance(expr, CartExp):
         '''
         For the Cartesian exponentiation of rational, real, or
