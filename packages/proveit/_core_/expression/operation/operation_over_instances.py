@@ -331,7 +331,7 @@ class OperationOverInstances(Operation):
         if arg_name == 'operator':
             return self.operator  # simply the operator
         elif arg_name == 'instance_param_or_params':
-            # return the joined instance variables according to style.
+            # return the instance parameter(s)
             return single_or_composite_expression(
                 OperationOverInstances.explicit_instance_params(self))
         elif arg_name == 'instance_expr':
@@ -351,7 +351,7 @@ class OperationOverInstances(Operation):
                 return None
             return self.domain if arg_name == 'domain' else None
         elif arg_name == 'condition' or arg_name == 'conditions':
-            # return the joined conditions excluding domain conditions
+            # return the conditions excluding domain conditions
             conditions = composite_expression(
                 OperationOverInstances.explicit_conditions(self))
             if conditions.num_entries() == 1 and arg_name == 'condition':
@@ -589,10 +589,8 @@ class OperationOverInstances(Operation):
         '''
         Return the instance parameters that are to be shown explicitly
         in the formatting (as opposed to being made implicit via
-        conditions) joined together at this level according to the
-        style. By default, this includes all of the instance parameters
-        that are to be joined but this may be overridden to exclude
-        implicit instance parameters.
+        conditions). By default, this includes all of the instance parameters
+        but this may be overridden to exclude implicit instance parameters.
         '''
         if hasattr(self, 'instance_params'):
             return self.instance_params.entries
@@ -602,11 +600,10 @@ class OperationOverInstances(Operation):
     def explicit_instance_vars(self):
         '''
         Return the instance parameter variables that are to be shown explicitly
-        in the formatting (as opposed to being made implicit via conditions)
-        joined together at this level according to the style. The behavior
-        is determined by 'explicit_instance_params'.  Here, we simply extract
-        the variables from the parameters that result from
-        'explicit_instance_params'.
+        in the formatting (as opposed to being made implicit via conditions).
+        The behavior is determined by 'explicit_instance_params'.
+        Here, we simply extract the variables from the parameters that
+        result from 'explicit_instance_params'.
         '''
         return [get_param_var(parameter) for
                 parameter in self.explicit_instance_params()]
@@ -632,54 +629,109 @@ class OperationOverInstances(Operation):
             return True
         return False
 
-    def domain_conditions(self):
+    def param_membership_formatting_info(self, format_type):
         '''
-        Return the domain conditions of all instance variables that
-        are joined together at this level according to the style.
+        Return the number of condition entries that are ClassMemberships
+        in correspondence with parameters. If all ClassMemberships are the
+        same (consistent for all parameters), also return the formatted
+        membership operator (either ':' or '∈') and the formatted
+        class/domain according to the given format_type. Otherwise, return
+        (# of entries, None, None).
         '''
-        if hasattr(self, 'domains'):
-            assert (self.conditions.num_entries() >= 
-                    len(self.domains)), (
-                            'expecting a condition for each domain')
-            for iparam, condition, domain in  \
-                    zip(self.instance_params, self.conditions, self.domains):
-                assert domain == _extract_domain_from_condition(
-                    iparam, condition)
-            return self.conditions[:len(self.domains)].entries
-        else:
-            explicit_domains = self.explicit_domains()
-            if len(explicit_domains) == 0:
-                return []  # no explicit domains
-            domain_conditions = []
-            assert (self.domain ==
-                    _extract_domain_from_condition(self.instance_param,
-                                                   self.conditions[0]))
-            domain_conditions.append(self.conditions[0])
-            return domain_conditions
-    
-    def non_domain_condition(self):
-        '''
-        Return the condition that excludes domain condition(s); this
-        will be a conjunction if there are more than one non-domain
-        conditions.
-        '''
-        from proveit.logic import And, TRUE
-        domains = self.explicit_domains()
-        if len(domains) == 0:
-            return self.condition
-        non_domain_conditions = self.conditions[len(domains):].entries
-        if len(non_domain_conditions) == 0:
-            return TRUE
-        if len(non_domain_conditions) == 1:
-            return non_domain_conditions[0]
-        return And(non_domain_conditions)
+        from proveit._core_.expression.composite.expr_range import (
+            extract_parameters, innermost_body,
+            extract_start_indices, extract_end_indices)
+        from proveit.classes import ClassMembership
+        from proveit.logic import InSet
+        num_param_mem_condition_entries = 0
+        membership_spec_for_all = None
+        last_class_membership = None
+        for iparam, condition in zip(self.instance_params,
+                                     self.conditions):
+            if isinstance(iparam, ExprRange) and (
+                    isinstance(condition, ExprRange)):
+                innermost_condition_body = innermost_body(condition)
+                if not isinstance(innermost_condition_body, ClassMembership):
+                    break # not a class membership
+                condition_params = extract_parameters(condition)
+                iparam_params = extract_parameters(iparam)
+                map_range_params = {iparam_param:cond_param for
+                                    iparam_param, cond_param in zip(
+                                        iparam_params, condition_params)}
+                iparam_start_indices = [
+                    _expr.basic_replaced(map_range_params)
+                    for _expr in extract_start_indices(iparam)]
+                iparam_end_indices = [
+                    _expr.basic_replaced(map_range_params)
+                    for _expr in extract_end_indices(iparam)]
+                innermost_iparam_body = innermost_body(iparam)
+                if extract_start_indices(condition) != iparam_start_indices:
+                    break # not a match
+                if extract_end_indices(condition) != iparam_end_indices:
+                    break # not a match
+                if innermost_condition_body.element != (
+                        innermost_iparam_body.basic_replaced(
+                            map_range_params)):
+                    break # not a match
+                membership_spec = ExprTuple(
+                    innermost_condition_body.operator,
+                    innermost_condition_body.operands[1:])
+                if not free_vars(membership_spec).isdisjoint(
+                        condition_params):
+                    # memberships are ExprRange parameter-dependent,
+                    # so they differ within the ExprRange
+                    membership_spec_for_all = None
+                elif not free_vars(condition.body.operands[1:]).isdisjoint(
+                        condition_params):
+                    # memberships differ within the ExprRange
+                    membership_spec_for_all = None
+                else:
+                    if num_param_mem_condition_entries == 0:
+                        membership_spec_for_all = membership_spec
+                    elif membership_spec != membership_spec_for_all:
+                        membership_spec_for_all = None # memberships differ
+                # valid match
+                last_class_membership = innermost_condition_body
+                num_param_mem_condition_entries += 1
+                continue
+            elif isinstance(condition, ClassMembership):
+                if condition.element == iparam:
+                    membership_spec = ExprTuple(condition.operator,
+                                                condition.operands[1:])
+                    if num_param_mem_condition_entries == 0:
+                        membership_spec_for_all = membership_spec
+                    elif membership_spec != membership_spec_for_all:
+                        membership_spec_for_all = None # memberships differ
+                    last_class_membership = condition
+                    num_param_mem_condition_entries += 1
+                    continue
+            break
+        formatted_membership_op = None
+        formatted_class = None
+        if membership_spec_for_all is not None:
+            if isinstance(last_class_membership, InSet):
+                formatted_class = last_class_membership.domain.formatted(
+                    format_type)
+                formatted_membership_op = InSet._operator_.formatted(
+                    format_type)
+            else:
+                try:
+                    formatted_class = (
+                        last_class_membership.formatted_class(format_type))
+                    # use a ':' to denote general class membership as opposed to
+                    # set membership which uses '∈'.
+                    formatted_membership_op = ':'
+                except NotImplementedError:
+                    formatted_class = formatted_membership_op = None
+        return (num_param_mem_condition_entries,
+                formatted_membership_op, formatted_class)
 
     def explicit_conditions(self):
         '''
         Return the conditions that are to be shown explicitly in the formatting
         (after the "such that" symbol "|") at this level according to the
-        style.  By default, this includes all of the 'joined' conditions except
-        implicit 'domain' conditions.
+        style.  By default, this includes all except implicit 'domain'
+        conditions.
         '''
         if hasattr(self, 'domains'):
             assert (self.conditions.num_entries() >= 
@@ -805,7 +857,6 @@ class OperationOverInstances(Operation):
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
-        from proveit.logic import InSet
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
@@ -820,28 +871,21 @@ class OperationOverInstances(Operation):
         if condition_wrapping == 'No': condition_wrapping=None
         if justification is None:
             justification = self.get_style('justification', 'center')
+        num_param_mem_cond_entries, formatted_membership_op, formatted_class = (
+            self.param_membership_formatting_info(format_type))
+        param_membership_conditions = ExprTuple(
+            *self.conditions[:num_param_mem_cond_entries])
+        explicit_conditions = ExprTuple(
+            *self.conditions[num_param_mem_cond_entries:])
         # override this default as desired
         explicit_iparams = list(self.explicit_instance_params())
-        explicit_conditions = ExprTuple(*self.explicit_conditions())
-        explicit_domains = ExprTuple(*self.explicit_domains())
         instance_expr = self.instance_expr
         has_explicit_iparams = (len(explicit_iparams) > 0)
         has_explicit_conditions = (explicit_conditions.num_entries() > 0)
         if not has_explicit_conditions:
             # No explicit conditions to wrap
             condition_wrapping = None
-        has_multi_domain = not self.has_one_domain()
-        domain_conditions = ExprTuple(*self.domain_conditions())
-        # domain_membership_op will be the InSet operator if all
-        # of the domain conditions are the InSet type, or the InClass
-        # operator otherwise - InClass is now obsolete.
-        domain_membership_op = InSet._operator_
-        for domain_condition in domain_conditions:
-            if ((isinstance(domain_condition, ExprRange) and
-                 not isinstance(domain_condition.body, InSet)) or (
-                         not isinstance(domain_condition, ExprRange)
-                         and not isinstance(domain_condition, InSet))):
-                domain_membership_op = InSet._operator_
+        has_multi_domain = (formatted_class is None)
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
@@ -864,17 +908,13 @@ class OperationOverInstances(Operation):
             out_str += self.operator.formatted(format_type) + '_{'
             if has_explicit_iparams:
                 if has_multi_domain:
-                    out_str += domain_conditions.formatted(
+                    out_str += param_membership_conditions.formatted(
                         format_type, operator_or_operators=',', fence=False)
                 else:
                     out_str += formatted_params
-            if not has_multi_domain and self.domain is not None:
-                out_str += ' %s '%domain_membership_op.string()
-                if has_multi_domain:
-                    out_str += explicit_domains.formatted(
-                        format_type, operator_or_operators='*', fence=False)
-                else:
-                    out_str += self.domain.formatted(format_type, fence=False)
+            if not has_multi_domain and formatted_class is not None:
+                out_str += ' %s '%formatted_membership_op
+                out_str += formatted_class
             if has_explicit_conditions:
                 if has_explicit_iparams:
                     out_str += " | "
@@ -897,14 +937,14 @@ class OperationOverInstances(Operation):
                     if has_multi_domain:
                         out_str += self._wrap_params_formatted(
                             format_type=format_type,
-                            params=domain_conditions,
+                            params=param_membership_conditions,
                             operator_or_operators=',',
                             fence=False)
                     else:
                         out_str += self._wrap_params_formatted(
                             format_type=format_type, params=explicit_iparams, fence=False)
-                if not has_multi_domain and self.domain is not None:
-                    out_str += ' %s '%domain_membership_op.latex()
+                if not has_multi_domain and formatted_class is not None:
+                    out_str += ' %s '%formatted_membership_op
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
                     if has_explicit_iparams:
@@ -921,13 +961,13 @@ class OperationOverInstances(Operation):
                     out_str += r'\scriptsize \begin{array}{l}'
                 if has_explicit_iparams:
                     if has_multi_domain:
-                        out_str += domain_conditions.formatted(
+                        out_str += param_membership_conditions.formatted(
                             format_type, operator_or_operators=',', fence=False)
                     else:
                         out_str += formatted_params
-                if not has_multi_domain and self.domain is not None:
-                    out_str += ' %s '%domain_membership_op.latex()
-                    out_str += self.domain.formatted(format_type, fence=False)
+                if not has_multi_domain and formatted_class is not None:
+                    out_str += ' %s '%formatted_membership_op
+                    out_str += formatted_class
                 if has_explicit_conditions:
                     if condition_wrapping == 'before':
                         out_str += r' \\'

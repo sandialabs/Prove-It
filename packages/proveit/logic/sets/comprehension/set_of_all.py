@@ -17,7 +17,7 @@ class SetOfAll(OperationOverInstances):
         Create an expression representing the set of all
         instance_element for instance parameter(s) such that the conditions
         are satisfied:
-        {instance_element | conditions}_{instance_param_or_params \in S}
+        {instance_element | conditions}_{instance_param_or_params ∈ S}
         '''
         OperationOverInstances.__init__(
             self, SetOfAll._operator_, instance_param_or_params,
@@ -36,11 +36,16 @@ class SetOfAll(OperationOverInstances):
                            "to be set")
 
     def _formatted(self, format_type, fence=False, **kwargs):
-        from proveit import ExprRange
         out_str = ''
-        explicit_conditions = ExprTuple(*self.explicit_conditions())
-        inner_fence = (explicit_conditions.num_entries() > 0)
+        num_param_mem_cond_entries, formatted_membership_op, formatted_class = (
+            self.param_membership_formatting_info(format_type))
         instance_element = self.instance_element
+        param_membership_conditions = ExprTuple(
+            *self.conditions[:num_param_mem_cond_entries])
+        explicit_conditions = ExprTuple(
+            *self.conditions[num_param_mem_cond_entries:])
+        inner_fence = (explicit_conditions.num_entries() > 0)
+        has_multi_domain = (formatted_class is None)
         if hasattr(self, 'condition'):
             with defaults.temporary() as temp_defaults:
                 # Add the condition as an assumption when formatting 
@@ -52,9 +57,6 @@ class SetOfAll(OperationOverInstances):
         else:
             formatted_instance_element = instance_element.formatted(
                     format_type, fence=inner_fence)
-        explicit_domains = self.explicit_domains()
-        has_multi_domain = not self.has_one_domain()
-        domain_conditions = ExprTuple(*self.domain_conditions())
         if format_type == 'latex':
             out_str += r"\left\{"
         else:
@@ -75,14 +77,14 @@ class SetOfAll(OperationOverInstances):
         out_str += '_{'
         instance_param_or_params = self.instance_param_or_params
         if has_multi_domain:
-            out_str += domain_conditions.formatted(
+            out_str += param_membership_conditions.formatted(
                     format_type, operator_or_operators=',', fence=False)
         else:
             # all in the same domain
             out_str += instance_param_or_params.formatted(
                 format_type, operator_or_operators=',', fence=False)
-            out_str += r' \in ' if format_type == 'latex' else ' in '
-            out_str += explicit_domains[0].formatted(format_type)
+            out_str += ' %s '%formatted_membership_op
+            out_str += formatted_class
         out_str += '}'
         return out_str
 
