@@ -38,8 +38,21 @@ class VecAdd(GroupAdd, VecOperation):
         
         Handles doubly-nested scalar multiplication.
         '''
+        from proveit.logic import And
         from proveit.numbers import Complex
-        if all(InSet(operand, Complex).proven() for operand in self.operands):
+        all_in_complex = True
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if not And(ExprRange(
+                        operand.parameter,
+                        InSet(operand.body, Complex),
+                        start_index = operand.start_index,
+                        end_index = operand.end_index)).proven():
+                    all_in_complex = False
+            elif not InSet(operand, Complex).proven():
+                all_in_complex = False
+
+        if all_in_complex:
             # If the operands are all complex numbers, this will
             # VecAdd will reduce to number Add.
             return self.number_add_reduction()
