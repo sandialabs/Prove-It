@@ -28,6 +28,8 @@ import urllib.request  # Comment in for Python 3
 import zmq  # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
 from proveit import Theory
+import functools
+print = functools.partial(print, flush=True)
 
 # IPython.InteractiveShell.cache_size=0
 

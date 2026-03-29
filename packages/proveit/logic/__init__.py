@@ -26,10 +26,9 @@ from .sets import (
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, CartProd, CartExp,
                    PowerSet, Disjoint, Distinct, Card)
-from .sets import (Functions, Injections, Surjections, Bijections,
+from .sets import (IsFunction, Functions, IsInjection, Injections,
+                   IsSurjection, Surjections, IsBijection, Bijections,
                    Image, InvImage)
-from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
-
 #from mapping.mapping_ops import Domain, CoDomain
 
 import proveit

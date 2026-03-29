@@ -1,4 +1,4 @@
-from proveit import (as_expression, Literal, Operation, 
+from proveit import (as_expression, Function, Literal, Operation, 
                      free_vars, safe_dummy_var,
                      Judgment, UnsatisfiedPrerequisites,
                      defaults, USE_DEFAULTS, prover, relation_prover)
@@ -86,21 +86,29 @@ class SubsetEq(InclusionRelation):
         if SetEquiv(*self.operands.entries).proven():
             return self.conclude_via_equivalence()
 
-        # Check for special case of set comprehension
-        # [{x | Q*(x)}_{x \in S}] \subseteq S
+        # Check for special case of basic set comprehension
+        # [{x | Q(x)}_{x \in S}] \subseteq S
         if isinstance(self.subset, SetOfAll):
+            
+            from proveit import y, ExprTuple
+            from proveit.logic import And
             from proveit.logic.sets.comprehension import (
                 comprehension_is_subset)
             set_of_all = self.subset
-            if (len(set_of_all.all_instance_vars()) == 1 and
-                set_of_all.instance_element == set_of_all.all_instance_vars()[0] and
-                    set_of_all.domain == self.superset):
+
+            if (len(set_of_all.all_instance_vars()) == 1
+                and (set_of_all.instance_element
+                     == set_of_all.all_instance_vars()[0])
+                and set_of_all.domain == self.superset):
+
                 Q_op, Q_op_sub = (
-                    Operation(Q, set_of_all.all_instance_vars()),
-                    set_of_all.conditions)
+                    Function(Q, set_of_all.all_instance_vars()),
+                    And(*set_of_all.explicit_conditions()))
+                _y_sub = set_of_all.all_instance_vars()[0]
+
                 concluded = comprehension_is_subset.instantiate(
-                    {S: set_of_all.domain, Q_op: Q_op_sub},
-                    relabel_map={x: set_of_all.all_instance_vars()[0]})
+                    {S: set_of_all.domain, y:_y_sub, Q_op: Q_op_sub})
+
                 return concluded
 
         _A, _B = self.operands.entries

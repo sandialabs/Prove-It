@@ -4,7 +4,7 @@ from proveit import x, y, alpha
 from proveit.logic import Equals
 from proveit.abstract_algebra.generic_methods import (
         deduce_equality_via_commutation)
-from .vector_spaces import VecSpaces
+from .is_vector_space import IsVecSpace
 
 class VecOperation(Operation):
     '''
@@ -102,9 +102,9 @@ def deduce_canonically_equal(expr1, expr2, *, field):
     involve vectos.  Temporarily set the vector space 'field' to use
     in this process.
     '''
-    _orig_default_field = VecSpaces.default_field
+    _orig_default_field = IsVecSpace.default_field
     try:
-        VecSpaces.default_field = field
+        IsVecSpace.default_field = field
         return expr1.deduce_canonically_equal(expr2)
     finally:
-        VecSpaces.default_field = _orig_default_field
+        IsVecSpace.default_field = _orig_default_field

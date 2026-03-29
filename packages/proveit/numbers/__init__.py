@@ -1,16 +1,17 @@
 # Arithmetic and number theory concepts.
 
 from .number_sets import (
-    ZeroSet, Natural, NaturalPos,
-    Integer, IntegerEven, IntegerNonZero, IntegerNeg, IntegerNonPos,
-    IntegerOdd, Rational, RationalNonZero, RationalPos, RationalNeg,
+    ZeroSet, Natural, NaturalPos, Integer, IntegerEven,
+    IntegerNonZero, IntegerNeg, IntegerNonPos, IntegerOdd,
+    Prime, Rational, RationalNonZero, RationalPos, RationalNeg,
     RationalNonNeg, RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
     Complex, ComplexNonZero, Conjugate,
     complex_polar_coordinates, 
     unit_length_complex_polar_angle)
 
-from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
+from .number_sets import (
+        Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC)
 from .number_sets import e, pi, i, infinity
 from .number_operation import (NumberOperation, readily_factorable,
                                deduce_in_number_set,
@@ -36,7 +37,8 @@ from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        less_eq_numeric_rationals,
                        not_equal_numeric_rationals,
                        deduce_not_equal_numeric_rationals)
-from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
+from .numerals import (zero, one, two, three, four, five, six, seven,
+        eight, nine, hexa, hexb, hexc, hexd, hexe, hexf)
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
@@ -51,8 +53,8 @@ from .summation import Sum
 from .product import Prod
 from .integration import Integrate
 
-from .functions import (MonDecFuncs, deduce_as_mon_dec_func,
-                        KroneckerDelta)
+from .functions import (IsMonDecFunc, deduce_as_mon_dec_func,
+                        IsEvenFunc, KroneckerDelta)
 
 import proveit
 
@@ -79,7 +81,7 @@ if proveit.defaults.running_theory_notebook is None: # might include here 2 is e
     from .number_sets.complex_numbers import (
             i_is_complex, i_is_complex_nonzero)
     from proveit.abstract_algebra.fields import (
-            rational_field, real_field, complex_field)
+            is_rational_field, is_real_field, is_complex_field)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

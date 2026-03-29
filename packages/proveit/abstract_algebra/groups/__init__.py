@@ -1,4 +1,4 @@
-from .groups import Groups
+from .is_group import IsGroup
 from .group_add import GroupAdd
 from .group_sum import GroupSum
 

@@ -208,8 +208,7 @@ class Expression(metaclass=ExprType):
     def _clear_():
         '''
         Clear all references to Prove-It information under
-        the Expression jurisdiction.  All Expression classes that store Prove-It
-        state information must implement _clear_ to clear that information.
+        the Expression jurisdiction.
         '''
         assert len(Expression.in_progress_to_conclude) == 0, (
                 "Unexpected remnant 'in_progress_to_conclude' items "
@@ -888,7 +887,7 @@ class Expression(metaclass=ExprType):
         free make attempts that may be cyclic.
         '''
         from proveit import Judgment, Assumption, ProofFailure
-        from proveit.relation import Relation
+        from proveit.relations import Relation
         from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
@@ -1109,7 +1108,7 @@ class Expression(metaclass=ExprType):
         Return True if self is a Relation or the logical negation
         of a relation which is essentially also a relation.
         '''
-        from proveit.relation import Relation
+        from proveit.relations import Relation
         from proveit.logic import Not
         return isinstance(self, Relation) or (
                 isinstance(self, Not) and

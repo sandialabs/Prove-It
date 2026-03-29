@@ -1,3 +1,4 @@
+from .is_injection import IsInjection
 from .injections import Injections
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

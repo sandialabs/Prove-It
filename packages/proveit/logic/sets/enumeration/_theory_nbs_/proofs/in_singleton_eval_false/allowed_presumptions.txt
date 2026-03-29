@@ -1,3 +1,4 @@
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.enumeration.singleton_def
 proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.sub_right_side_into

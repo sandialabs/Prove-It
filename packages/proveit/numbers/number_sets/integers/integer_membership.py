@@ -4,7 +4,7 @@ from proveit.logic import Equals, Exists, InSet, NotEquals
 from proveit.numbers import Add, Less, LessEq, Mult, Neg, subtract
 from proveit.numbers import (
         zero, one, two, Integer, IntegerEven, IntegerNeg,
-        IntegerNonPos, IntegerNonZero, IntegerOdd)
+        IntegerNonPos, IntegerNonZero, IntegerOdd, Prime)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
 
@@ -503,3 +503,84 @@ class IntegerOddMembership(NumberMembership):
         from . import odd_int_is_double_int_plus_one
         _a_sub = self.element
         return odd_int_is_double_int_plus_one.instantiate({a:_a_sub})
+
+
+class PrimeMembership(NumberMembership):
+    '''
+    Defines methods that apply to membership in the set of prime
+    numbers {2, 3, 5, 7, 11, ...}.
+    '''
+
+    def __init__(self, element):
+        NumberMembership.__init__(self, element, Prime)
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Concluding that an arbitrary number is prime is challenging.
+        For self.element that is an actual number, one could possibly
+        perform trial division of the given element by the numbers
+        2, 3, 4, ..., k, where k ≤ sqrt(element) (which we definitely
+        do NOT try to do here right now). For small
+        numbers, we resort to a list of the first 10 prime numbers.
+        '''
+        from proveit.numbers import DecimalSequence, Numeral
+        if (isinstance(self.element, Numeral)
+            or isinstance(self.element, DecimalSequence)):
+            if self.element.as_int() < 30:
+                from proveit import p
+                from . import small_primes_are_prime
+                return small_primes_are_prime.instantiate(
+                        {p:self.element})
+
+        raise NotImplementedError(
+                "PrimeMembership.conclude() still under development "
+                "and currently only works for literal prime numbers "
+                "less than 30.")
+
+        return NumberMembership.conclude(self)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'n in Prime' for:
+        (1) A prime number p is an integer (this will cascade to
+            rationals, reals, and complex numbers);
+        (2) A prime is either 2 or an odd integer.
+        '''
+        yield self.derive_element_in_integer
+        yield self.derive_element_as_two_or_odd
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import prime_membership_is_bool
+        return prime_membership_is_bool.instantiate(
+            {x: self.element}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_integer(self, **defaults_config):
+        from . import prime_within_int
+        return prime_within_int.derive_superset_membership(
+            self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_rational(self, **defaults_config):
+        from proveit.numbers.number_sets.rational_numbers import (
+                prime_within_rational)
+        return prime_within_rational.derive_superset_membership(
+                self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_real(self, **defaults_config):
+        from proveit.numbers.number_sets.real_numbers import (
+                prime_within_real)
+        return prime_within_real.derive_superset_membership(
+                self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_as_two_or_odd(self, **defaults_config):
+        from proveit import p
+        from . import prime_is_two_or_odd
+        return prime_is_two_or_odd.instantiate({p: self.element})
