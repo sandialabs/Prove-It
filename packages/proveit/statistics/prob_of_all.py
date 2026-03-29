@@ -5,7 +5,7 @@ from proveit import x, y, f, g, A, B, C, P, Q, R, S, X, Omega
 
 class ProbOfAll(OperationOverInstances):
     '''
-    ProbOfAll represents the probability of an event that is defines as
+    ProbOfAll represents the probability of an event defined as
     the set of outcomes of a sample space defined by a condition
     (set comprehension).
     '''
