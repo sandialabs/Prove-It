@@ -19,6 +19,9 @@ class DirectProverCallsCounter:
     def __exit__(self, type, value, traceback):
         self.nested_level -= 1 # one level shallower
 
+    def clear(self):
+        self.counter = self.nested_level = 0
+
 _direct_prover_calls_counter = DirectProverCallsCounter()
 
 def get_direct_prover_call_count():
