@@ -1,6 +1,6 @@
 from proveit import Judgment, Literal, Lambda, Conditional
 from proveit import prover, equality_prover, ClassMembership
-from proveit import f, g, A, B, C
+from proveit import f, g, x, A, B, C
 
 class IsBijection(ClassMembership):
     '''
@@ -59,11 +59,11 @@ class IsBijection(ClassMembership):
         for the f, A, and B in correspondence with this
         InjectionsMembership.
         '''
-        from . import bijective_def
+        from . import is_bijection_def
         _A = self.domain
         _B = self.codomain
         _f = self.element
-        return bijective_def.instantiate(
+        return is_bijection_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
 
     def as_defined(self):
@@ -117,6 +117,38 @@ class IsBijection(ClassMembership):
         _A = self.domain
         _B = f_codomain
         _C = subsequent_bijection.codomain
+        if isinstance(_f, Lambda):
+            _x = _f.parameter
+        elif isinstance(_g, Lambda):
+            _x = _g.parameter
+        else:
+            _x = x
         return (bijection_transitivity.instantiate(
-                {f:_f, g:_g, A:_A, B:_B, C:_C})
-                .derive_consequent())
+                {f:_f, g:_g, A:_A, B:_B, C:_C, x:_x})
+                .derive_consequent().elim_domain_condition())
+
+    @prover
+    def elim_domain_condition(self, **defaults_config):
+        '''
+        From IsBijection((x -> f(x) if x ∈ A), A, B), 
+        derive and return IsBijection((x -> f(x), A, B).
+        '''
+        from proveit.logic import InSet
+        from . import elim_domain_condition
+        _A = self.domain
+        _B = self.codomain
+        _f_with_cond = self.element
+        if (not isinstance(_f_with_cond, Lambda) or 
+                not isinstance(_f_with_cond.body, Conditional)):
+            raise TypeError(
+                    "'elim_domain_condition' only works with conditioned "
+                    "Lambda function element, not %s"%_f_with_cond)
+        condition = _f_with_cond.body.condition
+        domain_cond = InSet(_f_with_cond.parameter, _A)
+        if condition != domain_cond:
+            raise TypeError(
+                    "'elim_domain_condition' only works with a Lambda "
+                    "function element conditioned on the parameter being "
+                    "in the domain: %s ≠ %s"%(condition, domain_cond))
+        _f = Lambda(_f_with_cond.parameter, _f_with_cond.body.value)
+        return elim_domain_condition.instantiate({A:_A, B:_B, f:_f})

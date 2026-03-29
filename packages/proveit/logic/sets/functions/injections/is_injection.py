@@ -57,11 +57,11 @@ class IsInjection(ClassMembership):
         for the f, A, and B in correspondence with this
         InjectionsMembership.
         '''
-        from . import injective_def
+        from . import is_injection_def
         _A = self.domain
         _B = self.codomain
         _f = self.element
-        return injective_def.instantiate(
+        return is_injection_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
 
     def as_defined(self):
@@ -71,8 +71,7 @@ class IsInjection(ClassMembership):
         '''
         from proveit.logic import And, Forall, NotEquals, IsFunction
         _f = self.element
-        domain = self.domain
-        _A, _B = domain.domain, domain.codomain
+        _A, _B = self.domain, self.codomain
         _a, _b = safe_dummy_vars(2, self.element, self.domain)
         _fa = _f.apply(_a) if isinstance(_f, Lambda) else Function(_f, _a)
         _fb = _f.apply(_b) if isinstance(_f, Lambda) else Function(_f, _b)

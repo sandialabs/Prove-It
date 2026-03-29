@@ -37,11 +37,11 @@ class IsSurjection(ClassMembership):
         for the f, A, and B in correspondence with this
         InjectionsMembership.
         '''
-        from . import surjective_def
+        from . import is_surjection_def
         _A = self.domain
         _B = self.codomain
         _f = self.element
-        return surjective_def.instantiate(
+        return is_surjection_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
 
     def as_defined(self):
@@ -51,6 +51,5 @@ class IsSurjection(ClassMembership):
         '''
         from proveit.logic import And, Equals, IsFunction, Image
         _f = self.element
-        domain = self.domain
-        _A, _B = domain.domain, domain.codomain
+        _A, _B = self.domain, self.codomain
         return And(IsFunction(_f, _A, _B), Equals(Image(_f, _A), _B))

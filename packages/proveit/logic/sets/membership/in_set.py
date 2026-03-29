@@ -253,6 +253,15 @@ class InSet(Relation):
         return elem_sub_in_domain.inner_expr().element.substitute(
                 self.element)        
 
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude that the element is not in the domain
+        via proving nonmembership.
+        '''
+        nonmembership = self.negated()
+        return nonmembership.prove().unfold_not_in()
+
     @staticmethod
     def yield_known_memberships(element, *, domain_type=None,
                                 include_canonical_forms=True,

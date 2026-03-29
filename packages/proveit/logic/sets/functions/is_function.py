@@ -25,13 +25,13 @@ class IsFunction(ClassMembership):
         else:
             return ('[' + formatted_domain + r' -> '
                     + formatted_codomain + r']')
-    
+
     def side_effects(self, judgment):
         '''
         Unfold the injections set membership.
         '''
         yield self.unfold
-
+        
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -53,11 +53,11 @@ class IsFunction(ClassMembership):
         for the f, A, and B in correspondence with this
         InjectionsMembership.
         '''
-        from . import functions_def
+        from . import is_function_def
         _A = self.domain
         _B = self.codomain
         _f = self.element
-        return functions_def.instantiate(
+        return is_function_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
 
     def as_defined(self):
