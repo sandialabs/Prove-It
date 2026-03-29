@@ -375,11 +375,11 @@ def _make_decorated_relation_prover(func, automatic=False,
                     relation_class = 'Equals'
                 raise TypeError(
                         "@%s_prover, %s, expected to prove "
-                        "a %s with %s as its first operand. "
+                        "a %s with %s as its lhs. "
                         "%s does not satisfy this "
                         "requirement."%(prover_type, func,
                                         relation_class,
-                                        expected_first_operand,
+                                        expected_lhs,
                                         proven_expr))
             # Make the style consistent with the original expression.
             if not proven_expr.lhs.has_same_style(expected_lhs):
