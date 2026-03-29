@@ -73,6 +73,7 @@ def reset():
     from ._core_.expression import Expression
     from ._core_.judgment import Judgment
     from ._core_.theory import UnsetCommonExpressionPlaceholder
+    from .decorators import _direct_prover_calls_counter
     Expression._clear_()
     Literal._clear_()
     Operation._clear_()
@@ -80,6 +81,7 @@ def reset():
     Proof._clear_()
     Theory._clear_()
     defaults.reset()
+    _direct_prover_calls_counter.clear()
     _equality_prover_fn_to_tenses.clear()
     _equality_prover_fn_to_tenses.update(_basic_equality_prover_fn_to_tenses)
     _equality_prover_name_to_tenses.clear()
