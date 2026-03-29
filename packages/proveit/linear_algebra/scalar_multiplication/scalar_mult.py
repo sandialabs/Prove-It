@@ -204,9 +204,8 @@ class ScalarMult(VecOperation):
         '''
         from proveit.linear_algebra.inner_products import scaled_norm
         vec_space = IsVecSpace.known_vec_space(self.scaled)
-        field = IsVecSpace.known_field(vec_space)
         return scaled_norm.instantiate(
-                {K:field, H:vec_space, alpha:self.scalar, x:self.scaled})
+                {H:vec_space, alpha:self.scalar, x:self.scaled})
 
     def readily_factorable(self, factor, *, pull='left'):
         '''
