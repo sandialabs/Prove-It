@@ -1,4 +1,4 @@
-from .is_mon_dec_func import IsMonDecFunc
+from .is_mon_dec_func import IsMonDecFunc, deduce_as_mon_dec_func
 from .is_even_func import IsEvenFunc
 from .delta import KroneckerDelta
 

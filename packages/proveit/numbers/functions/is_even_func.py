@@ -34,14 +34,3 @@ class IsEvenFunc(ClassMembership):
         ClassMembership.__init__(self, _operator, 
                                  func, domain, styles=styles)
         self.domain = domain
-
-    @staticmethod
-    def yield_known_domain(even_fxn):
-        '''
-        Given a monotonically-decreasing function, yield its
-        known domain(s).
-        '''
-        if mon_dec_fxn in self.yield_known_memberships(even_fxn):
-            judgments = MonDecFuncs.known_mon_dec_funcs_memberships[mon_dec_fxn]
-            for judgment in judgments:
-                yield judgment.expr.domain.domain

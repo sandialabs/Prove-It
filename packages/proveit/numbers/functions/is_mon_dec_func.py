@@ -1,4 +1,4 @@
-from proveit import Literal
+from proveit import Literal, prover
 from proveit import ClassMembership
 
 class IsMonDecFunc(ClassMembership):
@@ -44,41 +44,57 @@ class IsMonDecFunc(ClassMembership):
             return r'{\rm MonDecFunc}(%s)'%domain_field
         return r'MonDecFunc(%s)'%domain_field
 
-    @staticmethod
-    def yield_known_domain(mon_dec_fxn):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        Given a monotonically-decreasing function, yield its
-        known domain(s).
+        Attempt to conclude the function is monotonically-decreasing.
         '''
-        if mon_dec_fxn in MonDecFuncs.known_mon_dec_funcs_memberships:
-            judgments = MonDecFuncs.known_mon_dec_funcs_memberships[mon_dec_fxn]
-            for judgment in judgments:
-                yield judgment.expr.domain.domain
+        return deduce_as_mon_dec_func(self.element, domain=self.domain)
 
+@prover
+def deduce_as_mon_dec_func(fxn, *, domain=None, 
+                           strict=False, **defaults_config):
+    '''
+    Prove that the Lambda-map specified by fxn is contained in the
+    set of monotonically-decreasing functions defined over the domain.
+    Unless strict is True, the returned proven membership may be
+    over a broader domain (that is, a stronger statement than required).
+    
+    For example, we might have fxn = Lambda(x, 1/x^2) and
+    domain = RealPos, in which case we try to prove that
+    Lambda(x, 1/x^2) is in the set of MonDecFuncs(RealPos).
+    '''
+    membership = None
+    
+    # This current implementation cheats to handle a specific case of
+    # intrest.  We can make this more general at a later date.
+    from proveit import x
+    from proveit.logic import SubsetEq
+    from proveit.numbers.functions import one_over_x_sqrd_in_mon_dec_fxns
+    from proveit.numbers import RealPos
+    if fxn == one_over_x_sqrd_in_mon_dec_fxns.element:
+        if domain is not None:
+            SubsetEq(domain, RealPos).prove()
+        return one_over_x_sqrd_in_mon_dec_fxns.instantiate({x:fxn.parameter})
+    
+    if domain is not None and IsMonDecFunc(fxn, domain).proven():
+        # fxn already known to be a monotonically-decreasing function.
+        return IsMonDecFunc(fxn, domain).prove()
+    
+    if hasattr(fxn, 'deduce_as_mon_dec_func'):
+        # If there is a 'deduce_as_mon_dec_func' class method for the
+        # fxn, try that.
+        membership = fxn.deduce_as_mon_dec_func()
 
-def containing_mon_dec_func(fxn, *, domain):
-    '''
-    Return a MonDecFunc over the given domain which contains 'fxn' as
-    a member.  Call the 'deduce_in_mon_dec_func' class method on 'fxn'
-    if there is one. Raise a NotImplementedError otherwise.
-    '''
-    if hasattr(vec, 'deduce_in_vec_space'):
-        vec_in_space = vec.deduce_in_vec_space(field=field)
-        # Check that vec_in_space has the right form.
-        if (not isinstance(vec_in_space, Judgment) or
-                not isinstance(vec_in_space.expr, InSet)):
-            raise TypeError("'deduce_in_vec_space' expected to "
-                            "return an InSet Judgment")
-        if vec_in_space.expr.element != vec:
-            raise ValueError("'deduce_in_vec_space' expected to "
-                             "return an InSet Judgment with "
-                             "the 'vec' as the 'element'")
-        vec_space = vec_in_space.domain
-        # Make sure we can prove vec_space is, in fact, a
-        # vector space.
-        deduce_as_vec_space(vec_space, field=field)
-        return vec_space
+    if membership is not None:
+        if (not isinstance(membership, Judgment)
+            or not isinstance(membership.expr, IsMonDecFunc)
+            or membership.element != fxn):
+            raise ValueError(
+                    "Expecting an IsMonDecFunc of %s but got %s"%
+                (fxn, membership))
+        return membership
+
     raise NotImplementedError(
-            "'containing_vec_space' is only implemented when "
-            "the element has a 'deduce_in_vec_space' method; %s "
-            "does not have such a method"%vec.__class__)   
+            "'deduce_as_mon_dec_func' is not implemented for this case")
+

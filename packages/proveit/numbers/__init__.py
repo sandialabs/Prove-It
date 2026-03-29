@@ -53,7 +53,8 @@ from .summation import Sum
 from .product import Prod
 from .integration import Integrate
 
-from .functions import (IsMonDecFunc, IsEvenFunc, KroneckerDelta)
+from .functions import (IsMonDecFunc, deduce_as_mon_dec_func,
+                        IsEvenFunc, KroneckerDelta)
 
 import proveit
 
