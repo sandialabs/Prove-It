@@ -726,6 +726,23 @@ class OperationOverInstances(Operation):
         return (num_param_mem_condition_entries,
                 formatted_membership_op, formatted_class)
 
+    def non_domain_condition(self):
+        '''
+        Return the condition that excludes domain condition(s); this
+        will be a conjunction if there are more than one non-domain
+        conditions.
+        '''
+        from proveit.logic import And, TRUE
+        domains = self.explicit_domains()
+        if len(domains) == 0:
+            return self.condition
+        non_domain_conditions = self.conditions[len(domains):].entries
+        if len(non_domain_conditions) == 0:
+            return TRUE
+        if len(non_domain_conditions) == 1:
+            return non_domain_conditions[0]
+        return And(non_domain_conditions)
+    
     def explicit_conditions(self):
         '''
         Return the conditions that are to be shown explicitly in the formatting
@@ -885,7 +902,8 @@ class OperationOverInstances(Operation):
         if not has_explicit_conditions:
             # No explicit conditions to wrap
             condition_wrapping = None
-        has_multi_domain = (formatted_class is None)
+        # Note: there may be an expression range parameter - that would have one enry
+        has_multi_domain = (num_param_mem_cond_entries > 0 and formatted_class is None)
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
