@@ -264,7 +264,7 @@ class Conditional(Expression):
     def _simplification(self, *, simplify_top_level=True,
                         simplify_only_where_marked=False,
                         markers_and_marked_expr=None):
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.logic import And
         
         if simplify_only_where_marked:
@@ -543,7 +543,7 @@ class Conditional(Expression):
         one with the new sub-expressions.
         '''
         from proveit.logic import Equals
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         assert len(new_sub_exprs)==2, (
                 "Expecting 2 sub-expressions: value and condition")
         eq = TransRelUpdater(self)

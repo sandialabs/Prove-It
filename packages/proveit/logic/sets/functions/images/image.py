@@ -7,7 +7,7 @@ class Image(Operation):
     is the set obtained by applying the function to each element of
     the original set.
     '''
-    _operator_ = Literal('IMAGE', theory=__file__)
+    _operator_ = Literal('Image', r'\textrm{Image}', theory=__file__)
     
     def __init__(self, elem_function, set_of_elems, *, styles=None):
         Operation.__init__(self, Image._operator_, 

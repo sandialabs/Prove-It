@@ -3,7 +3,7 @@ from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import x, y, A, X
-from proveit.relation import Relation
+from proveit.relations import Relation
 
 
 class NotEquals(Relation):

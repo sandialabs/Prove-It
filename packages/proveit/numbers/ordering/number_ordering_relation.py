@@ -1,6 +1,6 @@
 from proveit import Judgment, UnsatisfiedPrerequisites, prover, defaults
 from proveit.logic import Equals
-from proveit.relation import TransitiveRelation, total_ordering
+from proveit.relations import TransitiveRelation, total_ordering
 
 
 class NumberOrderingRelation(TransitiveRelation):    

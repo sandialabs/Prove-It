@@ -81,7 +81,7 @@ class MatrixSpace(Operation):
 class MatrixSpaceMembership(SetMembership):
     '''
     Defines methods that apply to InSet(element, LinMap(X, Y))
-    objects via InClass.__getattr__ which calls 
+    objects via InSet.__getattr__ which calls 
     LinMap.membership_object(element)
     to return a LinMapMembership object.    
     '''

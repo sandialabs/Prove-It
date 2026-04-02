@@ -790,7 +790,7 @@ class Operation(Expression):
         Helper to prove this Operation equal to a form in which its operands
         have been simplified.
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit import ExprRange, NamedExprs
         from proveit._core_.expression.expr import MarkedExprError
         from proveit.logic import is_irreducible_value
@@ -860,7 +860,7 @@ class Operation(Expression):
         if hasattr(self.operator, 'application_simplification'):
             return self.operator.application_simplification(
                 self.operands, must_evaluate=must_evaluate)
-        return Expression.shallow_simplification(must_evaluate=must_evaluate)
+        return Expression.shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('operator_substituted', 'operator_substitute')
     def operator_substitution(self, equality, **defaults_config):
@@ -923,7 +923,7 @@ class Operation(Expression):
         one with the new sub-expressions.
         '''
         from proveit.logic import Equals
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         assert len(new_sub_exprs)==2, (
                 "Expecting 2 sub-expressions: operator and operands")
         eq = TransRelUpdater(self)

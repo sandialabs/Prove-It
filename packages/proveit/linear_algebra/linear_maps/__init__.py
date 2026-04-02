@@ -1,4 +1,6 @@
-from .lin_map import LinMap, LinMapAdd
+from .is_lin_map import IsLinMap
+from .lin_maps import LinMaps
+from .lin_map_add import LinMapAdd
 from .identity import Identity
 from .commutator import Commutator
 from .anti_commutator import AntiCommutator

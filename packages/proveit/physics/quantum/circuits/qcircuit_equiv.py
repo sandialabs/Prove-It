@@ -3,7 +3,7 @@ from proveit import (Expression, Literal, Lambda, VertExprArray,
                      as_expression, Judgment, prover, equality_prover,
                      defaults, USE_DEFAULTS)
 from proveit import j, k, l, m, A, B, C, D, Q
-from proveit.relation import EquivRelation, TransRelUpdater
+from proveit.relations import EquivRelation, TransRelUpdater
 from proveit.statistics import Prob
 from .qcircuit import Qcircuit
 

@@ -20,3 +20,9 @@ class Surjections(Function):
         return (r'\left[' + domain_str 
                         + r' \xrightarrow[\text{onto}]{} '
                         + codomain_str + r'\right]')
+
+    def string(self, **kwargs):
+        domain_str = self.domain.latex(fence=True)
+        codomain_str = self.codomain.latex(fence=True)
+        return ('[' + domain_str + ' ->onto '
+                + codomain_str + '\right]')

@@ -5,7 +5,7 @@ from proveit import (Expression, Judgment, as_expression,
                      InnerExprGenerator, free_vars)
 from proveit.util import OrderedSet
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
-from proveit.relation import EquivRelation, TransitivityException
+from proveit.relations import EquivRelation, TransitivityException
 from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import a, b, c, d, k, A, B, P, Q, f, n, x, y, z

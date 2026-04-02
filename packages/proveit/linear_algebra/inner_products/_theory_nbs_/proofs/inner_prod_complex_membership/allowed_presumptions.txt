@@ -1,0 +1,2 @@
+proveit.linear_algebra.inner_products.inner_prod_field_membership
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space

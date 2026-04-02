@@ -70,7 +70,7 @@ class And(Operation):
         Check to see if the total ordering style is
         applicable, raising an exception otherwise.
         '''
-        from proveit.relation import TransitiveRelation
+        from proveit.relations import TransitiveRelation
         relations = self.operands.entries
         for relation in relations:
             if not isinstance(relation, TransitiveRelation):

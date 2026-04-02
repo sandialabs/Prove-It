@@ -1,3 +1,4 @@
+from .is_surjection import IsSurjection
 from .surjections import Surjections
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

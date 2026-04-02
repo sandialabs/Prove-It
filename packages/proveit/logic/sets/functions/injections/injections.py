@@ -24,3 +24,9 @@ class Injections(Function):
         return (r'\left[' + domain_str 
                         + r' \xrightarrow[]{\text{1-to-1}} '
                         + codomain_str + r'\right]')
+
+    def string(self, **kwargs):
+        domain_str = self.domain.latex(fence=True)
+        codomain_str = self.codomain.latex(fence=True)
+        return ('[' + domain_str + ' 1-to-1-> '
+                + codomain_str + '\right]')

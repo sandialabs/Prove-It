@@ -1,8 +1,9 @@
+from .is_function import IsFunction
 from .functions import Functions
 from .images import Image, InvImage
-from .injections import Injections
-from .surjections import Surjections
-from .bijections import Bijections
+from .injections import IsInjection, Injections
+from .surjections import IsSurjection, Surjections
+from .bijections import IsBijection, Bijections
 from .inversion import Inverse
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

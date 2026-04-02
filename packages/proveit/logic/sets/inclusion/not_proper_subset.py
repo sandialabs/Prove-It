@@ -2,7 +2,7 @@ from proveit import (as_expression, Literal, Operation, safe_dummy_var,
                      USE_DEFAULTS, prover, relation_prover)
 from proveit import A, B, C, x
 from proveit import f, S
-from proveit.relation import Relation
+from proveit.relations import Relation
 
 class NotProperSubset(Relation):
     # operator for the NotProperSubset operation

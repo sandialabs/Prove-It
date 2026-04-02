@@ -1267,7 +1267,7 @@ class TheoryFolderStorage:
         color = 'Black'
         png = latex_to_png(latex, backend='dvipng', color=color, wrap=True)
         if png is None:
-            print("The LaTeX failed to complile. Make sure a LaTeX distribution "
+            print("The LaTeX failed to compile. Make sure a LaTeX distribution "
                   "is installed. To deduce the problem, try generating a "
                   "tmp.tex file with the following content:\n\n%s"%
                   '\n'.join(genelatex(latex, wrap=True)),
@@ -2148,7 +2148,7 @@ class TheoryFolderStorage:
                 # prepend the constructor with the module
                 # -- assume it is in the same module as the class
                 constructor = ('.'.join(full_class_name.split('.')[:-1]) +
-                               constructor)
+                               '.' + constructor)
             return constructor
         if isinstance(expr, NamedExprs):
             # convert to (name, value) tuple form

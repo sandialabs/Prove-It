@@ -70,9 +70,9 @@ def _make_decorated_prover(func):
         preserve_all =  kwargs.get('preserve_all', defaults.preserve_all)
         auto_simplify =  kwargs.get('auto_simplify', defaults.auto_simplify)
         if no_simplify_method: auto_simplify=False
+        preserve_first_operand = kwargs.pop('preserve_first_operand',
+                                            False)
         preserve_expr = kwargs.pop('preserve_expr', None)
-        preserve_lhs_on_auto_simplify = kwargs.pop('preserve_lhs_on_auto_simplify',
-                                                   None)
         simplify_only_where_marked = kwargs.pop('simplify_only_where_marked',
                                                 False)
         markers_and_marked_expr = kwargs.pop('markers_and_marked_expr', None)
@@ -281,13 +281,14 @@ def _make_decorated_prover(func):
                 if replacement_expr.lhs in defaults.preserved_exprs:
                     # Skip the replacement of this preserved expression.
                     continue
-                if preserve_lhs_on_auto_simplify and isinstance(
-                        proven_truth.expr, Relation):
+                if preserve_first_operand and isinstance(
+                        proven_truth.expr, ClassMembership):
                     _lambda_map = proven_truth.inner_expr().rhs.global_repl(
-                        replacement_expr.lhs)
+                        replacement_expr.operands[0])
                     if not free_vars(_lambda_map.body).isdisjoint(
                             _lambda_map.parameter_vars):
-                        # There are occurrences of the replacement lhs to
+                        # There are occurrences of the replacement
+                        # first operand to
                         # replace with the rhs.
                         proven_truth = replacement.sub_right_side_into(_lambda_map)
                 else:
@@ -298,6 +299,7 @@ def _make_decorated_prover(func):
             # And don't simplify a conclude method call.
             proven_expr = proven_truth.expr
             if auto_simplify:
+                from proveit._core_.expression.operation import Operation
                 skip_simplify = (is_shallow_simplification_method or
                                  is_simplification_method)
                 if proven_truth != orig_proven_truth:
@@ -305,24 +307,28 @@ def _make_decorated_prover(func):
                     # of simplification.
                     skip_simplify = False
                 if not skip_simplify:
-                    from proveit import Relation
                     from proveit.logic import Equals
-                    if preserve_lhs_on_auto_simplify and isinstance(
-                            proven_expr, Relation):
-                        dummy_var = proven_expr.safe_dummy_var()
+                    _expr = proven_truth.expr
+                    if preserve_first_operand and isinstance(_expr, Operation):
+                        from proveit import safe_dummy_vars
+                        simplify_only_where_marked = True
                         if simplify_only_where_marked and isinstance(
-                                markers_and_marked_expr[1], Relation):
+                                markers_and_marked_expr[1], _expr.__class__):
                             # In addition to anything else that may be
-                            # reserved by the markedd_expr, preserve the lhs.
-                            markers_and_marked_expr[1].__class__(
-                                proven_expr.lhs,
-                                markers_and_marked_expr[1].rhs)
+                            # preserved in the existing marked_expr, preserve
+                            # the first operand.
+                            markers_and_marked_expr[1] = (
+                                _expr.__class__(
+                                    _expr.operands[0],
+                                    *markers_and_marked_expr[1].operands[1:]))
                         else:
-                            # Just preserve the lhs.
+                            # Just preserve the first operand.
+                            dummy_vars = safe_dummy_vars(
+                                _expr.operands.num_entries()-1,_expr)
                             simplify_only_where_marked=True
                             markers_and_marked_expr = (
-                                (dummy_var,), Equals(proven_expr.lhs,
-                                                     dummy_var))
+                                dummy_vars, _expr.__class__(
+                                    _expr.operands[0], *dummy_vars))
                     proven_truth = proven_truth.simplify(
                         preserved_exprs=preserved_exprs,
                         simplify_with_known_evaluations=
@@ -331,27 +337,6 @@ def _make_decorated_prover(func):
                         kwargs.get('simplify_with_provable_evaluations', None),
                         simplify_only_where_marked=simplify_only_where_marked,
                         markers_and_marked_expr=markers_and_marked_expr)
-            '''
-            # Temporarily reconfigure defaults
-            with defaults.temporary() as temp_defaults:
-                for key in defaults_to_change:
-                    # Temporarily alter a default:
-                    setattr(temp_defaults, key, kwargs[key])
-                #print(func.__name__, proven_truth)
-                # Effect the replacements and/or auto-simplification by
-                # regenerating the proof object under the active defaults.
-                simplify_only_where_marked = False
-                markers_and_marked_expr = None
-                new_proven_truth = (
-                    proven_truth.proof().regenerate_proof_with_replacements(
-                        simplify_only_where_marked, markers_and_marked_expr)
-                    .proven_truth)
-                proven_truth = (new_proven_truth.inner_expr()
-                                .with_mimicked_style(proven_truth.expr))
-                #print('preserved_exprs', defaults.preserved_exprs,
-                #      'orig_proven_truth', orig_proven_truth,
-                #      'proven_truth', proven_truth)
-            '''
 
         if is_conclude_method:             
             if proven_truth is None:
@@ -379,43 +364,122 @@ def _make_decorated_prover(func):
         return proven_truth
     return decorated_prover    
 
-def _make_decorated_relation_prover(func):
+def _make_decorated_class_membership_prover(func, *, automatic=False,
+                                            prover_type='class_membership'):
     '''
-    Use for decorating 'relation_prover' methods 
-    (@relation_prover or @equality_prover).  In addition
-    to the @prover capabilities, temporarily altering 'defaults' and
-    checking that a Judgment is returned check that the
-    Judgment is for a Relation.  Furthermore, unless alter_lhs=True 
-    is set in the keyword arguments when the method is called,
-    automatically 'preserve' the 'self' expression and make sure it
-    is on the left side of the returned Relation Judgment.
+    Use for decorating 'class_membership_prover' methods
+    (@class_membership_prover, @relation_prover, or @equality_prover).
+    In addition to the @prover capabilities, temporarily altering 
+    'defaults' and checking that a Judgment is returned check that the
+    Judgment is for a ClassMembership.  Furthermore, unless 
+    preserve_self=False is set in the keyword arguments when the
+    method is called, automatically 'preserve' the 'self' expression
+    and make sure it is the first operand of the returned
+    ClassMembership.
     '''
 
     decorated_prover = _make_decorated_prover(func)
     
-    def decorated_relation_prover(*args, **kwargs):
+    def decorated_class_membership_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
         from proveit._core_.expression.composite import ExprRange, ExprTuple
-        from proveit.relation import Relation  
+        from proveit.classes import ClassMembership
         
         # 'preserve' the 'self' or 'self.expr' expression so it will 
-        # be on the left side without simplification.
+        # be the first operand without simplification.
         _self = args[0]
         if isinstance(_self, Expression):
             expr = _self
         elif hasattr(_self, 'expr'):
             expr = _self.expr
         else:
-            raise TypeError("@relation_prover, %s, expected to be a "
-                            "method for an Expression type or it must "
-                            "have an 'expr' attribute."%func)
-        alter_lhs = kwargs.pop('alter_lhs', False)
-        if not alter_lhs:
-            kwargs['preserve_lhs_on_auto_simplify'] = True
+            raise TypeError("@class_membership_prover, %s, expected to "
+                            "be a method for an Expression type or it "
+                            "must have an 'expr' attribute."%func)
+        preserve_self = kwargs.pop('preserve_self', True)
+        if preserve_self:
+            if automatic:
+                kwargs['preserve_first_operand'] = True
+            else:
+                # preserve the left side.
+                if 'preserve_expr' in kwargs:
+                    if 'preserved_exprs' in kwargs:
+                        kwargs['preserved_exprs'] = (
+                            kwargs['preserved_exprs'].union([expr]))
+                    else:
+                        kwargs['preserved_exprs'] = (
+                            defaults.preserved_exprs.union([expr]))
+                else:
+                    kwargs['preserve_expr'] = expr
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
         
+        # Check that the result is of the expected form.
+        proven_expr = proven_truth.expr
+        if not isinstance(proven_expr, ClassMembership):
+            raise TypeError(
+                    "@%s_prover, %s, expected to prove"
+                    "a ClassMembership expression, not %s of type %s."
+                    %(prover_type, func, proven_expr,
+                      proven_expr.__class__))
+        if preserve_self and prover_type=='class_membership':
+            expected_first_operand = expr
+            if isinstance(expected_first_operand, ExprRange):
+                expected_first_operand = ExprTuple(expected_first_operand)
+            if proven_expr.operands[0] != expected_first_operand:
+                class_membership_class = 'ClassMembership'
+                if prover_type=='relation':
+                    class_membership_class = 'Relation'
+                elif prover_type=='equality':
+                    class_membership_class = 'Equals'
+                raise TypeError(
+                        "@%s_prover, %s, expected to prove "
+                        "a %s with %s as its first operand. "
+                        "%s does not satisfy this "
+                        "requirement."%(prover_type, func,
+                                        class_membership_class,
+                                        expected_first_operand,
+                                        proven_expr))
+            # Make the style consistent with the original expression.
+            if not proven_expr.operands[0].has_same_style(
+                    expected_first_operand):
+                # Make the first operand of the proven truth have a
+                # style that matches the original expression.
+                inner_first_operand = proven_truth.inner_expr().operands[0]
+                proven_truth = (
+                    inner_first_operand.with_matching_style(
+                        expected_first_operand))
+        return proven_truth
+    return decorated_class_membership_prover
+
+def _make_decorated_relation_prover(func, automatic=False,
+                                    prover_type='relation'):
+    '''
+    Use for decorating 'relation_prover' methods 
+    (@relation_prover or @equality_prover).  In addition
+    to the @class_membership_prover capabilities, check that
+    a Judgment for a Relation is returned with self as the lhs.
+    Furthermore, unless preserve_self=False is set as a keyword
+    argument when the method is called,
+    automatically 'preserve' the 'self' expression and make sure it
+    is on the left side of the returned Relation Judgment.
+    '''
+
+    decorated_class_membership_prover = (
+        _make_decorated_class_membership_prover(
+            func,  automatic=automatic, prover_type=prover_type))
+    
+    def decorated_relation_prover(*args, **kwargs):
+        from proveit._core_.expression.expr import Expression
+        from proveit._core_.expression.composite import ExprRange, ExprTuple
+        from proveit.relations import Relation
+        
+        # Use the more generate @class_membership_prover wrapper.
+        proven_truth = decorated_class_membership_prover(
+            *args, **kwargs)
+
+                
         # Check that the result is of the expected form.
         proven_expr = proven_truth.expr
         if not isinstance(proven_expr, Relation):
@@ -423,23 +487,38 @@ def _make_decorated_relation_prover(func):
                     "@relation_prover, %s, expected to prove a "
                     "Relation expression, not %s of type %s."
                     %(func, proven_expr, proven_expr.__class__))
-        if not alter_lhs:
+        _self = args[0]
+        if isinstance(_self, Expression):
+            expr = _self
+        elif hasattr(_self, 'expr'):
+            expr = _self.expr
+        preserve_self = kwargs.pop('preserve_self', True)
+        if preserve_self:
             expected_lhs = expr
-            if isinstance(expr, ExprRange):
-                expected_lhs = ExprTuple(expr)
+            if isinstance(expected_lhs, ExprRange):
+                expected_lhs = ExprTuple(expected_lhs)
             if proven_expr.lhs != expected_lhs:
+                relation_class = 'Relation'
+                if prover_type=='equality':
+                    relation_class = 'Equals'
                 raise TypeError(
-                        "@relation_prover, %s, expected to prove a "
-                        "relation with %s on its left side "
-                        "('lhs').  %s does not satisfy this "
-                        "requirement."%(func, expected_lhs, proven_expr))
+                        "@%s_prover, %s, expected to prove "
+                        "a %s with %s as its lhs. "
+                        "%s does not satisfy this "
+                        "requirement."%(prover_type, func,
+                                        relation_class,
+                                        expected_lhs,
+                                        proven_expr))
             # Make the style consistent with the original expression.
             if not proven_expr.lhs.has_same_style(expected_lhs):
-                # Make the left side of the proven truth have a style
-                # that matches the original expression.
-                inner_lhs = proven_truth.inner_expr().lhs
-                proven_truth = inner_lhs.with_matching_style(expected_lhs)
+                # Make the first operand of the proven truth have a
+                # style that matches the original expression.
+                inner_first_operand = proven_truth.inner_expr().operands[0]
+                proven_truth = (
+                    inner_first_operand.with_matching_style(expected_lhs))
+        
         return proven_truth
+
     return decorated_relation_prover
 
 
@@ -477,13 +556,28 @@ def auto_prover(func):
     '''
     return _wraps(func, _make_decorated_prover(func))
 
+def class_membership_prover(func):
+    '''
+    @class_membership_prover is a decorator for methods that are to
+    return a proven judgment valid under "active" (default) assumptions,
+    is a ClassMembership type Expression, and has the original expression
+    (self or self.expr) as the first operand (unless preserve_self=False).
+    Unless preserve_self=False, This "original expression" will 
+    automatically be "preserved" (not automatically simplified).
+    The style of the original expression will be used for this first
+    operand of the resulting ClassMembership.  
+    As with @prover methods, defaults may be temporarily set.
+    '''
+    return _wraps(func, _make_decorated_class_membership_prover(func))
+
 def relation_prover(func):
     '''
     @relation_prover is a decorator for methods that are to return a 
     proven judgment valid under "active" (default) assumptions, is a
     Relation type Expression, and has the original expression (self
-    or self.expr) on the left hand side.  This "original expression"
-    will automatically be "preserved" (not automatically simplified).
+    or self.expr) on the left hand side (preserve_self=False).
+    Unless preserve_self=False, this "original expression" will
+    automatically be "preserved" (not automatically simplified).
     The style of the original expression will be used on the left side.  
     As with @prover methods, defaults may be temporarily set.
     '''
@@ -533,7 +627,8 @@ def equality_prover(past_tense, present_tense):
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
         is_simplification_method = (name == 'simplification')
-        decorated_relation_prover = _make_decorated_relation_prover(func)
+        decorated_relation_prover = _make_decorated_relation_prover(
+            func, automatic=automatic, prover_type='equality')
 
         def wrapper(*args, **kwargs):   
             '''
@@ -672,7 +767,7 @@ def equality_prover(past_tense, present_tense):
                 owner, name, past_tense, present_tense)        
 
         def __call__(self, *args, **kwargs):
-            from proveit.relation import TransitiveRelation
+            from proveit.relations import TransitiveRelation
             # 'preserve' it so it will be on the left side without
             # simplification.
             print(self.func, args, kwargs)

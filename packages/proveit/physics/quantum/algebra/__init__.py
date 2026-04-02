@@ -1,5 +1,5 @@
 from .bra_ket import Bra, Ket, NumBra, NumKet
-from .qmult import Qmult
+from .qmult import Qmult, IsProperQmult
 import proveit
 
 

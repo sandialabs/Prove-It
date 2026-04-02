@@ -274,7 +274,7 @@ class Exp(NumberOperation):
             * If factor_numeric_rational is True:
                 a^{x+b} = a^b a^x if a and b are numeric rationals.
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
         from proveit.numbers import (zero, one, two, Add, Neg, Mult, Div,
@@ -410,12 +410,11 @@ class Exp(NumberOperation):
                     {x:base.operand, n:_n}, replacements=replacements)        
         elif isinstance(base, Exp) and (
                 Exp._simplification_directives_.reduce_double_exponent):
-            if ((InSet(exponent, Real).readily_provable() and 
-                 InSet(base.exponent, Real).readily_provable() and
-                 NotEquals(base.base, zero).readily_provable()) or (
-                         InSet(base.base, RealPos).readily_provable())):
+            try:
                 # (a^b)^c = a^{b*c}
                 return self.double_exponent_reduction()
+            except:
+                pass # number sets not proper
         if Exp._simplification_directives_.distribute_exponent and (
                 isinstance(base, Mult) or isinstance(base, Div)):
             # Distribute the exponent as directed.

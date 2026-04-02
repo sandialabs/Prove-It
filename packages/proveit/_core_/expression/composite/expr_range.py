@@ -699,7 +699,7 @@ class ExprRange(Expression):
         '''
 
         from proveit.core_expr_types import ConditionalSet
-        from proveit.relation import Relation
+        from proveit.relations import Relation
         from proveit.logic import Not, Equals, NotEquals, InSet
         from proveit.numbers import (
                 Less, num, Add, Interval, Neg, negated,

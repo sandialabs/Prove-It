@@ -1,5 +1,5 @@
 from proveit import USE_DEFAULTS, prover
-from proveit.relation import (
+from proveit.relations import (
     TransitiveRelation, total_ordering)
 
 

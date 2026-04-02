@@ -1,0 +1,3 @@
+proveit.logic.equality.equals_reversal
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.rhs_via_equality

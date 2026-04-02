@@ -680,7 +680,7 @@ class ExprTuple(Composite, Expression):
         Proves that this ExprTuple is equal to an ExprTuple
         with all of its entries simplified (and ExprRanges reduced).
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit import ExprRange
         from proveit.logic import Equals
         expr = self
@@ -734,7 +734,7 @@ class ExprTuple(Composite, Expression):
         with ExprRanges reduced unless these are "preserved"
         expressions.
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit import ExprRange
         from proveit.logic import is_irreducible_value, EvaluationError
         expr = self
@@ -1124,7 +1124,7 @@ class ExprTuple(Composite, Expression):
         from proveit import a, b, i
         from proveit.logic import Equals
         from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.numbers import num, one
         lhs = self
 
@@ -1203,7 +1203,7 @@ class ExprTuple(Composite, Expression):
         from proveit._core_.expression.lambda_expr import (
                 Lambda, ArgumentExtractionError)
         from .expr_range import ExprRange, simplified_index
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.core_expr_types.tuples import (
             merge, merge_front, merge_back, merge_extension,
             merge_pair, merge_series)
@@ -1347,7 +1347,7 @@ class ExprTuple(Composite, Expression):
         '''
         from proveit import (ExprRange, ProofFailure,
                              UnsatisfiedPrerequisites)
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit.logic import Equals
         from proveit.numbers import zero, one, Less, LessEq, Add, Neg
         if len(expr_tuples) == 0:

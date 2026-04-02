@@ -25,11 +25,10 @@ from .sets import (
     not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, CartProd, CartExp,
-                   PowerSet, Disjoint, Distinct, Card)
-from .sets import (Functions, Injections, Surjections, Bijections,
+                   PowerSet, Disjoint, Distinct, Card,
+                   IsFunction, Functions, IsInjection, Injections,
+                   IsSurjection, Surjections, IsBijection, Bijections,
                    Image, InvImage, Inverse)
-from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
-
 #from mapping.mapping_ops import Domain, CoDomain
 
 import proveit
