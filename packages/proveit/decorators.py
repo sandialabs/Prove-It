@@ -189,7 +189,7 @@ def _make_decorated_prover(func, automatic=False):
                                                 *dummy_vars))
                 else:
                     simplify_only_where_marked = False
-                    marker_and_Marked_expr = None
+                    marker_and_marked_expr = None
                 new_proven_truth = (
                     proven_truth.proof().regenerate_proof_with_replacements(
                         simplify_only_where_marked, markers_and_marked_expr)

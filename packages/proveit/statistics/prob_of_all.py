@@ -83,7 +83,7 @@ class ProbOfAll(OperationOverInstances):
                 {Omega:_Omega, A:_A, B:_B, C:_C, X:_X, Q:_Q, f:_f})
 
     @equality_prover("defined", "define")
-    def defintion(self, sample_space, **defaults_config):
+    def definition(self, sample_space, **defaults_config):
         '''
         The defintion of a ProbOfAll equates it with the 
         probability of an event (set of samples in a sample space).
