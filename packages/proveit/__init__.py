@@ -34,9 +34,8 @@ from ._core_ import (
 # @prover and @equality_prover are useful decorators for many
 # Expression class methods:
 from .decorators import (prover, class_membership_prover,
-                         relation_prover, equality_prover, 
-                         auto_prover, auto_relation_prover,
-                         auto_equality_prover, display_provers)
+                         relation_prover, equality_prover,
+                         display_provers)
 
 from .classes import ClassMembership
 

@@ -3,8 +3,7 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites, relation_prover,
-                     equality_prover, auto_relation_prover,
-                     auto_equality_prover, SimplificationDirectives)
+                     equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
@@ -657,7 +656,7 @@ class Div(NumberOperation):
         else:
             return False
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):

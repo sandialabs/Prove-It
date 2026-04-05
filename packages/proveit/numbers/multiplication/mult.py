@@ -3,7 +3,6 @@ from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
         Judgment, ProofFailure, UnsatisfiedPrerequisites,
         prover, relation_prover, equality_prover,
-        auto_prover, auto_relation_prover, auto_equality_prover,
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
@@ -1481,7 +1480,7 @@ class Mult(NumberOperation):
         # of self.
         return remove_common_factors(factor, self)==one
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factors_or_index, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):
@@ -1682,7 +1681,7 @@ class Mult(NumberOperation):
                         0, num_remainder_operands))
         return eq.relation
 
-    @auto_equality_prover('combined_exponents', 'combine_exponents')
+    @equality_prover('combined_exponents', 'combine_exponents')
     def combining_exponents(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -1853,7 +1852,7 @@ class Mult(NumberOperation):
                 return exp_pkg.products_of_complex_powers.instantiate(
                         {m:_m, a:_a, b:_b}, replacements=replacements)
 
-    @auto_equality_prover('combined_operands', 'combine_operands')
+    @equality_prover('combined_operands', 'combine_operands')
     def combining_operands(self, **defaults_config):
         '''
         Combine factors, adding their literal, rational exponents.
@@ -1861,7 +1860,7 @@ class Mult(NumberOperation):
         '''
         return self.combining_exponents()    
 
-    @auto_equality_prover('common_power_extracted', 'common_power_extract')
+    @equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,
                                 exp_factor=None,
                                 **defaults_config):

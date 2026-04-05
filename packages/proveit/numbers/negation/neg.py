@@ -2,7 +2,6 @@ from proveit import (Expression, Literal, Operation, ExprRange,
                      maybe_fenced_string, maybe_fenced_latex, 
                      InnerExpr, defaults, USE_DEFAULTS, 
                      ProofFailure, relation_prover, equality_prover,
-                     auto_relation_prover, auto_equality_prover,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
@@ -347,7 +346,7 @@ class Neg(NumberOperation):
             factor = factor.operand
         return self.operand.readily_factorable(factor)
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=None,
                       group_remainder=None, **defaults_config):
         '''

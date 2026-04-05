@@ -1,8 +1,7 @@
 from proveit import (defaults, Literal, ExprRange, ExprTuple, ProofFailure,
                      SimplificationDirectives,
                      UnsatisfiedPrerequisites, prover, relation_prover,
-                     equality_prover, auto_prover, auto_relation_prover,
-                     auto_equality_prover, TransRelUpdater)
+                     equality_prover, TransRelUpdater)
 from proveit import a, b, c, i, j, k, n, v, x, y, K, V
 from proveit.logic import Equals, InSet
 from proveit.numbers import zero, one, Add
@@ -212,7 +211,7 @@ class VecAdd(GroupAdd, VecOperation):
                 return False
         return True
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):
@@ -262,7 +261,7 @@ class VecAdd(GroupAdd, VecOperation):
                 group_remainder=group_remainder, field=field))
         return eq.relation
 
-    @auto_equality_prover('shallow_factorized', 'shallow_factor')
+    @equality_prover('shallow_factorized', 'shallow_factor')
     def shallow_factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):

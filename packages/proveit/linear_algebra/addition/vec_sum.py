@@ -2,7 +2,6 @@ from proveit import (defaults, free_vars, Literal, Function, Lambda,
                      ExprTuple,
                      SimplificationDirectives,
                      relation_prover, equality_prover,
-                     auto_relation_prover, auto_equality_prover,
                      TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, v, K, Q, V
 from proveit.logic import InSet
@@ -402,7 +401,7 @@ class VecSum(GroupSum, VecOperation):
             return False
         return readily_factorable(self.summand, factor, pull=pull)
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):
@@ -483,7 +482,7 @@ class VecSum(GroupSum, VecOperation):
                          group_remainder=group_remainder, field=field,
                          _check_index_independence=False))
 
-    @auto_equality_prover('shallow_factorized', 'shallow_factor')
+    @equality_prover('shallow_factorized', 'shallow_factor')
     def shallow_factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, _check_index_independence=True,
@@ -593,7 +592,7 @@ class VecSum(GroupSum, VecOperation):
                     {K:_K, f:_f, Q:_Q, V:_V, i:_i, j:_j, k:_k,
                      a:_a, b:_b, c:_c}).derive_consequent().with_wrapping_at()
 
-    @auto_equality_prover('factors_extracted', 'factors_extract')
+    @equality_prover('factors_extracted', 'factors_extract')
     def factors_extraction(self, field=None, **defaults_config):
         '''
         Derive an equality between this VecSum and the result
@@ -777,7 +776,7 @@ class VecSum(GroupSum, VecOperation):
 
         return eq.relation
 
-    @auto_equality_prover('tensor_prod_factored', 'tensor_prod_factor')
+    @equality_prover('tensor_prod_factored', 'tensor_prod_factor')
     def tensor_prod_factoring(self, idx=None, idx_beg=None, idx_end=None,
                               field=None, **defaults_config):
         '''

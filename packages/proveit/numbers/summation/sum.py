@@ -3,7 +3,6 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
-                     auto_prover, auto_relation_prover, auto_equality_prover,
                      SimplificationDirectives, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
@@ -692,7 +691,7 @@ class Sum(OperationOverInstances):
                 "index or indices {} and domain {}."
                 .format(self, self.indices, self.domain))
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=True,
                       group_remainder=None, **defaults_config):
         '''

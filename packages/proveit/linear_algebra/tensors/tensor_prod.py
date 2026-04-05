@@ -1,6 +1,6 @@
 from proveit import (Judgment, defaults, ExprRange,
                      class_membership_prover, relation_prover, 
-                     equality_prover, auto_equality_prover,
+                     equality_prover,
                      Literal, Operation, Lambda, 
                      UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
@@ -333,7 +333,7 @@ class TensorProd(VecOperation):
                 "Don't know how to distribute tensor product over " +
                 str(sum_factor.__class__) + " factor")
 
-    @auto_equality_prover('scalars_factorized', 'factor_scalars')
+    @equality_prover('scalars_factorized', 'factor_scalars')
     def scalars_factorization(self, *, field=None, **defaults_config):
         '''
         Equate this TensorProd with a form that has all of the
@@ -358,7 +358,7 @@ class TensorProd(VecOperation):
         
         return eq.relation
         
-    @auto_equality_prover('scalar_factorized', 'factor_scalar')
+    @equality_prover('scalar_factorized', 'factor_scalar')
     def scalar_factorization(self, idx=None, *, field=None,
                              **defaults_config):
         '''
@@ -455,7 +455,7 @@ class TensorProd(VecOperation):
             raise ValueError("'pull' must be 'left' or 'right', not %s"
                              %pull)
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):

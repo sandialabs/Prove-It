@@ -271,7 +271,7 @@ def _make_decorated_prover(func):
             # Perform default replacements
             orig_proven_truth = proven_truth
             for replacement in replacements:
-                from proveit import Relation, free_vars
+                from proveit import ClassMembership, free_vars
                 assert isinstance(replacement, Judgment)
                 replacement_expr = replacement.expr
                 assert isinstance(replacement_expr, Equals)
@@ -311,7 +311,6 @@ def _make_decorated_prover(func):
                     _expr = proven_truth.expr
                     if preserve_first_operand and isinstance(_expr, Operation):
                         from proveit import safe_dummy_vars
-                        simplify_only_where_marked = True
                         if simplify_only_where_marked and isinstance(
                                 markers_and_marked_expr[1], _expr.__class__):
                             # In addition to anything else that may be
@@ -364,7 +363,7 @@ def _make_decorated_prover(func):
         return proven_truth
     return decorated_prover    
 
-def _make_decorated_class_membership_prover(func, *, automatic=False,
+def _make_decorated_class_membership_prover(func, *,
                                             prover_type='class_membership'):
     '''
     Use for decorating 'class_membership_prover' methods
@@ -398,19 +397,7 @@ def _make_decorated_class_membership_prover(func, *, automatic=False,
                             "must have an 'expr' attribute."%func)
         preserve_self = kwargs.pop('preserve_self', True)
         if preserve_self:
-            if automatic:
-                kwargs['preserve_first_operand'] = True
-            else:
-                # preserve the left side.
-                if 'preserve_expr' in kwargs:
-                    if 'preserved_exprs' in kwargs:
-                        kwargs['preserved_exprs'] = (
-                            kwargs['preserved_exprs'].union([expr]))
-                    else:
-                        kwargs['preserved_exprs'] = (
-                            defaults.preserved_exprs.union([expr]))
-                else:
-                    kwargs['preserve_expr'] = expr
+            kwargs['preserve_first_operand'] = True
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
@@ -453,8 +440,7 @@ def _make_decorated_class_membership_prover(func, *, automatic=False,
         return proven_truth
     return decorated_class_membership_prover
 
-def _make_decorated_relation_prover(func, automatic=False,
-                                    prover_type='relation'):
+def _make_decorated_relation_prover(func, prover_type='relation'):
     '''
     Use for decorating 'relation_prover' methods 
     (@relation_prover or @equality_prover).  In addition
@@ -468,7 +454,7 @@ def _make_decorated_relation_prover(func, automatic=False,
 
     decorated_class_membership_prover = (
         _make_decorated_class_membership_prover(
-            func,  automatic=automatic, prover_type=prover_type))
+            func, prover_type=prover_type))
     
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
@@ -550,12 +536,6 @@ def prover(func):
     '''
     return _wraps(func, _make_decorated_prover(func))
 
-def auto_prover(func):
-    '''
-    TODO: eliminate usage. now obsolete.
-    '''
-    return _wraps(func, _make_decorated_prover(func))
-
 def class_membership_prover(func):
     '''
     @class_membership_prover is a decorator for methods that are to
@@ -580,12 +560,6 @@ def relation_prover(func):
     automatically be "preserved" (not automatically simplified).
     The style of the original expression will be used on the left side.  
     As with @prover methods, defaults may be temporarily set.
-    '''
-    return _wraps(func, _make_decorated_relation_prover(func))
-
-def auto_relation_prover(func):
-    '''
-    TODO: eliminate usage. now obsolete.
     '''
     return _wraps(func, _make_decorated_relation_prover(func))
 
@@ -628,7 +602,7 @@ def equality_prover(past_tense, present_tense):
         is_shallow_simplification_method = (name == 'shallow_simplification')
         is_simplification_method = (name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(
-            func, automatic=automatic, prover_type='equality')
+            func, prover_type='equality')
 
         def wrapper(*args, **kwargs):   
             '''
@@ -730,72 +704,6 @@ def equality_prover(past_tense, present_tense):
 
     return wrapper_maker
 
-def auto_equality_prover(past_tense, present_tense):
-    '''
-    TODO: eliminate usage. now obsolete.
-    '''
-    return equality_prover(past_tense, present_tense)
-
-"""
-def equality_prover(past_tense, present_tense):
-    '''
-    @equality_prover works the same way as the @prover decorator
-    except that it also registers the "equivalence method" in
-    InnerExpr with the past tense and present tense names.  The method
-    name itself should be a noun form and return the proven equivalence
-    with 'self' of the method on the left-hand side.  Calling the 
-    past-tense version will return the right-hand side as equivalent
-    to 'self'.  The present-tense version can be called on an
-    InnerExpr of a Judgment to return a Judgment where inner expression
-    is replaced according to the equivalence.
-    
-    To ensure that the left-hand side of the equivalence is not altered
-    via automatic simplification, we temporarily 'preserve' the 'self'
-    expression in the defaults before the equivalence method is called.
-    '''    
-    class EquivalenceProverDecorator:
-        def __init__(self, func):
-            functools.update_wrapper(self, func)
-            self.func = func
-        
-        def __set_name__(self, owner, name):
-            # Solution for obtaining the method class (owner) seen at: 
-            # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
-
-            # Register the equivalence method:
-            _register_equivalence_method(
-                owner, name, past_tense, present_tense)        
-
-        def __call__(self, *args, **kwargs):
-            from proveit.relations import TransitiveRelation
-            # 'preserve' it so it will be on the left side without
-            # simplification.
-            print(self.func, args, kwargs)
-            kwargs['preserved_exprs'] = set(defaults.preserved_exprs)
-            kwargs['preserved_exprs'].add(self.func.__self__)
-            proven_truth = _make_decorated_prover(self.func)(*args, **kwargs)
-            proven_expr = proven_truth.expr
-            if not isinstance(proven_expr, TransitiveRelation):
-                raise TypeError("@equality_prover expected to prove a "
-                                "TranstiveRelation expression (more "
-                                "specifically, the EquivalenceClass type of "
-                                "relation), not %s of type %s"
-                                %(proven_expr, proven_expr.__class__))
-            if not isinstance(proven_expr, 
-                              proven_expr.__class__.EquivalenceClass()):
-                raise TypeError("@equality_prover expected to prove a "
-                                "TranstiveRelation of the EquivalenceClass, "
-                                "not %s of type %s"
-                                %(proven_expr, proven_expr.__class__))
-            if proven_expr.lhs != self.func.__self__:
-                raise TypeError("@equality_prover expected to prove an "
-                                "equivalence relation with 'self', %s, on "
-                                "its left side ('lhs').  %s does not satisfy "
-                                "this requirement"%(self, proven_expr))
-            return proven_truth
-    
-    return EquivalenceProverDecorator
-"""
 
 class InconsistentTenseNames(Exception):
     def __init__(self, func, previous_tenses, current_tenses):

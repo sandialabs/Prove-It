@@ -5,7 +5,6 @@ from collections import deque, Counter
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, StyleOptions,
                      prover, relation_prover, equality_prover,
-                     auto_prover, auto_relation_prover, auto_equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
@@ -1658,7 +1657,7 @@ class Add(NumberOperation):
                 return False
         return True
 
-    @auto_equality_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
                       group_factors=True, group_remainder=True,
                       **defaults_config):
