@@ -537,7 +537,7 @@ class OperationOverInstances(Operation):
     def _build_canonical_form(self):
         '''
         Build the canonical form of this OperationOverInstances.
-        This override Expression._build_canonical_form to make
+        This overrides Expression._build_canonical_form to make
         sure that the domain conditions are kept in their proper place.
         '''
         from proveit.logic import And, InSet
@@ -550,6 +550,11 @@ class OperationOverInstances(Operation):
             # to worry about.
             return Operation._build_canonical_form(self)
         condition = self.condition
+        # auto_nest_multi_params is no longer supported but may be
+        # resurrected later.  If it does get resurrected, this may need
+        # to revert to include some code that was eliminated during the
+        # merge of 365-classes_as_predicates into 293_definition_category.
+        assert not self.auto_nest_multi_params()
         num_explicit_domains = len([_ for _ in self.explicit_domains()
                                     if _ is not None])
         # parameters should be unchanged:
@@ -578,7 +583,7 @@ class OperationOverInstances(Operation):
                      in conds[num_explicit_domains:]], key=hash)
             canonical_conditions = ExprTuple(*canonical_conditions)
             canonical_instance_expr = instance_expr.canonical_form()
-            canonical_lambda = OperationOverInstances._createOperand(
+            canonical_lambda = self.__class__._create_operand(
                     parameters, canonical_instance_expr,
                     canonical_conditions)
         else:

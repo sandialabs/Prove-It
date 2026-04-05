@@ -189,7 +189,7 @@ class Sum(OperationOverInstances):
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        explicit_conds = self.non_domain_conditions()
+        explicit_conds = self.explicit_conditions()
         if hasattr(self, 'domain') and isinstance(self.domain, Interval) and (
                 len(explicit_conds)==0):
             formatted_operator = self.operator.formatted(format_type)
