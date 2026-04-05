@@ -1900,8 +1900,8 @@ class Expression(metaclass=ExprType):
                         replacement = None
                 else:
                     replacement = None
-            if replacement is not None:
-                return replacement
+                if replacement is not None:
+                    return replacement
         return self._simplification(
             simplify_top_level=simplify_top_level,
             simplify_only_where_marked=simplify_only_where_marked,
