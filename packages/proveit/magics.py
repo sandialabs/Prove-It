@@ -1285,6 +1285,7 @@ def display_assignments(names, beginning_proof=False,
                         beginning_existence_proof=False,
                         beginning_extension_proof=False):
     from proveit import single_or_composite_expression, Judgment
+    from proveit._core_.expression.inner_expr import InnerExpr
     theory = prove_it_magic.theory
     processed_right_sides = []
     for name in names:
@@ -1305,9 +1306,10 @@ def display_assignments(names, beginning_proof=False,
                     right_side, wrap_expr_range_in_tuple=False)
             except BaseException:
                 pass
-            if not isinstance(right_side, Expression):
+            if not (isinstance(right_side, Expression) or isinstance(
+                    right_side, InnerExpr)):
                 # Only display the assigments if all of the assignments
-                # are expressions and/or judgments.
+                # are expressions and/or judgments and/or inner-expressions.
                 return
         processed_right_sides.append(right_side)
     names = list(names)
