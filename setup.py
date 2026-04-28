@@ -57,6 +57,11 @@ dist = setup(name='Prove-It',
              classifiers=[_f for _f in classifiers.split("\n") if _f],
              )
 
-if "develop" in sys.argv:
-    print("\n_configuring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
+# if "develop" in sys.argv:
+#     print("\n_configuring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
+#     install_nbstripout(['git', 'config'])
+
+# Updated check to catch modern pip 'editable' installs
+if any(arg in sys.argv for arg in ("develop", "dist_info", "egg_info", "editable_wheel")):
+    print("\n_configuring git locally to filter jupyter notebook 'output'...")
     install_nbstripout(['git', 'config'])
