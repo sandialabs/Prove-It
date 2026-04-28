@@ -24,8 +24,8 @@ from .sets import (
     NotProperSubset, superset_eq, not_superset_eq, proper_superset,
     not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
-                   SetOfAll, CartProd, CartExp,
-                   PowerSet, Disjoint, Distinct, Card)
+                   SetOfAll, CartProd, CartExp, PowerSet,
+                   AllDisjoint, Disjoint, AllDistinct, Distinct, Card)
 from .sets import (Functions, Injections, Surjections, Bijections,
                    Image, InvImage)
 from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
