@@ -38,11 +38,21 @@ class AllDistinct(Function):
         Initialize AllDistinct(S), the claim that all elements of S
         are distinct.
         '''
-        # If S is a Python list or tuple,
-        # wrap it so it stays a single unit
-        if isinstance(S, (list, tuple)):
-            from proveit import ExprTuple
-            S = ExprTuple(*S)
 
-        super().__init__(AllDistinct._operator_, [S], styles=styles)
+        super().__init__(AllDistinct._operator_, S, styles=styles)
         self.set = S
+
+    def _function_formatted(self, format_type, **kwargs):
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        formatted_operator = self.operator.formatted(format_type, fence=True)
+        lparen = r'\left(' if format_type=='latex' else '('
+        rparen = r'\right)' if format_type=='latex' else ')'
+        if (hasattr(self, 'operand') and 
+                not isinstance(self.operand, ExprTuple)):
+            formatted_operand = self.operand.formatted(
+                    format_type, fence=True) # prev False
+        else:
+            formatted_operand = self.operands.formatted(
+                    format_type, fence=True, sub_fence=False) # prev both False
+
+        return (formatted_operator + lparen + formatted_operand + rparen)
