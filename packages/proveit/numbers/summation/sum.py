@@ -197,7 +197,7 @@ class Sum(OperationOverInstances):
                      a: self.domain.lower_bound})
         if (isinstance(self.domain,Interval) and
                 self.instance_param not in free_vars(summand)
-                and self.non_domain_condition()==TRUE):
+                and len(self.conditions)==1):
             # Trivial sum: summand independent of parameter.
             _a = self.domain.lower_bound
             _b = self.domain.upper_bound
@@ -807,5 +807,5 @@ class Sum(OperationOverInstances):
         _b = self.domain.upper_bound
         _f = Lambda(self.index, self.summand)
         membership = deduce_as_mon_dec_func(_f, domain=IntervalCC(subtract(_a, one), _b))
-        _S = membership.domain.domain
+        _S = membership.domain
         return integral_upper_bound_of_sum.instantiate({a:_a, b:_b, f:_f, S:_S})

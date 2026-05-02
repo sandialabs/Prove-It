@@ -7,7 +7,7 @@ from proveit import a, b, c, i, j, k, n, v, x, y, K, V
 from proveit.logic import Equals, InSet
 from proveit.numbers import zero, one, Add
 from proveit.abstract_algebra import GroupAdd
-from proveit.linear_algebra import VecSpaces, VecOperation
+from proveit.linear_algebra import IsVecSpace, VecOperation
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, group_commutation, group_commute,
@@ -38,8 +38,21 @@ class VecAdd(GroupAdd, VecOperation):
         
         Handles doubly-nested scalar multiplication.
         '''
+        from proveit.logic import And
         from proveit.numbers import Complex
-        if all(InSet(operand, Complex).proven() for operand in self.operands):
+        all_in_complex = True
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if not And(ExprRange(
+                        operand.parameter,
+                        InSet(operand.body, Complex),
+                        start_index = operand.start_index,
+                        end_index = operand.end_index)).proven():
+                    all_in_complex = False
+            elif not InSet(operand, Complex).proven():
+                all_in_complex = False
+
+        if all_in_complex:
             # If the operands are all complex numbers, this will
             # VecAdd will reduce to number Add.
             return self.number_add_reduction()
@@ -75,8 +88,8 @@ class VecAdd(GroupAdd, VecOperation):
         
         terms = self.terms
         if vec_space is None:
-            vec_space = VecSpaces.common_known_vec_space(terms, field=field)
-        field = VecSpaces.known_field(vec_space)
+            vec_space = IsVecSpace.common_known_vec_space(terms, field=field)
+        field = IsVecSpace.known_field(vec_space)
         all_scaled = all((isinstance(term, ScalarMult)
                           or (isinstance(term, ExprRange) and
                               isinstance(term.body, ScalarMult)))
@@ -136,8 +149,8 @@ class VecAdd(GroupAdd, VecOperation):
         from . import (binary_permutation, leftward_permutation,
                                  rightward_permutation)
         terms = self.terms
-        vec_space = VecSpaces.common_known_vec_space(terms)
-        field = VecSpaces.known_field(vec_space)
+        vec_space = IsVecSpace.common_known_vec_space(terms)
+        field = IsVecSpace.known_field(vec_space)
         return apply_commutation_thm(
             self, init_idx, final_idx, binary_permutation,
             leftward_permutation, rightward_permutation,
@@ -261,9 +274,9 @@ class VecAdd(GroupAdd, VecOperation):
         from proveit.linear_algebra import (
                 ScalarMult, TensorProd)
         
-        _V = vec_space = VecSpaces.common_known_vec_space(
+        _V = vec_space = IsVecSpace.common_known_vec_space(
                 self.terms, field=field)
-        _K = VecSpaces.known_field(vec_space)
+        _K = IsVecSpace.known_field(vec_space)
         if all(isinstance(term, ScalarMult) and term.scalar == the_factor
                for term in self.terms):
             from proveit.linear_algebra.scalar_multiplication import (
@@ -368,8 +381,8 @@ class VecAdd(GroupAdd, VecOperation):
             _x = _a.scaled if isinstance(_a, ScalarMult) else _a
             _y = _b.scaled if isinstance(_b, ScalarMult) else _b
             if Equals(InnerProd(_x, _y), zero).proven():
-                vec_space = VecSpaces.known_vec_space(_a)
-                field = VecSpaces.known_field(vec_space)
+                vec_space = IsVecSpace.known_vec_space(_a)
+                field = IsVecSpace.known_field(vec_space)
                 return norm_of_sum_of_orthogonal_pair.instantiate(
                         {K:field, V:vec_space, a:_a, b:_b})                    
         raise NotImplementedError(

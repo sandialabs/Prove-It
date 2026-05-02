@@ -3,7 +3,7 @@ from proveit import (defaults, Literal, Operation,
                      SimplificationDirectives)
 from proveit import a, b, c, i, j, x, L, N
 from proveit.logic import Equals
-from proveit.relation import TransRelUpdater
+from proveit.relations import TransRelUpdater
 from proveit.numbers import (
         two, Abs, Add, Div, Integer, LessEq, NumberOperation,
         readily_provable_number_set, Real, ZeroSet)

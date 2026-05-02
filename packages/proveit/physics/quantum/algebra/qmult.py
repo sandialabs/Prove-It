@@ -3,14 +3,15 @@ from proveit import (Operation, Literal, Lambda, ExprTuple, ExprRange,
                      prover, equality_prover, relation_prover)
 from proveit import (a, b, c, f, i, j, l, m, n, A, B, C, M, Q, U, X, Y,
                      alpha)
-from proveit.relation import TransRelUpdater
-from proveit.logic import Equals, InSet, ClassMembership, InClass, CartExp
+from proveit.relations import TransRelUpdater
+from proveit.logic import Equals, InSet, CartExp
+from proveit.classes import ClassMembership
 from proveit.numbers import Complex, subtract, one, two, Exp
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
-from proveit.linear_algebra import (VecSpaces, VecAdd, VecSum, LinMap,
+from proveit.linear_algebra import (IsVecSpace, VecAdd, VecSum, LinMaps,
                                     MatrixSpace, Norm, 
-                                    HilbertSpaces, Hspace)
+                                    IsHilbertSpace, Hspace)
 
 class Qmult(Operation):
     '''
@@ -85,9 +86,9 @@ class Qmult(Operation):
         '''
         from proveit.linear_algebra import ScalarMult
         from proveit.physics.quantum import (
-                Bra, Ket, HilbertSpaces,
+                Bra, Ket, IsHilbertSpace,
                 varphi, var_ket_psi)
-        yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
+        yield_known_hilbert_spaces = IsHilbertSpace.yield_known_hilbert_spaces
         
         if self.operands.is_single():
             # Handle unary cases
@@ -104,7 +105,7 @@ class Qmult(Operation):
                         Ket(operand.operand)):
                     return qmult_of_bra.instantiate(
                             {Hspace:_Hspace, varphi:operand.operand})
-            elif InClass.has_known_membership(
+            elif InSet.has_known_membership(
                     operand, domain_type=MatrixSpace._operator_):
                 # Qmult of a matrix.  It equates to a lambda
                 # map, but this isn't considered a simplification.
@@ -190,7 +191,7 @@ class Qmult(Operation):
     def projection(self,**defaults_config):
         from . import qmult_op_ket, ket_self_projection
         from proveit.physics.quantum import (
-                Bra, Ket, HilbertSpaces, var_ket_psi,psi)
+                Bra, Ket, IsHilbertSpace, var_ket_psi,psi)
         from proveit.logic import Equals
         if not self.operands.is_double():
             raise ValueError("'projection' method only works when there are two operands")
@@ -199,7 +200,7 @@ class Qmult(Operation):
         linmap_eq = Qmult(M).linmap_reduction()
        # except ValueError:
         #    pass
-        yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
+        yield_known_hilbert_spaces = IsHilbertSpace.yield_known_hilbert_spaces
         for _Hspace in yield_known_hilbert_spaces(ket):
             if isinstance(M, Bra) and M.operand==ket.operand and ket_self_projection.is_usable():
             #if M.operand==ket.operand:
@@ -221,20 +222,19 @@ class Qmult(Operation):
         '''
         Equate the Qmult to a linear map, if possible.
         '''
-        from proveit.physics.quantum import QmultCodomain
         # In the process of proving that 'self' is in QmultCodomain,
         # it will prove it is a linear map if it can.
-        QmultCodomain.membership_object(self).conclude()
+        IsProperQmult(self).conclude()
         from proveit.physics.quantum import (
-                Bra, Ket, HilbertSpaces, varphi)
+                Bra, Ket, IsHilbertSpace, varphi)
         #from proveit.physics.quantum.algebra import Hspace
         from . import qmult_of_matrix, qmult_of_bra_as_map
 
-        yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
+        yield_known_hilbert_spaces = IsHilbertSpace.yield_known_hilbert_spaces
         if self.operands.is_single():
             # Unary Qmult
             operand = self.operand
-            for mspace_membership in InClass.yield_known_memberships(
+            for mspace_membership in InSet.yield_known_memberships(
                     operand, domain_type=MatrixSpace._operator_):
                 # Qmult of a matrix is the linear map
                 # represented by the matrix.
@@ -261,15 +261,14 @@ class Qmult(Operation):
         Prove that this Qmult is in a vector space (e.g., if it is
         a ket).
         '''
-        from proveit.physics.quantum import QmultCodomain
         # In the process of proving that 'self' is in QmultCodomain,
         # it will prove it is a vector in a Hilbert space if
         # appropriate.
-        QmultCodomain.membership_object(self).conclude()
+        IsProperQmult(self).conclude()
         if vec_space is not None:
             return InSet(self, vec_space).prove()
-        return InSet(self, 
-                     VecSpaces.known_vec_space(self, field=field)).prove()
+        return InSet(
+            self, IsVecSpace.known_vec_space(self, field=field)).prove()
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
@@ -336,7 +335,7 @@ class Qmult(Operation):
         
         Also see scalar_mult_factorization.
         '''
-        from . import (QmultCodomain, qmult_pulling_scalar_out_front,
+        from . import (qmult_pulling_scalar_out_front,
                        qmult_pulling_scalars_out_front,
                        qmult_scalar_association)
         expr = self
@@ -344,8 +343,8 @@ class Qmult(Operation):
         
         # First, lets prove the Qmult is well-formed and, in the
         # process, ensure to know which operands are Complex.
-        if not InClass(self, QmultCodomain).proven():
-            QmultCodomain.membership_object(self).conclude()
+        if not IsProperQmult(self).proven():
+            IsProperQmult(self).conclude()
         
         # Go through the operands in reverse order so the complex
         # factors will be in the original order out front in the end.
@@ -471,7 +470,7 @@ class Qmult(Operation):
         In the current implementation, we simply prove that
         normalization is preserved when applying a unitary.
         '''
-        from proveit.physics.quantum import HilbertSpaces, var_ket_psi
+        from proveit.physics.quantum import IsHilbertSpace, var_ket_psi
         from . import state_space_preservation, normalization_preservation
         if not self.operands.is_double():
             raise NotImplementedError(
@@ -479,7 +478,7 @@ class Qmult(Operation):
                     "for binary Qmults, specifically a unitary applied "
                     "to a normalized vector")
         vec = self.operands[1]
-        for _H in HilbertSpaces.yield_known_hilbert_spaces(vec):
+        for _H in IsHilbertSpace.yield_known_hilbert_spaces(vec):
             if (isinstance(_H, CartExp) and _H.base == Complex):
                 _n = _H.exponent
                 _alpha = Norm(vec).computed()
@@ -494,41 +493,31 @@ class Qmult(Operation):
                 "to a normalized vector in a known Hilbert space that "
                 "is the Cartesian exponent of two to a NaturalPos power.")
 
-class QmultCodomainLiteral(Literal):
+class IsProperQmult(ClassMembership):
     '''
     A product (Qmult, specifically) of a sequence of bras, kets, 
     and/or quantum operators, if and only if they are in a valid 
     sequence (well-formed), will yield a vector in a vector space over 
     complex numbers (including the complex numbers themselves), 
     or a linear map between vectors between vectors spaces over complex
-    numbers.  We regard this as a proper class called the QmultCodomain.      
-    '''
-    def __init__(self, *, styles=None):
-        Literal.__init__(self, 'Q*', r'\mathcal{Q^*}', styles=styles)
+    numbers.  We regard this as a proper class we denote as Q*..
 
-    @property
-    def is_proper_class(self):
-        '''
-        Vector spaces are proper classes. This indicates that
-        InClass should be used instead of InSet when this is a domain.
-        '''
-        return True
+    This may become obsolete in the future, shifting everything
+    into vector operations but allow for a Dirac notation.
+    '''
+
+    _operator_ = Literal(
+            string_format=r'IsProperQmult', latex_format=r'\textrm{IsProperQmult}',
+            theory=__file__)
     
-    def membership_object(self, element):
-        return QmultCodomainMembership(element)
+    def __init__(self, element, *, styles=None):
+        ClassMembership.__init__(self, self._operator_, element)
 
-class QmultCodomainMembership(ClassMembership):
-    '''
-    Defines methods that apply to InClass(element, QmultCodomain) 
-    objects via InClass.__getattr__ which calls 
-    QmultCodomain.membership_object(element)
-    to return a QmultCodomainMembership object.
-    '''
-
-    def __init__(self, element):
-        from . import QmultCodomain
-        ClassMembership.__init__(self, element, QmultCodomain)
-
+    def formatted_class(self, format_type):
+        if format_type == 'latex':
+            return r'\mathcal{Q^*})'
+        return r'Q*'
+        
     def side_effects(self, judgment):
         return # generator yielding nothing
         yield
@@ -542,9 +531,7 @@ class QmultCodomainMembership(ClassMembership):
         from proveit import ProofFailure
         from proveit.numbers import deduce_in_number_set
         from proveit.physics.quantum import (
-                Bra, Ket, varphi, var_ket_psi, HilbertSpaces)
-        from proveit.physics.quantum.algebra import (
-                QmultCodomain)
+                Bra, Ket, varphi, var_ket_psi, IsHilbertSpace)
         from . import (
                 qmult_complex_in_QmultCodomain,
                 qmult_complex_left_closure, qmult_complex_right_closure,
@@ -562,7 +549,7 @@ class QmultCodomainMembership(ClassMembership):
                 op_in_QmultCodomain, multi_qmult_def
                 )
         element = self.element
-        yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
+        yield_known_hilbert_spaces = IsHilbertSpace.yield_known_hilbert_spaces
         
         if isinstance(element, Qmult):
             if element.operands.num_entries() == 0:
@@ -602,7 +589,7 @@ class QmultCodomainMembership(ClassMembership):
                 if isinstance(op, Qmult):
                     # Prove memberships of the nested unary Qmult 
                     # to fascilitate the cases below.
-                    QmultCodomain.membership_object(op).conclude()
+                    IsProperQmult(op).conclude()
                     for _Hspace in yield_known_hilbert_spaces(op):
                         # Propagate Hspace membership
                         qmult_ket_is_ket.instantiate(
@@ -623,7 +610,7 @@ class QmultCodomainMembership(ClassMembership):
                 
                 for _attempt in (0, 1):               
                     # Handle unary Qmult on a matrix.
-                    for mspace_membership in InClass.yield_known_memberships(
+                    for mspace_membership in InSet.yield_known_memberships(
                             op, domain_type=MatrixSpace._operator_):
                         mspace = mspace_membership.domain
                         _m, _n = (mspace.operands['rows'], 
@@ -688,8 +675,8 @@ class QmultCodomainMembership(ClassMembership):
                 
                 # Prove memberships of unary Qmult on each of the
                 # operands to fascilitate the various cases below.
-                QmultCodomain.membership_object(Qmult(op1)).conclude()
-                QmultCodomain.membership_object(Qmult(op2)).conclude()
+                IsProperQmult(Qmult(op1)).conclude()
+                IsProperQmult(Qmult(op2)).conclude()
                 
                 # Handle the case where one of the operands is complex.
                 thm = None
@@ -738,12 +725,11 @@ class QmultCodomainMembership(ClassMembership):
                             raise NotImplementedError(
                                     "Bra, %s, with no known Hilbert space "
                                     "membership for the corresponding Ket. "
-                                    "Cannot prove %s membership in %s"%
-                                    (op2, element, QmultCodomain))
+                                    "Cannot prove IsMult(%s)"%
+                                    (op2, element))
                     if thm is not None:
                         # Just choose any valid Hilbert spaces (the 
-                        # last used one will do) for the QmultCodomain
-                        # membership proof.
+                        # last used one will do) for the IsProperQmult proof
                         _Hspace, _X = used_Hspaces
                         return thm.instantiate(
                                 {Hspace:_Hspace, X:_X,
@@ -754,7 +740,7 @@ class QmultCodomainMembership(ClassMembership):
                 if isinstance(op1, Bra):
                     # By proving the bra is in QmultCodomain, we
                     # get that it is a linear map as a side-effect.
-                    QmultCodomain.membership_object(Qmult(op1)).conclude()
+                    IsProperQmult(Qmult(op1)).conclude()
                 
                 # Next, handle the op-ket case.
                 # TODO: handle the ket-ket case.
@@ -825,19 +811,17 @@ class QmultCodomainMembership(ClassMembership):
                     partition_idx = subtract(expr_range.true_end_index, one)
                     partition = element.inner_expr().operands[-1].partition(
                             partition_idx)
-                    membership = InClass(partition.rhs, QmultCodomain)
+                    membership = IsProperQmult(partition.rhs)
                     if not membership.proven():
-                        QmultCodomain.membership_object(
-                                partition.rhs).conclude()
+                        IsProperQmult(partition.rhs).conclude()
                     membership = membership.prove()
                     return partition.sub_left_side_into(membership)
                 multi_def = multi_qmult_def.instantiate({m:_m, A:_A, B:_B},
                                                         preserve_all=True)
                 # Prove the binary case then substitute.
-                binary_membership = InClass(multi_def.rhs, QmultCodomain)
+                binary_membership = IsProperQmult(multi_def.rhs)
                 if not binary_membership.proven():
-                    QmultCodomain.membership_object(
-                            multi_def.rhs).conclude()
+                    IsProperQmult(multi_def.rhs).conclude()
                 binary_membership = binary_membership.prove()
                 # We need to propogate the side-effect memberships.
                 _rhs = multi_def.rhs
@@ -871,8 +855,8 @@ class QmultCodomainMembership(ClassMembership):
                 raise NotImplementedError(
                         "Bra, %s, with no known Hilbert space "
                         "membership for the corresponding Ket. "
-                        "Cannot prove %s membership in %s"%
-                        (element, self, QmultCodomain))                
+                        "Cannot prove IsProperQmult(%s)"%
+                        (element, self))
             
             # Handle complex numbers as as special case
             # (first, soft attempt).
@@ -882,7 +866,7 @@ class QmultCodomainMembership(ClassMembership):
 
             for _attempt in (0, 1):
                 # Handle kets
-                for _Hspace in HilbertSpaces.yield_known_hilbert_spaces(
+                for _Hspace in IsHilbertSpace.yield_known_hilbert_spaces(
                             element):
                     return ket_in_QmultCodomain.instantiate(
                             {Hspace:_Hspace, var_ket_psi:element})
@@ -926,17 +910,17 @@ def containing_hilbert_space_linmap_sets(qobj):
     between vectors spaces over complex fields (Hilbert spaces) which
     contain the given 'qobj'.
     '''
-    from proveit.linear_algebra.inner_products.hilbert_spaces import (
+    from proveit.linear_algebra.inner_products.is_hilbert_space import (
             deduce_as_hilbert_space)
     # Prove the membership of qobj in Q* to prove
     # the side-effect linear map membership as well.
     #QmultCodomain.membership_object(qobj).conclude()
     for qobj in (qobj, Qmult(qobj)):
-        for linmap_membership in InClass.yield_known_memberships(
-                qobj, domain_type=LinMap._operator_):
+        for linmap_membership in InSet.yield_known_memberships(
+                qobj, domain_type=LinMaps._operator_):
             linmap = linmap_membership.domain
             for vec_space in linmap.operands:
                 deduce_as_hilbert_space(vec_space)
-            if all(InClass(V, HilbertSpaces).proven() for V 
+            if all(IsHilbertSpace(V).proven() for V 
                    in linmap.operands):
                 yield linmap

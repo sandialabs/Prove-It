@@ -68,12 +68,6 @@ class Operation(Expression):
                 else:
                     self.operands = ExprTuple(operand_or_operands)
 
-        def raise_bad_operator_type(operator):
-            raise TypeError("An operator may not be an explicit Lambda map "
-                            "like %s; this is necessary to avoid a Curry's "
-                            "paradox." % str(operator))
-        if isinstance(self.operator, Lambda):
-            raise_bad_operator_type(self.operator)
         if (isinstance(self.operands, ExprTuple) and 
                 self.operands.is_single()):
             # This is a single operand.
@@ -735,7 +729,7 @@ class Operation(Expression):
         Prove this Operation equal to a form in which its operands
         have been simplified.
         '''
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         from proveit import ExprRange, NamedExprs
         from proveit.logic import is_irreducible_value
         if any(isinstance(operand, ExprRange) for operand in self.operands):
@@ -764,6 +758,25 @@ class Operation(Expression):
                             inner_operand = expr.inner_expr().operands[k]
                             expr = eq.update(inner_operand.simplification())
         return eq.relation
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False, 
+                               **defaults_config):
+        '''
+        Attempt to simplify 'self' under the assumption that it's
+        operands (sub-expressions) have already been simplified.
+        Returns the simplification as a Judgment equality with 'self'
+        on the left side.
+        
+        The Operation default will check for a 'application_simplification'
+        method of the operator andotherwise call
+        Expression.shallow_simplification.  Override for
+        Operation-class-specific simplification.
+        '''
+        if hasattr(self.operator, 'application_simplification'):
+            return self.operator.application_simplification(
+                self.operands, must_evaluate=must_evaluate)
+        return Expression.shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('operator_substituted', 'operator_substitute')
     def operator_substitution(self, equality, **defaults_config):
@@ -826,7 +839,7 @@ class Operation(Expression):
         one with the new sub-expressions.
         '''
         from proveit.logic import Equals
-        from proveit.relation import TransRelUpdater
+        from proveit.relations import TransRelUpdater
         assert len(new_sub_exprs)==2, (
                 "Expecting 2 sub-expressions: operator and operands")
         eq = TransRelUpdater(self)

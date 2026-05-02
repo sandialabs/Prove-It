@@ -1,3 +1,4 @@
+from .is_bijection import IsBijection
 from .bijections import Bijections
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

@@ -1,5 +1,6 @@
 from .prob import Prob
 from .prob_of_all import ProbOfAll
+from .is_sample_space import IsSampleSpace
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

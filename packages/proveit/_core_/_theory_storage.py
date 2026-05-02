@@ -1075,7 +1075,7 @@ class TheoryFolderStorage:
         color = 'Black'
         png = latex_to_png(latex, backend='dvipng', color=color, wrap=True)
         if png is None:
-            print("The LaTeX failed to complile. Make sure a LaTeX distribution "
+            print("The LaTeX failed to compile. Make sure a LaTeX distribution "
                   "is installed. To deduce the problem, try generating a "
                   "tmp.tex file with the following content:\n\n%s"%
                   '\n'.join(genelatex(latex, wrap=True)),

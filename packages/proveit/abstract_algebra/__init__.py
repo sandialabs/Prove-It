@@ -1,6 +1,7 @@
-from .groups import Groups, GroupAdd, GroupSum
-from .rings import Rings
-from .fields import Fields, FieldAdd, FieldMult, FieldSum, FieldProd
+from .groups import IsGroup, GroupAdd, GroupSum
+from .rings import IsRing
+from .fields import (IsField, FieldAdd, FieldMult, FieldSum, FieldProd,
+                     is_rational_field, is_real_field, is_complex_field)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

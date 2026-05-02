@@ -1,7 +1,7 @@
 from proveit import Literal, Operation, prover, equality_prover
 from proveit import m, n, K, V
 from proveit.logic import SetMembership, CartExp
-from proveit.linear_algebra import VecSpaces
+from proveit.linear_algebra import IsVecSpace
                                     
 class TensorExp(Operation):
     '''
@@ -76,14 +76,14 @@ class TesorExpMembership(SetMembership):
         from . import tensor_exp_inclusion, tensor_exp_of_cart_exp_inclusion
         if isinstance(self.domain.base, CartExp):
             _V = self.domain.base
-            _K = VecSpaces.known_field(_V)
+            _K = IsVecSpace.known_field(_V)
             _m = self.domain.base.exponent
             _n = self.domain.exponent
             inclusion = tensor_exp_of_cart_exp_inclusion.instantiate(
                     {V:_V, K:_K, m:_m, n:_n})
         else:
             _V = self.domain.base
-            _K = VecSpaces.known_field(_V)
+            _K = IsVecSpace.known_field(_V)
             _n = self.domain.exponent
             inclusion = tensor_exp_inclusion.instantiate(
                     {V:_V, K:_K, n:_n})
