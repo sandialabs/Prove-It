@@ -1,5 +1,5 @@
 from proveit import Operation, Literal, Lambda, U, f, g, prover, x, free_vars, c, n
-from proveit.numbers import Exp, Add, Real, Mult, Numeral, sqrt, frac, one, two, Neg, zero, greater, Rational, Natural, IntegerNeg, readily_provable_number_set
+from proveit.numbers import Exp, Add, Real, RealPos, Mult, Numeral, sqrt, frac, one, two, Neg, zero, greater, Rational, NaturalPos, Integer, readily_provable_number_set
 
 class IsDifferentiable(Operation):
     '''
@@ -59,27 +59,24 @@ class IsDifferentiable(Operation):
                 return Neg_isDiff.instantiate({U:self.U, f:_f})
             
             if isinstance(self.func.body,Exp):
-                print("expo is differentiable")
-                # from proveit.numbers.differentiation import exp_isDiff
-            
                 _f = Lambda(self.func.parameter, self.func.body.base)
                 _n = self.func.body.exponent
                 _nset = readily_provable_number_set(_n, default=Real)
 
-                if _n == frac(one,two):
-                    from proveit.numbers.differentiation import sqrt_isDiff
-                    return sqrt_isDiff.instantiate({U:self.U, f:_f, n:_n })
+                if NaturalPos.readily_includes(_nset):
+                    from proveit.numbers.differentiation import exp_natpos_isDiff
+                    return exp_natpos_isDiff.instantiate({U:self.U, f:_f, n:_n })
                 
-                if Natural.readily_includes(_nset):
-                    from proveit.numbers.differentiation import exp_pos_isDiff
-                    return exp_pos_isDiff.instantiate({U:self.U, f:_f, n:_n })
+                if Integer.readily_includes(_nset):
+                    from proveit.numbers.differentiation import exp_integer_isDiff
+                    return exp_integer_isDiff.instantiate({U:self.U, f:_f, n:_n })
                 
-                if IntegerNeg.readily_includes(_nset):
-                    from proveit.numbers.differentiation import exp_neg_isDiff
-                    return exp_neg_isDiff.instantiate({U:self.U, f:_f, n:_n })
+                if RealPos.readily_includes(_nset):
+                    from proveit.numbers.differentiation import exp_real_isDiff
+                    return exp_real_isDiff.instantiate({U:self.U, f:_f, n:_n })
 
                 # exit with an error      
                 
-                # return exp_isDiff.instantiate({U:self.U, f:_f, n:_n })
+               
             
             
