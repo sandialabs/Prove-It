@@ -1,0 +1,4 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.quantification.existence.existence_by_example
+proveit.logic.booleans.conjunction.conjunction_intro
