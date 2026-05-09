@@ -262,7 +262,7 @@ class Div(NumberOperation):
                                 Equals(denom, self.denominator).prove()]
                 return Div(numer, denom).cancelation(
                         num(abs(numer_int)), replacements=replacements,
-                        preserve_expr=self, alter_lhs=True)
+                        preserve_expr=self, preserve_self=False)
             gcd = math.gcd(numer_int, denom_int)
             expr = self
             eq = TransRelUpdater(expr)

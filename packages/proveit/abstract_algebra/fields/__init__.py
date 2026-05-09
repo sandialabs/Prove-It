@@ -1,4 +1,5 @@
-from .fields import Fields
+from .is_field import (IsField, is_rational_field, is_real_field,
+                       is_complex_field)
 from .field_add import FieldAdd
 from .field_mult import FieldMult
 from .field_sum import FieldSum

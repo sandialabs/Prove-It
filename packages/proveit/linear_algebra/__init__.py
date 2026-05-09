@@ -1,5 +1,5 @@
-from .vector_spaces import (VecSpaces, deduce_as_vec_space,
-                            containing_vec_space, including_vec_space)
+from .is_vector_space import (IsVecSpace, deduce_as_vec_space,
+                              containing_vec_space, including_vec_space)
 from .vec_operation import (VecOperation, readily_factorable,
                             deduce_canonically_equal)
 from .addition import VecAdd, VecSum, VecZero, vec_subtract
@@ -8,9 +8,9 @@ from .scalar_multiplication import ScalarMult
 from .vector_sets import (
         Span, SpanningSets, LinDepSets, Bases, Dim)
 from .inner_products import (
-        InnerProd, InnerProdSpaces, HilbertSpaces, Hspace,
+        InnerProd, IsInnerProdSpace, IsHilbertSpace, Hspace,
         Norm, OrthoNormBases, OrthoProj, Adj, deduce_as_inner_prod_space)
-from .linear_maps import (LinMap, LinMapAdd, Identity,
+from .linear_maps import (IsLinMap, LinMaps, LinMapAdd, Identity,
                           Commutator, AntiCommutator)
 from .matrices import (MatrixSpace, MatrixMult, MatrixExp,
                        Unitary, SpecialUnitary, Diagonal)

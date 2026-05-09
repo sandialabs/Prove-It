@@ -1,6 +1,5 @@
-from proveit.linear_algebra.inner_products import HilbertSpaces, Hspace
-from .algebra import (Qmult, QmultCodomain, Bra, Ket, 
-                      NumBra, NumKet)
+from proveit.linear_algebra.inner_products import IsHilbertSpace, Hspace
+from .algebra import Qmult, Bra, Ket, NumBra, NumKet
 from .quantum_ops import Meas, QubitRegisterSpace, RegisterU, RegisterSU
 
 # There is a tricky chicken-and-egg issue if we include these

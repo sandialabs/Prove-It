@@ -128,6 +128,16 @@ class DifferenceNonmembership(SetNonmembership):
         return nonmembership_equiv.instantiate(
             {x: self.element, A: _A, B: _B}, auto_simplify=False)
 
+    def as_defined(self):
+        '''
+        From self=[x ∉ (A - B))], return
+        [(x ∉ A) or (x ∈ B)]
+        '''
+        from proveit.logic import Or, InSet, NotInSet
+        element = self.element
+        _A, _B = self.domain.operands.entries        
+        return Or(NotInSet(element, _A), InSet(element, _B))
+
     @prover
     def unfold(self, **defaults_config):
         '''
