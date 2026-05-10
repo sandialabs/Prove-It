@@ -1,5 +1,6 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     composite_expression, prover, relation_prover)
+                     composite_expression, prover, equality_prover,
+                     relation_prover)
 from proveit import defaults, Literal, Function, ExprTuple
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
@@ -62,7 +63,7 @@ class Exists(OperationOverInstances):
 
     def _readily_provable(self):
         '''
-        Return True iff we should be able to conclude this existential
+        Return True iff we should readily be able to conclude this existential
         quantification.  Certain forms may be proved automatically
         (e.g., existence of a conservative definition).
         '''
@@ -356,18 +357,23 @@ class Exists(OperationOverInstances):
             raise NotImplementedError("multi-parameter existence unfolding will"
                                       " be implemented later.")
 
-    @prover
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Return definition of this existential quantifier as an
         equation with this existential quantifier on the left
         and a negated universal quantification on the right. This
-        handles two separate cases (along with cases with and w/out
-        conditions):
-            Exists(x, P(x)) vs. Exists(x, Not(P(x))),
+        handles 4 separate cases:
+            1. ∃_x P(x)
+            2. ∃_x ¬P(x)
+            3. ∃_{x | Q(x)} P(x)
+            4. ∃_{x | Q(x)} ¬P(x)
         which return:
-            Not(Forall(x, Not(P(x))) and Not(Forall(x, P(x))),
-        respectively.
+            1. ¬[∀_x ¬P(x)]
+            2. ¬[∀_x P(x)]
+            3. ¬[∀_{x | Q(x)} ¬P(x)]
+            4. ¬[∀_{x | Q(x)} P(x)]
+        respectively, as well as multi-parameter variants.
         '''
         from proveit.logic import Not
         if self.instance_params.is_single():
@@ -469,6 +475,13 @@ class Exists(OperationOverInstances):
             domain=self.domain,
             conditions=self.conditions)
         return not_exists_expr.conclude_as_folded()
+
+    def as_defined(self):
+        '''
+        Return the equivalent form that would result from
+        self.definition().rhs.
+        '''
+        return self.equivalent_universal_quantification()
 
     def equivalent_universal_quantification(self):
         from proveit.logic import Forall, Not

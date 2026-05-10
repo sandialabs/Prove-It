@@ -1,5 +1,6 @@
 from proveit import OperationOverInstances
-from proveit import Literal, Operation, Lambda, prover, relation_prover
+from proveit import (Literal, Operation, Lambda, 
+                     prover, equality_prover, relation_prover)
 from proveit import n, x, y, P, Q, S
 
 
@@ -28,12 +29,25 @@ class NotExists(OperationOverInstances):
             condition=condition, conditions=conditions,
             styles=styles, _lambda_map=_lambda_map)
 
+    def _readily_provable(self):
+        '''
+        Return True iff we should be able to conclude this NotExists;
+        specifically if the equilent universal quantification is readily
+        provable: 
+        '''
+        return self.equivalent_universal_quantification().readily_provable()
+
+    @prover
+    def conclude(self, **defaults_config):
+        if self.equivalent_universal_quantification().readily_provable():
+            return self.conclude_as_folded()
+
     @classmethod
     def _create_instance_expr_with_condition(cls, instance_expr, condition):
         '''
         The condition for an existential quantifier is effected via a
-        conjunction. That is, notexists_{x | Q(x)} P(x) is a stylized form
-        of notexists_{x} [Q(x) ∧ P(x).]
+        conjunction. That is, ∄_{x | Q(x)} P(x) is a stylized form
+        of ∄_{x} [Q(x) ∧ P(x).]
         Return the conjunction (e.g., Q(x) ∧ P(x) in the example).
         '''
         from proveit.logic import And
@@ -43,8 +57,8 @@ class NotExists(OperationOverInstances):
     def _extract_condition_and_instance_expr(cls, lambda_body):
         '''
         The condition for an existential quantifier is effected via a
-        conjunction. That is, notexists_{x | Q(x)} P(x) is a stylized form
-        of notexists_{x} [Q(x) ∧ P(x).]
+        conjunction. That is, ∄_{x | Q(x)} P(x) is a stylized form
+        of ∄_{x} [Q(x) ∧ P(x).]
         Return the condition and instance_expr as a tuple.  For the example,
         this would return (Q(x), P(x)).
         '''
@@ -60,19 +74,99 @@ class NotExists(OperationOverInstances):
         '''
         yield self.unfold  # unfolded form: Not(Exists(..))
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        Return definition of this NotExists quantifier as an
+        equation with this NotExists quantifier on the left
+        and a negated universal quantification on the right. This
+        handles two separate cases: with and w/out conditions:
+            1. ∄_x P(x)
+            2. ∄_{x | Q(x)} P(x)
+        which return:
+            1. ∀_x ¬P(x)
+            2. ∀_{x | Q(x)} ¬P(x)
+        respectively where w=var1 and z=var2,
+        as well as multi-parameter variants.
+        '''
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
+            else:
+                _Q = None
+            _P = Lambda(_x, self.instance_expr)
+            if _Q is None:
+                from . import not_exists_by_def
+                thm = not_exists_by_def
+            else:
+                from . import conditional_not_exists_by_def
+                thm = conditional_not_exists_by_def
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P})
+            else:
+                return thm.instantiate({x:_x, y:_y, P:_P, Q:_Q})
+        else:
+            raise NotImplementedError("multi-parameter existence definition will"
+                                      " be implemented later.")
+
     @prover
     def unfold(self, **defaults_config):
         '''
         Derive and return Not(Exists_{x | Q(x)} P(x)) from 
         NotExists_{x | Q(x)} P(x).
         '''
-        from . import not_exists_unfolding
-        _x = _y = self.instance_params
-        _n = _x.num_elements()
-        _Q = Lambda(_x, self.conditions)
-        _P = Lambda(_x, self.instance_expr)
-        return not_exists_unfolding.instantiate(
-            {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
+            else:
+                _Q = None
+            _P = Lambda(_x, self.instance_expr)
+            if _Q is None:
+                from . import not_exists_unfolding
+                thm = not_exists_unfolding
+            else:
+                from . import conditional_not_exists_unfolding
+                thm = conditional_not_exists_unfolding
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P}).derive_consequent()
+            else:
+                return thm.instantiate(
+                    {x:_x, y:_y, P:_P, Q:_Q}).derive_consequent()
+        else:
+            from . import multiparam_not_exists_unfolding
+            _x = _y = self.instance_params
+            _n = _x.num_elements()
+            _Q = Lambda(_x, self.conditions)
+            _P = Lambda(_x, self.instance_expr)
+            return multiparam_not_exists_unfolding.instantiate(
+                {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+
+    def as_defined(self):
+        '''
+        Return the equivalent form that would result from
+        self.definition().rhs.
+        '''
+        return self.equivalent_universal_quantification()
+
+    def equivalent_universal_quantification(self):
+        from proveit.logic import Forall, Not
+        if self.instance_params.is_single():
+            _x = self.instance_params[0]
+            if isinstance(self.instance_expr, Not):
+                _P = self.instance_expr.operand
+            else:
+                _P = Not(self.instance_expr)
+            if hasattr(self, 'condition'):
+                _Q = self.condition
+            else:
+                _Q = None
+            
+            if _Q is None:
+                return Forall(_x, _P)
+            else:
+                return Forall(_x, _P, condition=_Q)
 
     @prover
     def conclude_as_folded(self, **defaults_config):
@@ -80,13 +174,32 @@ class NotExists(OperationOverInstances):
         Prove and return some NotExists_{x | Q(x)} P(x) 
         from Not(Exists_{x | Q(x)} P(x)).
         '''
-        from . import not_exists_folding
-        _x = _y = self.instance_params
-        _n = _x.num_elements()
-        _Q = Lambda(_x, self.conditions)
-        _P = Lambda(_x, self.instance_expr)
-        return not_exists_folding.instantiate(
-            {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
+        if self.instance_params.is_single():
+            _x = _y = self.instance_params[0]
+            if hasattr(self, 'condition'):
+                _Q = Lambda(_x, self.condition)
+            else:
+                _Q = None
+            _P = Lambda(_x, self.instance_expr)
+            if _Q is None:
+                from . import not_exists_folding
+                thm = not_exists_folding
+            else:
+                from . import conditional_not_exists_folding
+                thm = conditional_not_exists_folding
+            if _Q is None:
+                return thm.instantiate({x:_x, y:_y, P:_P}).derive_consequent()
+            else:
+                return thm.instantiate(
+                    {x:_x, y:_y, P:_P, Q:_Q}).derive_consequent()
+        else:
+            from . import multiparam_not_exists_folding
+            _x = _y = self.instance_params
+            _n = _x.num_elements()
+            _Q = Lambda(_x, self.conditions)
+            _P = Lambda(_x, self.instance_expr)
+            return multiparam_not_exists_folding.instantiate(
+                {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
 
     @prover
     def conclude_via_forall(self, **defaults_config):
