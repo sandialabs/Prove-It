@@ -44,7 +44,7 @@ class Abs(NumberOperation):
         from proveit.logic import Equals
         assert isinstance(rhs, Abs)
         operand_cf = self.operand.canonical_form()
-        rhs_operand_cf = rhs.canonical_form()
+        rhs_operand_cf = rhs.operand.canonical_form()
         if operand_cf == rhs_operand_cf:
             # Prove equality using standard techniques.
             return NumberOperation._deduce_canonically_equal(self, rhs)
