@@ -1221,7 +1221,11 @@ if __name__ == '__main__':
         sys.stdout.flush()
         for path in all_paths:
             pv_it_dir = os.path.join(path, '__pv_it')
-            os.system('rm -fr "%s"'%pv_it_dir)
+            try:
+                shutil.rmtree(pv_it_dir)
+            except:
+                pass
+            #os.system('rm -fr "%s"'%pv_it_dir)
             '''
             # remove files from __pv_it folders except *.png, *.latex kinds.
             for sub in os.listdir(pv_it_dir):
