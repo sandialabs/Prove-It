@@ -112,18 +112,21 @@ class NotInSet(Relation):
         '''
         return self.negated().prove()
     
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Set membership is axiomatically defined to be Boolean; non-membership
+        must be Boolean as well.
+        '''
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
-        Deduce and return that this 'not in' statement is in the set
-        of BOOLEANS. For example,
-        NotInSet(x, {1, 2, 3}).deduce_in_bool()
-        returns |- NotInSet(x, {1, 2, 3}) in Bool
+        Set non-membership is always Boolean.
         '''
         from . import not_in_set_is_bool
-        from proveit import x, S
-        return not_in_set_is_bool.instantiate(
-                {x: self.element, S: self.domain})
+        return not_in_set_is_bool.instantiate({x:self.element,
+                                               S:self.domain})
 
     @prover
     def unfold_not_in(self, **defaults_config):

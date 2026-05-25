@@ -89,6 +89,7 @@ class Equals(EquivRelation):
 
         # automatically derive the reversed form which is equivalent
         yield self.derive_reversed
+        yield self.derive_implication
         if self.rhs == FALSE:
             if self.lhs.proven(): # readily provable doesn't seem to work here
                 # derive FALSE given lhs=FALSE and lhs.
@@ -1072,6 +1073,14 @@ class Equals(EquivRelation):
         '''
         from . import lhs_via_equality
         return lhs_via_equality.instantiate({P: self.lhs, Q: self.rhs})
+    
+    @prover
+    def derive_implication(self, **defaults_config):
+        '''
+        From A = B, derive A ⇒ B.
+        '''
+        from . import impl_from_eq
+        return impl_from_eq.instantiate({A:self.lhs, B:self.rhs})
 
     def other_side(self, expr):
         '''

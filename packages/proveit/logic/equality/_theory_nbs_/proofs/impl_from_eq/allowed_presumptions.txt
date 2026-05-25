@@ -1,0 +1,13 @@
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.implication.false_antecedent_implication
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.implication.negated_true_antecedent_implication
+proveit.logic.booleans.implication.untrue_antecedent_implication
+proveit.logic.booleans.implication.self_implication
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.rhs_via_equality

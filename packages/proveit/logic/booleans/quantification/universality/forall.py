@@ -2,7 +2,7 @@ from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar, UnusableProof,
                      defaults, USE_DEFAULTS, ProofFailure,
                      prover, relation_prover, equality_prover)
-from proveit import k, n, x, A, B, P, Q, S
+from proveit import k, n, x, A, B, P, Q, S, Px
 from proveit._core_.proof import Generalization
 
 
@@ -91,10 +91,23 @@ class Forall(OperationOverInstances):
         assumptions of if another universal quantification has
         been proven with a more inclusive domain.
         '''
-        from proveit.logic import Not
+        from proveit.logic import Not, Implies, Equals
 
         if self._readily_provable_via_generalization():
             return True
+
+        if isinstance(self.instance_expr, Implies):
+            # As a special case that is easily checked, universally quantified
+            # implication can be derived from universally quantified equality.
+            _antecedent, _consequent = self.instance_expr.operands
+            _domains = self.domains if hasattr(self, 'domains') else None
+            for _A, _B in ((_antecedent, _consequent),
+                           (_consequent, _antecedent)):
+                univ_quant_equality = Forall(
+                    self.instance_params, Equals(_A, _B),
+                    domains=_domains, conditions=self.conditions)
+                if univ_quant_equality.proven():
+                    return True
 
         # Is this readily provable by cases?
         # Avoid an exponential blow-up when doing this *readily* provable
@@ -152,8 +165,29 @@ class Forall(OperationOverInstances):
         method, attempt to conclude this Forall statement
         via 'conclude_by_cases'.
         '''
-        from proveit.logic import SubsetEq
+        from proveit.logic import Implies, Equals, SubsetEq
         
+        if isinstance(self.instance_expr, Implies):
+            # As a special case that is easily checked, universally quantified
+            # implication can be derived from universally quantified equality.
+            _antecedent, _consequent = self.instance_expr.operands
+            _domains = self.domains if hasattr(self, 'domains') else None
+            _all_conditions = self.all_conditions()
+            for _A, _B in ((_antecedent, _consequent),
+                           (_consequent, _antecedent)):
+                univ_quant_equality = Forall(
+                    self.instance_params, Equals(_A, _B),
+                    domains=_domains, conditions=self.conditions)
+                if univ_quant_equality.proven():
+                    # By instantiating with incidental_automation turned on,
+                    # we should be able to derive this universally quantified
+                    # implication via `impl_from_eq` (which doesn't happen
+                    # without this nudge because `_instantiate_generically`
+                    # does not allow cascaded incidentals.
+                    univ_quant_equality.instantiate(
+                        incidental_automation=True,
+                        append_assumptions=_all_conditions)
+
         # Make sure we derive incidentals from the conditions
         # before checking of the generalization is readily provable
         # for Forall.conclude purposes.
@@ -488,14 +522,19 @@ class Forall(OperationOverInstances):
         is in the set of BOOLEANS, as all forall expressions are
         (they are taken to be false when not true).
         '''
-        from . import forall_in_bool, forall_with_conditions__is_bool
-        _x = self.instance_params
-        _P = Lambda(_x, self.instance_expr)
-        _n = _x.num_elements()
-        if self.conditions.num_entries() == 0:
-            return forall_in_bool.instantiate(
+        from . import forall_is_bool
+        with_expanded_condition = self.with_expanded_condition()
+        if self.instance_params.is_single():
+            _x = self.instance_param
+            inbool_stmt = forall_is_bool.instantiate(
+                {x:_x, P:Lambda(_x, with_expanded_condition.instance_expr)})
+        else:
+            from . import multiparam_forall_is_bool
+            _x = self.instance_params
+            _P = Lambda(_x, self.instance_expr)
+            _n = _x.num_elements()
+            inbool_stmt = multiparam_forall_is_bool.instantiate(
                 {n: _n, P: _P, x: _x})
-        _Q = Lambda(_x, self.condition)
-        return forall_with_conditions__is_bool.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x}, preserve_expr=self,
-                auto_simplify=True)
+        if self.has_compact_condition():
+            return inbool_stmt.inner_expr().element.with_compact_condition()
+        return inbool_stmt

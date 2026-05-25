@@ -314,6 +314,16 @@ class Or(Operation):
             {A: self.operands[0], B: self.operands[1]})
 
     @prover
+    def conclude_via_right(self, **defaults_config):
+        '''
+        Conclude that (A V B) from B.
+        '''
+        from . import or_if_right
+        assert self.operands.is_double()
+        return or_if_right.instantiate(
+            {A: self.operands[0], B: self.operands[1]})
+
+    @prover
     def conclude_via_demorgans(self, **defaults_config):
         '''
         # created by JML 6/28/19
@@ -408,16 +418,17 @@ class Or(Operation):
         From (A or B) as self, and assuming A => C, B => C, and A and B
         are Boolean, derive and return the conclusion, C.
         '''
-        from . import (singular_constructive_dilemma,
-                       singular_constructive_multi_dilemma)
+        from . import singular_constructive_dilemma
         if self.operands.is_double():
             return singular_constructive_dilemma.instantiate(
                 {A: self.operands[0], B: self.operands[1], C: conclusion},
                 preserve_expr=conclusion)
-        _A = self.operands
-        _m = _A.num_elements()
-        return singular_constructive_multi_dilemma.instantiate(
-                {m: _m, A: _A, C: conclusion}, preserve_expr=conclusion)
+        else:
+            from . import singular_constructive_multi_dilemma
+            _A = self.operands
+            _m = _A.num_elements()
+            return singular_constructive_multi_dilemma.instantiate(
+                    {m: _m, A: _A, C: conclusion}, preserve_expr=conclusion)
 
     @prover
     def derive_via_multi_dilemma(self, conclusion, **defaults_config):

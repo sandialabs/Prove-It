@@ -1,6 +1,6 @@
-from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     composite_expression, prover, equality_prover,
-                     relation_prover)
+from proveit import (Lambda, Conditional, Operation, OperationOverInstances, 
+                     Judgment, ProofFailure, free_vars, composite_expression,
+                     prover, equality_prover, relation_prover)
 from proveit import defaults, Literal, Function, ExprTuple
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
@@ -67,7 +67,6 @@ class Exists(OperationOverInstances):
         quantification.  Certain forms may be proved automatically
         (e.g., existence of a conservative definition).
         '''
-        from proveit import Operation, free_vars
         from proveit.logic import Equals, Forall
         if self.instance_params.is_single() and (
                 len(self.conditions) == 0 and
@@ -94,17 +93,10 @@ class Exists(OperationOverInstances):
     def conclude(self, **defaults_config):
         from proveit import Operation, free_vars
         from proveit.logic import Forall, Equals, SubsetEq
-        if self.instance_params.is_single() and (
-                len(self.conditions) == 0 and
-                isinstance(self.instance_expr, Equals) and
-                self.instance_expr.lhs == self.instance_param and
-                self.instance_param not in free_vars(self.instance_expr.rhs)):
-            # Existential for a conservative definition.
-            from . import conservative_def_existence
-            return conservative_def_existence.instantiate(
-                {x:self.instance_param, y:self.instance_expr.rhs})
-        elif self.equivalent_universal_quantification().readily_provable():
+        if self.equivalent_universal_quantification().readily_provable():
             return self.conclude_as_folded()
+        '''
+          # is this obsolete? not sure. may resurrect.
         elif self.instance_params.is_single() and (
                 len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Forall) and
@@ -125,6 +117,12 @@ class Exists(OperationOverInstances):
                  self.instance_param:Lambda(
                      self.instance_expr.instance_expr.lhs.operands,
                      self.instance_expr.instance_expr.rhs)})
+        '''
+        # Check for existence by equlity
+        try:
+            return self.conclude_via_equality()
+        except ValueError:
+            return None
         if (self.has_domain() and self.instance_params.is_single()
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
@@ -231,7 +229,6 @@ class Exists(OperationOverInstances):
         '''
         from proveit import free_vars, Lambda
         from proveit import n, P, alpha
-        from proveit.logic import And
         from proveit.core_expr_types import (x_1_to_n, y_1_to_n)
         from proveit.logic.booleans.quantification.existence import (
             skolem_elim)
@@ -290,11 +287,11 @@ class Exists(OperationOverInstances):
                     preserve_all=True).derive_consequent()
             else:
                 from proveit.logic.booleans.quantification.existence import (
-                    nary_skolem_elim)
+                    multi_skolem_elim)
                 _n = existential.instance_params.num_elements()
                 x_1_to__n = ExprTuple(x_1_to_n.basic_replaced({n: _n}))
                 y_1_to__n = ExprTuple(y_1_to_n.basic_replaced({n: _n}))
-                return nary_skolem_elim.instantiate(
+                return multi_skolem_elim.instantiate(
                     {n: _n, P: _P, alpha: _alpha,
                      x_1_to__n: skolem_constants,
                      y_1_to__n: existential.instance_params},
@@ -538,6 +535,29 @@ class Exists(OperationOverInstances):
             raise NotImplementedError("multi-parameter existence folding will"
                                       " be implemented later.")
 
+    @prover
+    def conclude_via_equality(self, **defaults_config):
+        '''
+        Conclude an return existence of the form
+        ∃_{x, y} (x = y)
+        ∃_{x, y} (y = x)
+        '''
+        from proveit.logic import Equals
+        if hasattr(self, 'instance_param') and (
+                isinstance(self.instance_expr, Equals) and
+                len(self.conditions) == 0):
+            instance_param = self.instance_param
+            lhs, rhs = self.instance_expr.lhs, self.instance_expr.rhs
+            if rhs == instance_param and instance_param not in free_vars(lhs):
+                from . import existence_by_reversed_equality
+                return existence_by_reversed_equality.instantiate(
+                    {x:instance_param, y:lhs})
+            if lhs == instance_param and instance_param not in free_vars(rhs):
+                from . import existence_by_equality
+                return existence_by_equality.instantiate(
+                    {x:instance_param, y:rhs})
+        raise ProofFailure(self, defaults.assumptions,
+                           "Not an existence form to conclude by equality")
 
     @prover
     def conclude_via_example(self, example_instance, **defaults_config):
@@ -569,9 +589,9 @@ class Exists(OperationOverInstances):
             _P = Lambda(_x, self.instance_expr)
             _y = composite_expression(example_instance)
             if hasattr(self, 'condition'):
-                from . import general_existence_by_example
+                from . import multi_existence_by_example
                 _Q = Lambda(_x, self.condition)
-                return general_existence_by_example.instantiate(
+                return multi_existence_by_example.instantiate(
                     {n: _n, x: _x, y: _y, P: _P, Q: _Q})
             else:
                 from . import multiparam_existence_by_example
@@ -670,85 +690,94 @@ class Exists(OperationOverInstances):
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
-        Deduce, then return, that this exists expression is in the set of BOOLEANS as
-        all exists expressions are (they are taken to be false when not true).
+        Attempt to deduce, then return, that this existence expression
+        is in the set of BOOLEANS, as all existence expressions are
+        (this property transfers from universal quantification).
         '''
-        from . import exists_is_bool, exists_with_conditions_is_bool
-        _x = self.instance_params
-        _P = Lambda(_x, self.instance_expr)
-        _n = _x.num_elements()
-        if len(self.conditions) == 0:
-            return exists_is_bool.instantiate(
-                {n: _n, P: _P, x: _x})
-        _Q = Lambda(_x, self.condition)
-        return exists_with_conditions_is_bool.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x}, preserve_expr=self,
-                auto_simplify=True)
+        from . import exists_is_bool
+        if self.instance_params.is_single():
+            with_expanded_condition = self.with_expanded_condition()
+            _x = self.instance_param
+            inst = exists_is_bool.instantiate(
+                {x:_x, P:Lambda(_x, with_expanded_condition.instance_expr)})
+            if self.has_compact_condition():
+                return inst.inner_expr().element.with_compact_condition()
+            return inst
+        else:
+            raise NotImplementedError("multi-parameter version will"
+                                      " be implemented later.")
 
     @prover
-    def substitute_instances(self, universality, **defaults_config):
+    def substitute_instance(self, new_instance_expr, **defaults_config):
         '''
-        Derive from this Exists operation, Exists_{..x.. in S | ..Q(..x..)..} P(..x..),
-        one that substitutes instance expressions given some
-        universality = forall_{..x.. in S | P(..x..), ..Q(..x..)..} R(..x..).
-                                            or forall_{..x.. in S | ..Q(..x..)..} P(..x..) = R(..x..).
-        Either is allowed in the theory of the existential quantifier.
-        Derive and return the following type of existential operation assuming universality:
-        Exists_{..x.. in S | ..Q(..x..)..} R(..x..)
-        Works also when there is no domain S and/or no conditions ..Q...
+        Given this Exists operation of the form ∃_x P(x),
+        derive and return ∃_x R(x) provided that ∀_x P(x) ⇒ R(x).
+        This is also generalizes for multiple parameters and conditional
+        quantifiers: from ∃_{x | Q(x)} P(x) to ∃_{x | Q(x)} R(x) given
+        ∀_{x | Q(x)} P(x) ⇒ R(x).
         '''
-        raise NotImplementedError("Need to test/update")
-        from . import existential_implication, no_domain_existential_implication
-        from proveit import Etcetera
-        from proveit.logic import Forall
-        from proveit._generic_ import InstanceSubstitutionException
-        if isinstance(universality, Judgment):
-            universality = universality.expr
-        if not isinstance(universality, Forall):
-            raise InstanceSubstitutionException(
-                "'universality' must be a forall expression", self, universality)
+        from . import existential_instance_weakening
+        if self.instance_params.is_single():
+            if hasattr(self, 'condition'):
+                from . import conditioned_existential_instance_weakening
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _Q = Lambda(_x, self.condition)
+                _R = Lambda(_x, new_instance_expr)
+                inst = conditioned_existential_instance_weakening.instantiate(
+                    {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
+            else:
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _R = Lambda(_x, new_instance_expr)
+                inst = existential_instance_weakening.instantiate(
+                    {P:_P,  R:_R, x:_x, y:_x, z:_x})
+        else:
+            _x = self.instance_params
+            _n = _x.num_elements()
+            _P = Lambda(_x, self.instance_expr)
+            _R = Lambda(_x, new_instance_expr)
+            if hasattr(self, 'condition'):
+                from . import (
+                    multiparam_conditioned_existential_instance_weakening)
+                _thm = multiparam_conditioned_existential_instance_weakening
+                _Q = Lambda(_x, self.condition)
+                inst = _thm.instantiate(
+                    {n: _n, x: _x, y: _x, z: _x, P: _P, Q: _Q, R:_R})
+            else:
+                from . import multiparam_existential_instance_weakening
+                inst = multiparam_existential_instance_weakening.instantiate(
+                    {n: _n, x: _x, y: _x, z:_x, P: _P, R:_R})
+        return inst.derive_consequent().derive_consequent()
 
-        if self.instance_expr in universality.conditions:
-            # map from the forall instance variables to self's instance
-            # variables
-            i_var_substitutions = {
-                forall_ivar: self_ivar for forall_ivar,
-                self_ivar in zip(
-                    universality.instance_vars,
-                    self.instance_vars)}
-            first_condition = universality.conditions[0].substituted(
-                i_var_substitutions)
-            if first_condition != self.instance_expr:
-                raise InstanceSubstitutionException(
-                    "The first condition of the 'universality' must match the instance expression of the Exists operation having instances substituted",
-                    self,
-                    universality)
-            if (len(universality.instance_vars) != len(self.instance_vars)):
-                raise InstanceSubstitutionException(
-                    "'universality' must have the same number of variables as the Exists operation having instances substituted",
-                    self,
-                    universality)
-            if universality.domain != self.domain:
-                raise InstanceSubstitutionException(
-                    "'universality' must have the same domain as the Exists having instances substituted",
-                    self,
-                    universality)
-            if ExpressionList(universality.conditions[1:]).substituted(
-                    i_var_substitutions) != self.conditions:
-                raise InstanceSubstitutionException(
-                    "'universality' must have the same conditions as the Exists operation having instances substituted, in addition to the Exists instance expression",
-                    self,
-                    universality)
-            _x = universality.instance_vars,
-            _y = self.instance_params
-            _P = Lambda(_y, self.instance_expr)
-            _Q = Lambda(_y, self.condition)
-            _R = Lambda(_y, universality.instance_expr.substituted(
-                i_var_substitutions))
-            _impl = existential_implication.instantiate(
-                {P: _P, Q: _Q, R: _R, S: self.domain, x: _x, y: _y, z: _y})
-            return _impl.derive_consequent().derive_consequent()
-        # Default to the OperationOverInstances version which works with
-        # universally quantified equalities.
-        return OperationOverInstances.substitute(
-            self, universality)
+    @prover
+    def substitute_condition(self, new_condition, **defaults_config):
+        '''
+        Given this Exists operation of the form ∃_{x | Q(x)} P(x),
+        derive and return ∃_{x | R(x)} P(x) provided that 
+        ∀_x P(x) ⇒ R(x).
+        This is also generalizes for multiple parameters.
+        '''
+        from . import existential_condition_weakening
+        if not hasattr(self, 'condition'):
+            raise ValueError("No 'condition' to substitute")
+
+        if self.instance_params.is_single():
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _Q = Lambda(_x, self.condition)
+                _R = Lambda(_x, new_condition)
+                inst = existential_condition_weakening.instantiate(
+                    {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
+        else:
+            from . import (
+                multiparam_existential_condition_weakening)
+            _x = self.instance_params
+            _n = _x.num_elements()
+            _P = Lambda(_x, self.instance_expr)
+            _R = Lambda(_x, new_condition)
+            _thm = multiparam_existential_condition_weakening
+            _Q = Lambda(_x, self.condition)
+            inst = _thm.instantiate(
+                {n: _n, x: _x, y: _x, z: _x, P: _P, Q: _Q, R:_R})
+        return inst.derive_consequent().derive_consequent()

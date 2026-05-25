@@ -1,8 +1,8 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     composite_expression, prover, relation_prover,
-                     equality_prover)
+                     ProofFailure, composite_expression, prover,
+                     relation_prover, equality_prover)
 from proveit import (defaults, Literal, Function, ExprTuple, USE_DEFAULTS,
-                     safe_dummy_vars)
+                     safe_dummy_vars, free_vars)
 from proveit import n, w, x, y, z, A, B, P, Q, R, S, Px
 
 
@@ -64,8 +64,37 @@ class UniqueExists(OperationOverInstances):
 
     @prover
     def conclude(self, **defaults_config):
+        # Check if we can conclude as 'folded'.
         if self.as_defined().readily_provable():
             return self.conclude_as_folded()
+        try:
+            return self.conclude_via_equality()
+        except ValueError():
+            return None
+
+    @prover
+    def conclude_via_equality(self, **defaults_config):
+        '''
+        Conclude an return existence of the form
+        ∃!_{x, y} (x = y)
+        ∃!_{x, y} (y = x)
+        '''
+        from proveit.logic import Equals
+        if hasattr(self, 'instance_param') and (
+                isinstance(self.instance_expr, Equals) and
+                len(self.conditions) == 0):
+            instance_param = self.instance_param
+            lhs, rhs = self.instance_expr.lhs, self.instance_expr.rhs
+            if rhs == instance_param and instance_param not in free_vars(lhs):
+                from . import unique_existence_by_reversed_equality
+                return unique_existence_by_reversed_equality.instantiate(
+                    {x:instance_param, y:lhs})
+            if lhs == instance_param and instance_param not in free_vars(rhs):
+                from . import unique_existence_by_equality
+                return unique_existence_by_equality.instantiate(
+                    {x:instance_param, y:rhs})
+        raise ProofFailure(self, defaults.assumptions,
+                           "Not an existence form to conclude by equality")
 
     def incidentals(self, judgment):
         '''
@@ -148,8 +177,8 @@ class UniqueExists(OperationOverInstances):
     @prover
     def conclude_as_folded(self, **defaults_config):
         '''
-        Prove and return some NotExists_{x | Q(x)} P(x) 
-        from Not(Exists_{x | Q(x)} P(x)).
+        Prove and return some ∃!_{x | Q(x)} P(x) 
+        from ∃_{x | Q(x)} P(x) ∧ ∀_{w, z | P(w), P(z)} (w=z)
         '''
         if self.instance_params.is_single():
             _y = self.instance_params[0]
@@ -206,3 +235,104 @@ class UniqueExists(OperationOverInstances):
             raise NotImplementedError(
                 "multi-parameter UniqueExists.as_defined() will"
                 " be implemented later.")
+
+    def readily_in_bool(self):
+        '''
+        Existential quantification is always boolean.
+        '''
+        return True
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Attempt to deduce, then return, that this unique existence expression
+        is in the set of BOOLEANS, as all existence expressions are
+        (this property transfers from universal quantification).
+        '''
+        from . import unique_exists_is_bool
+        if self.instance_params.is_single():
+            with_expanded_condition = self.with_expanded_condition()
+            _x = self.instance_param
+            inst = unique_exists_is_bool.instantiate(
+                {x:_x, P:Lambda(_x, with_expanded_condition.instance_expr)})
+            if self.has_compact_condition():
+                return inst.inner_expr().element.with_compact_condition()
+            return inst
+        else:
+            raise NotImplementedError("multi-parameter version will"
+                                      " be implemented later.")
+
+    @prover
+    def substitute_instance(self, new_instance_expr, **defaults_config):
+        '''
+        Given this Exists operation of the form ∃!_x P(x),
+        derive and return ∃!_x R(x) provided that ∀_x P(x) ⇒ R(x).
+        This is also generalizes for multiple parameters and conditional
+        quantifiers: from ∃!_{x | Q(x)} P(x) to ∃!_{x | Q(x)} R(x) given
+        ∀_{x | Q(x)} P(x) ⇒ R(x).
+        '''
+        from . import unique_existential_instance_weakening
+        if self.instance_params.is_single():
+            if hasattr(self, 'condition'):
+                from . import conditioned_unique_existential_instance_weakening
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _Q = Lambda(_x, self.condition)
+                _R = Lambda(_x, new_instance_expr)
+                inst = conditioned_unique_existential_instance_weakening.instantiate(
+                    {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
+            else:
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _R = Lambda(_x, new_instance_expr)
+                inst = unique_existential_instance_weakening.instantiate(
+                    {P:_P,  R:_R, x:_x, y:_x, z:_x})
+        else:
+            _x = self.instance_params
+            _n = _x.num_elements()
+            _P = Lambda(_x, self.instance_expr)
+            _R = Lambda(_x, new_instance_expr)
+            if hasattr(self, 'condition'):
+                from . import (
+                    multiparam_conditioned_unique_existential_instance_weakening)
+                _thm = multiparam_conditioned_unique_existential_instance_weakening
+                _Q = Lambda(_x, self.condition)
+                inst = _thm.instantiate(
+                    {n: _n, x: _x, y: _x, z: _x, P: _P, Q: _Q, R:_R})
+            else:
+                from . import multiparam_unique_existential_instance_weakening
+                inst = multiparam_unique_existential_instance_weakening.instantiate(
+                    {n: _n, x: _x, y: _x, z:_x, P: _P, R:_R})
+        return inst.derive_consequent().derive_consequent()
+    
+    @prover
+    def substitute_condition(self, new_condition, **defaults_config):
+        '''
+        Given this Exists operation of the form ∃!_{x | Q(x)} P(x),
+        derive and return ∃!_{x | R(x)} P(x) provided that 
+        ∀_x P(x) ⇒ R(x).
+        This is also generalizes for multiple parameters.
+        '''
+        from . import unique_existential_condition_weakening
+        if not hasattr(self, 'condition'):
+            raise ValueError("No 'condition' to substitute")
+
+        if self.instance_params.is_single():
+                _x = self.instance_param
+                _P = Lambda(_x, self.instance_expr)
+                _Q = Lambda(_x, self.condition)
+                _R = Lambda(_x, new_condition)
+                inst = unique_existential_condition_weakening.instantiate(
+                    {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
+        else:
+            from . import (
+                multiparam_unique_existential_condition_weakening)
+            _x = self.instance_params
+            _n = _x.num_elements()
+            _P = Lambda(_x, self.instance_expr)
+            _R = Lambda(_x, new_condition)
+            _thm = multiparam_unique_existential_condition_weakening
+            _Q = Lambda(_x, self.condition)
+            inst = _thm.instantiate(
+                {n: _n, x: _x, y: _x, z: _x, P: _P, Q: _Q, R:_R})
+        return inst.derive_consequent().derive_consequent()

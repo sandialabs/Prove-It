@@ -5,6 +5,7 @@ from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
 from proveit.util import OrderedSet
 from proveit.relations import Relation
 from proveit.classes import ClassMembership
+from proveit import x, S
 
 class InSet(Relation):
     '''
@@ -344,6 +345,21 @@ class InSet(Relation):
                 return known_membership
         return None # No match found.
 
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Set membership is axiomatically defined to be Boolean.
+        '''
+        return True
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Set membership is always Boolean.
+        '''
+        from . import in_set_is_bool
+        return in_set_is_bool.instantiate({x:self.element,
+                                           S:self.domain})
+
 class SetMembership:
     def __init__(self, element, domain):
         '''
@@ -435,16 +451,4 @@ class SetMembership:
         definition = self.definition()
         def_eq_rhs = definition.deduce_canonically_equal(rhs)
         return definition.apply_transitivity(def_eq_rhs)
-        
-    def readily_in_bool(self, **defaults_config):
-        '''
-        Unless this is overridden, we won't presume that the membership
-        is readily provable to be boolean.
-        '''
-        return False
 
-    @relation_prover
-    def deduce_in_bool(self, **defaults_config):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
-                self.__class__))

@@ -288,8 +288,7 @@ class Iff(TransitiveRelation):
         from . import eq_from_iff, eq_from_mutual_impl
         # eq_from_mutual_impl may make for a shorter proof; do it both 
         # ways (if both are usable)
-        if not eq_from_iff.is_fully_proven_and_usable():
-            return eq_from_mutual_impl.instantiate(
-                {A: self.A, B: self.B})
+        if eq_from_mutual_impl.is_fully_proven_and_usable():
+            eq_from_mutual_impl.instantiate({A: self.A, B: self.B})
         return eq_from_iff.instantiate(
-            {A: self.A, B: self.B})
+            {A: self.A, B: self.B}).derive_consequent()
