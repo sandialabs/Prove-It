@@ -450,7 +450,7 @@ class OperationOverInstances(Operation):
         elif arg_name == 'instance_expr':
             # return the inner instance expression after joining the
             # instance variables according to the style
-            return self.instance_expr
+            return self._instance_expr
         elif arg_name == 'domain' or arg_name == 'domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicit_domains(self)
@@ -481,38 +481,28 @@ class OperationOverInstances(Operation):
         if len(sub_expressions) != 2:
             raise ValueError("Expecting exactly two sub_expressions for an "
                              "OperationOverInstances object: an operator and "
-                             "operands with a single lambda_map entry.")
+                             "operands with a Lambda as the first entry.")
 
         implicit_operator = cls._implicit_operator()
         operator = sub_expressions[0]
         operands = sub_expressions[1]
-        
-        if (not isinstance(operands, ExprTuple) or 
-                not len(operands.entries) == 1):
-            raise ValueError("Expecting operands to have a single entry.")
 
         if isinstance(operands[0], Variable) and hasattr(cls, '_operator_'):
-            # If the operand is not a Variable, make an
+            # If the operand is a Variable, make an
             # Operation instead.  This can come up when creating
             # an InnerExpr replacement map when the inner expression
-            # the the operand of an OperationOverInstances.
+            # is the operator of an OperationOverInstances.
             return Function(cls._operator_, operands, styles=styles)
             
         lambda_map = operands[0]
-        if not isinstance(lambda_map, Lambda):
-            # If the operand isn't a Lambda, use Operation._make
-            # and create a gerneric function-style operation.
-            return Operation._make(core_info, sub_expressions,
-                                   styles=styles)
-        
-        if implicit_operator is None or operator != implicit_operator:
-            # If there is no implicit operator for the class or
-            # the operator is no longer that implicit operator, make
-            # a generic OperationOverInstance.
-            return OperationOverInstances(
-                    operator, None, None, 
-                    styles=styles, _lambda_map=lambda_map)
-        
+        if not isinstance(lambda_map, Lambda) or implicit_operator is None or (
+                operator != implicit_operator):
+            # If the operand isn't a Lambda or there is no implicit operator
+            # for the class or the operator is no longer that implicit
+            # operator then use Operation._make and create a gerneric
+            # function-style operation.
+            return Operation._make(core_info, sub_expressions, styles=styles)
+
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
         if ('_lambda_map' not in sig.parameters or
@@ -529,10 +519,9 @@ class OperationOverInstances(Operation):
                               Parameter.POSITIONAL_OR_KEYWORD):
                 npositional += 1
         npositional -= 1 # exclude 'self'
-        made_operation = cls(
+        return cls(
             *[None] * npositional,
             styles=styles, _lambda_map=lambda_map)
-        return made_operation
 
     def _build_canonical_form(self):
         '''
@@ -1239,21 +1228,21 @@ class OperationOverInstances(Operation):
     def with_condition_justification(self, justification):
         return self.with_styles(condition_justification=justification)
 
+    """
     def with_param_range_indices(self, start_index_or_indices,
                                 end_index_or_indices):
-        '''
-        Return a list of wrap conditions according to the current style setting.
-        '''
         if not isinstance(start_index_or_indices, Expression) or (
                 not isinstance(end_index_or_indices, Expression)):
             start_index_or_indices = composite_expression(start_index_or_indices)
             end_index_or_indices = composite_expression(end_index_or_indices)
         return self.with_styles(param_range_start=start_index_or_indices,
                                 param_range_end=end_index_or_indices)
+    """
 
     def wrap_condition_positions(self):
         '''
-        Return a list of wrap conditions according to the current style setting.
+        Return a list of wrap condition positions according to the current
+        style setting.
         '''
         return [int(pos_str) for pos_str in self.get_style(
             'wrap_condition_positions', '').strip('()').split(' ')
@@ -1299,7 +1288,7 @@ class OperationOverInstances(Operation):
              formatted_membership_op, formatted_class) = (
                 self.param_membership_formatting_info(format_type))
             # Note: there may be an expression range parameter 
-            # - that would have one enrty
+            # - that would have one entry
             has_multi_domain = (len(explicit_conditions) < len(self.conditions)
                                 and formatted_class is None)
             with defaults.temporary() as temp_defaults:
