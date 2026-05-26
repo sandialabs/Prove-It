@@ -274,12 +274,12 @@ class UniqueExists(OperationOverInstances):
         from . import unique_existential_instance_weakening
         if self.instance_params.is_single():
             if hasattr(self, 'condition'):
-                from . import conditioned_unique_existential_instance_weakening
+                from . import conditional_unique_existential_instance_weakening
                 _x = self.instance_param
                 _P = Lambda(_x, self.instance_expr)
                 _Q = Lambda(_x, self.condition)
                 _R = Lambda(_x, new_instance_expr)
-                inst = conditioned_unique_existential_instance_weakening.instantiate(
+                inst = conditional_unique_existential_instance_weakening.instantiate(
                     {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
             else:
                 _x = self.instance_param

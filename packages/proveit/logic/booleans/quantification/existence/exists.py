@@ -719,12 +719,12 @@ class Exists(OperationOverInstances):
         from . import existential_instance_weakening
         if self.instance_params.is_single():
             if hasattr(self, 'condition'):
-                from . import conditioned_existential_instance_weakening
+                from . import conditional_existential_instance_weakening
                 _x = self.instance_param
                 _P = Lambda(_x, self.instance_expr)
                 _Q = Lambda(_x, self.condition)
                 _R = Lambda(_x, new_instance_expr)
-                inst = conditioned_existential_instance_weakening.instantiate(
+                inst = conditional_existential_instance_weakening.instantiate(
                     {P:_P, Q:_Q, R:_R, x:_x, y:_x, z:_x})
             else:
                 _x = self.instance_param
@@ -739,8 +739,8 @@ class Exists(OperationOverInstances):
             _R = Lambda(_x, new_instance_expr)
             if hasattr(self, 'condition'):
                 from . import (
-                    multiparam_conditioned_existential_instance_weakening)
-                _thm = multiparam_conditioned_existential_instance_weakening
+                    multiparam_conditional_existential_instance_weakening)
+                _thm = multiparam_conditional_existential_instance_weakening
                 _Q = Lambda(_x, self.condition)
                 inst = _thm.instantiate(
                     {n: _n, x: _x, y: _x, z: _x, P: _P, Q: _Q, R:_R})
