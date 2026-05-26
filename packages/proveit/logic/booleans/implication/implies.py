@@ -147,7 +147,7 @@ class Implies(TransitiveRelation):
             # consequent is disprovable the antecedent better be as well.)
             return falsified_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
-        elif Equals(self.antecedent, self.consequent).readily_provable():
+        elif Equals(self.antecedent, self.consequent).proven():
             from proveit.logic.equality import impl_from_eq
             return impl_from_eq.instantiate({A:self.antecedent,
                                              B:self.consequent})
@@ -159,6 +159,14 @@ class Implies(TransitiveRelation):
                 # so we can prove the implication via Deduction.
                 return self.consequent.prove().as_implication(
                     self.antecedent)
+
+        if Equals(self.antecedent, self.consequent).readily_provable():
+            # Doing this after we've attempted proof by deduction above
+            # will prevent infinite 'conclude' recursion.
+            from proveit.logic.equality import impl_from_eq
+            return impl_from_eq.instantiate({A:self.antecedent,
+                                             B:self.consequent})
+
 
         try:
             # try to prove the implication via deduction.
