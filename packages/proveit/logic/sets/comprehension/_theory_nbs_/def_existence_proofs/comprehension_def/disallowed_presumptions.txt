@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.closure
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.booleans.conjunction.combine_conjunctions
+proveit.numbers.numerals.decimals.tuple_len_2
+proveit.numbers

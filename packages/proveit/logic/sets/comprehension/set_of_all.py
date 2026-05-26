@@ -1,30 +1,42 @@
 from proveit import (
-        ExprTuple, Function, Literal, OperationOverInstances,
-        Lambda, composite_expression, relation_prover, defaults)
+        ExprTuple, Operation, OperationOverInstances, Function, Literal,
+        Variable, Lambda, composite_expression, NamedExprs, free_vars,
+        relation_prover, defaults)
 from proveit import f, n, x, y, Q, R, S
+from proveit.logic.sets.membership import InSet
 
 
 class SetOfAll(OperationOverInstances):
     # operator of the SetOfAll operation
     _operator_ = Literal(string_format='SetOfAll',
                          latex_format=r'\textrm{SetOfAll}', theory=__file__)
-    _init_argname_mapping_ = {'instance_element': 'instance_expr'}
 
     def __init__(self, instance_param_or_params, instance_element,
                  domain=None, *, domains=None, condition=None,
-                 conditions=None, styles=None, _lambda_map=None):
+                 conditions=None, styles=None,
+                 _lambda_map=None):
         '''
         Create an expression representing the set of all
         instance_element for instance parameter(s) such that the conditions
         are satisfied:
-        {instance_element | conditions}_{instance_param_or_params ∈ S}
+        {f(x) | x ∈ S, Q(x)}, represented internally as
+        SetOfAll(x ↦ {'instance_element': f(x),
+                      'condition': (x ∈ S ∧ Q(x)))
         '''
+        if _lambda_map is not None:
+            # Remake from the first operand lambda map.
+            OperationOverInstances.__init__(
+                self, SetOfAll._operator_, None, None,
+                styles=styles, _lambda_map=_lambda_map)
+            self.instance_element = self._instance_expr
+            return
+            
         OperationOverInstances.__init__(
             self, SetOfAll._operator_, instance_param_or_params,
             instance_element, domain=domain, domains=domains,
             condition=condition, conditions=conditions,
             styles=styles, _lambda_map=_lambda_map)
-        self.instance_element = self.instance_expr
+        self.instance_element = self._instance_expr
         if hasattr(self, 'instance_param'):
             if not hasattr(self, 'domain'):
                 raise ValueError("SetOfAll requires a domain")
@@ -35,57 +47,245 @@ class SetOfAll(OperationOverInstances):
             assert False, ("Expecting either 'instance_param' or 'instance_params' "
                            "to be set")
 
+    @property
+    def instance_expr(self):
+        raise AttributeError('Use instance_element not instance_expr for SetOfAll')
+
+    @classmethod
+    def _create_operand(cls, instance_param_or_params, instance_expr, conditions):
+        assert conditions.num_entries() > 0
+        if conditions.is_single():
+            condition = conditions[0]
+        else:
+            from proveit.logic import And
+            condition = And(*conditions)
+        body = cls._create_instance_expr_with_condition(
+            instance_expr, condition)
+        return Lambda(instance_param_or_params, body)
+    
+    @classmethod
+    def _create_instance_expr_with_condition(cls, instance_expr, condition):
+        return NamedExprs(('instance_element', instance_expr),
+                          ('condition', condition))
+        
+    @classmethod
+    def _extract_condition_and_instance_expr(cls, lambda_body):
+        # Intenally, the instance expression is the condition.
+        assert isinstance(lambda_body, NamedExprs)
+        return lambda_body['condition'], lambda_body['instance_element']
+
+    def extract_my_init_arg_value(self, arg_name):
+        if arg_name == 'instance_element':
+            return self.operand.body['instance_element']
+        return OperationOverInstances.extract_my_init_arg_value(self, arg_name)
+
+    def style_options(self):
+        from proveit._core_.expression.style_options import StyleOptions
+        options = StyleOptions(self)
+        options.add_option(
+            name = 'wrap_param_positions',
+            description = (
+                    "position(s) at which wrapping of parameters is to occur; "
+                    "'2 n - 1' is after the nth operand, '2 n' is "
+                    "after the nth parameter."),
+            default = '()',
+            related_methods = (
+                    'with_param_wrapping_at', 
+                    'without_param_wrapping',
+                    'wrap_param_positions'))
+        options.add_option(
+            name = 'param_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapped parameters"),
+            default = 'left',
+            related_methods = ('with_condition_justification',
+                               'with_param_wrapping_at'))     
+        options.add_option(
+            name = 'suchthat_wrapping',
+            description = ("Wrap 'before' or 'after' the '|' that separates "
+                           "the parameter(s) from the condition(s) (or None)."),
+            default = None,
+            related_methods = ('with_wrap_after_suchthat',
+                               'with_wrap_before_suchthat',
+                               'without_suchthat_wrapping')),
+        options.add_option(
+            name = 'suchthat_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapping before/after '|' "
+                           "that divides parameter(s) and condition(s)"),
+            default = 'left',
+            related_methods = ('with_suchthat_justification',
+                               'with_wrap_after_suchthat',
+                               'with_wrap_before_suchthat'))
+        options.add_option(
+            name = 'wrap_condition_positions',
+            description = (
+                    "position(s) at which wrapping of conditions is to occur; "
+                    "'2 n - 1' is after the nth operand, '2 n' is "
+                    "after the nth condition."),
+            default = '()',
+            related_methods = (
+                    'with_condition_wrapping_at', 
+                    'without_condition_wrapping',
+                    'wrap_condition_positions'))
+        options.add_option(
+            name = 'condition_justification',
+            description = ("justify to the 'left', 'center', or 'right' "
+                           "in the array cells for wrapped conditions"),
+            default = 'left',
+            related_methods = ('with_condition_justification',
+                               'with_condition_wrapping_at')),
+        return options
+
+    def with_param_wrapping_at(self, *wrap_positions):
+        return self.with_styles(
+            wrap_param_positions='(' +
+            ' '.join(
+                str(pos) for pos in wrap_positions) +
+            ')')
+
+    def without_param_wrapping(self, *wrap_positions):
+        return self.with_param_wrapping_at()
+
+    def with_param_justification(self, justification):
+        return self.with_styles(param_justification=justification)
+
+    def wrap_param_positions(self):
+        '''
+        Return a list of wrap positions according to the current style setting.
+        '''
+        return [int(pos_str) for pos_str in self.get_style(
+            'wrap_param_positions', '').strip('()').split(' ') if pos_str != '']
+    
+    def with_wrap_before_suchthat(self):
+        return self.with_styles(suchthat_wrapping='before')
+
+    def with_wrap_after_suchthat(self):
+        return self.with_styles(suchthat_wrapping='after')
+    
+    def without_suchthat_wrapping(self):
+        return self.with_styles(suchthat_wrapping=None)
+
+    def with_suchthat_justification(self, justification):
+        return self.with_styles(suchthat_justification=justification)
+
+    def with_condition_wrapping_at(self, *wrap_positions):
+        return self.with_styles(
+            wrap_condition_positions='(' +
+            ' '.join(
+                str(pos) for pos in wrap_positions) +
+            ')')
+
+    def without_condition_wrapping(self, *wrap_positions):
+        return self.with_condition_wrapping_at()
+
+    def with_condition_justification(self, justification):
+        return self.with_styles(condition_justification=justification)
+
+    """
+    def with_param_range_indices(self, start_index_or_indices,
+                                end_index_or_indices):
+        if not isinstance(start_index_or_indices, Expression) or (
+                not isinstance(end_index_or_indices, Expression)):
+            start_index_or_indices = composite_expression(start_index_or_indices)
+            end_index_or_indices = composite_expression(end_index_or_indices)
+        return self.with_styles(param_range_start=start_index_or_indices,
+                                param_range_end=end_index_or_indices)
+    """
+
+    def wrap_condition_positions(self):
+        '''
+        Return a list of wrap condition positions according to the current
+        style setting.
+        '''
+        return [int(pos_str) for pos_str in self.get_style(
+            'wrap_condition_positions', '').strip('()').split(' ')
+            if pos_str != '']
+
     def _formatted(self, format_type, fence=False, **kwargs):
-        out_str = ''
-        num_param_mem_cond_entries, formatted_membership_op, formatted_class = (
-            self.param_membership_formatting_info(format_type))
+        # style call to wrap the expression after the parameters
+        suchthat_wrapping = self.get_style('suchthat_wrapping', 'No')
+        if suchthat_wrapping == 'No': suchthat_wrapping=None
+        suchthat_justification = self.get_style('suchthat_justification', 'left')
+        param_justification = self.get_style('param_justification', 'left')
+        condition_justification = self.get_style('condition_justification', 'left')
         instance_element = self.instance_element
-        param_membership_conditions = ExprTuple(
-            *self.conditions[:num_param_mem_cond_entries])
-        explicit_conditions = ExprTuple(
-            *self.conditions[num_param_mem_cond_entries:])
-        inner_fence = (explicit_conditions.num_entries() > 0)
-        has_multi_domain = (formatted_class is None)
-        if hasattr(self, 'condition'):
-            with defaults.temporary() as temp_defaults:
-                # Add the condition as an assumption when formatting 
-                # the instance expression.
-                temp_defaults.assumptions = defaults.assumptions + (
-                        self.condition,)
-                formatted_instance_element =  instance_element.formatted(
-                    format_type, fence=inner_fence)
-        else:
-            formatted_instance_element = instance_element.formatted(
-                    format_type, fence=inner_fence)
+
+        (param_membership_conditions, explicit_conditions, 
+         formatted_membership_op, formatted_class) = (
+            self.param_membership_formatting_info(format_type))
+        # Note: there may be an expression range parameter 
+        # - that would have one entry
+        has_multi_domain = (len(explicit_conditions) < len(self.conditions)
+                            and formatted_class is None)
+        with defaults.temporary() as temp_defaults:
+            # Add the conditions as assumptions when formatting 
+            # the instance expression.
+            temp_defaults.automation = False
+            temp_defaults.assumptions = defaults.assumptions + (
+                    self.conditions)
+            formatted_instance_elem =  instance_element.formatted(
+                format_type, fence=True)
+
         if format_type == 'latex':
-            out_str += r"\left\{"
+            out_str = r"\left\{"
         else:
-            out_str += "{"
-        out_str += formatted_instance_element
-        if explicit_conditions.num_entries() > 0:
-            formatted_conditions = explicit_conditions.formatted(
-                format_type, fence=False)
+            out_str = "{"
+        out_str += formatted_instance_elem
+
+        if format_type == 'latex' and suchthat_wrapping is not None:
+            out_str += r'\scriptsize \begin{array}{%s}'%suchthat_justification[0]
+
+        if suchthat_wrapping == 'before':
             if format_type == 'latex':
-                out_str += r'~|~'
+                out_str += r'\\'
+            out_str += '\n'
+        else:
+            if format_type == 'latex':
+                out_str += '~'
             else:
-                out_str += ' s.t. '  # such that
-            out_str += formatted_conditions
+                out_str += ' '
+        out_str += "|"
+        if suchthat_wrapping == 'after':
+            if format_type == 'latex':
+                out_str += r'\\'
+            out_str += '\n'
+        else:
+            if format_type == 'latex':
+                out_str += '~'
+            else:
+                out_str += ' '
+
+        if has_multi_domain:
+            out_str += param_membership_conditions.formatted(
+                format_type, operator_or_operators=',', 
+                wrap_positions=self.wrap_param_positions(),
+                justification=param_justification, fence=False)
+        else:
+            # 1 domain for all instance parameters
+            out_str += self.instance_params.formatted(
+                format_type, operator_or_operators=',', 
+                wrap_positions=self.wrap_param_positions(), 
+                justification=param_justification, fence=False)
+            assert (formatted_membership_op == 
+                    InSet._operator_.formatted(format_type))
+            out_str += ' %s '%formatted_membership_op
+            out_str += formatted_class
+        out_str += ', '
+        if len(explicit_conditions) > 0:
+            wrap_condition_positions = self.wrap_condition_positions()
+            if len(wrap_condition_positions) > 0 and format_type == 'latex':
+                out_str += r'\scriptsize'
+            out_str += explicit_conditions.formatted(
+                format_type, fence=False, operator_or_operators=',', 
+                wrap_positions=self.wrap_condition_positions(),
+                justification=condition_justification)
+        if format_type == 'latex' and suchthat_wrapping is not None:
+            out_str += r'\end{array}'
         if format_type == 'latex':
             out_str += r"\right\}"
         else:
             out_str += "}"
-        out_str += '_{'
-        instance_param_or_params = self.instance_param_or_params
-        if has_multi_domain:
-            out_str += param_membership_conditions.formatted(
-                    format_type, operator_or_operators=',', fence=False)
-        else:
-            # all in the same domain
-            out_str += instance_param_or_params.formatted(
-                format_type, operator_or_operators=',', fence=False)
-            out_str += ' %s '%formatted_membership_op
-            out_str += formatted_class
-        out_str += '}'
         return out_str
 
     @relation_prover
