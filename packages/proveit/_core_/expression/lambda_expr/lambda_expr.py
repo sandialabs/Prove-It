@@ -1132,23 +1132,18 @@ class Lambda(Expression):
     @equality_prover('substituted', 'substitute')
     def substitution(self, universal_eq, **defaults_config):
         '''
-        Equate this Lambda, 
-        x_1, ..., x_n -> f(x_1, ..., x_n) if Q(x_1, ..., x_n),
-        with one that substitutes the body given some universal_eq:
-            forall_{x_1, ..., x_n | Q(x_1, ..., x_n)} 
-                f(x_1, ..., x_n) = g(x_1, ..., x_n).
-        Derive and return the following type of equality assuming 
-        universal_eq:
-        x_1, ..., x_n -> f(x_1, ..., x_n) if Q(x_1, ..., x_n)
-          = x_1, ..., x_n -> g(x_1, ..., x_n) if Q(x_1, ..., x_n).
-        
-        The Q conditional need not be present.
+        Equate this Lambda with one that substitutes its body
+        given a universally quantified equation to effect the substition.
+        For example, (x ↦ f(x)) = (x ↦ g(x)) given∀_x f(x) = g(x).
+        The substitution may be conditional such as
+        (x ↦ {f(x) if Q(x).) = (x ↦ {g(x) if Q(x).) given
+        ∀_{x | Q(x) f(x) = g(x).
+        Multi-parameter variants are also possible.
         '''
         from proveit import Conditional, Judgment
         from proveit import a, b, c, i, f, g, Q
         from proveit.logic import Forall, Equals
-        from proveit.core_expr_types.lambda_maps import (
-                lambda_substitution, general_lambda_substitution)
+        from proveit.core_expr_types.lambda_maps import lambda_substitution
         if isinstance(universal_eq, Judgment):
             universal_eq = universal_eq.expr
         if not isinstance(universal_eq, Forall):
@@ -1159,24 +1154,44 @@ class Lambda(Expression):
             raise TypeError(
                     "'universal_eq' expected to be of a universally "
                     "quantified equality, got %s", universal_eq)
-        equality = universal_eq.instance_expr
-        _a = universal_eq.instance_params
-        _b = _c = self.parameters
-        _i = _b.num_elements()
         
-        thm = lambda_substitution
-        if hasattr(universal_eq, 'condition'):
-            # use general lambda substitution.
-            if not isinstance(self.body, Conditional):
-                raise ValueError(
-                    "'universal_eq' has conditions but this Lambda "
-                    "does not have a conditional body")
-            thm = general_lambda_substitution
-            _f = Lambda(self.parameters, self.body.value)
-        else:
-            _f = Lambda(self.parameters, self.body)
+        equality = universal_eq.instance_expr
         lhs_map = Lambda(universal_eq.instance_params, equality.lhs)
         rhs_map = Lambda(universal_eq.instance_params, equality.rhs)
+        repl_map = dict()
+        if is_single(self.parameters):
+            if hasattr(universal_eq, 'condition') and (
+                    isinstance(self.body, Conditional)):
+                from proveit.core_expr_types.lambda_maps import (
+                    conditional_lambda_substitution)
+                thm = conditional_lambda_substitution
+                _f = Lambda(self.parameter, self.body.value)
+                _Q = Lambda(self.parameter, self.body.condition)
+                repl_map[Q] = _Q
+            else:
+                thm = lambda_substitution
+                _f = Lambda(self.parameter, self.body)
+        else:
+            _a = universal_eq.instance_params
+            _b = _c = self.parameters
+            _i = _b.num_elements()
+            repl_map.update({a:_a, b:_b, c:_c, i:_i})
+            if hasattr(universal_eq, 'condition'):
+                from proveit.core_expr_types.lambda_maps import (
+                    multiparam_conditional_lambda_substitution)
+                if not isinstance(self.body, Conditional):
+                    raise ValueError(
+                        "'universal_eq' has conditions but this Lambda "
+                        "does not have a conditional body")
+                thm = multiparam_conditional_lambda_substitution
+                _f = Lambda(self.parameters, self.body.value)
+                _Q = Lambda(self.parameters, self.body.condition)
+                repl_map[Q] = _Q
+            else:
+                from proveit.core_expr_types.lambda_maps import (
+                    multiparam_lambda_substitution)
+                thm = multiparam_lambda_substitution
+                _f = Lambda(self.parameters, self.body)
         if _f == lhs_map:
             _g = rhs_map
         elif _f == rhs_map:
@@ -1186,18 +1201,10 @@ class Lambda(Expression):
                     "%s not valid as the 'universal_eq' argument for "
                     "the call to 'substitution' on %s: %s not equal "
                     "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))
-        if thm == general_lambda_substitution:
-            _Q = Lambda(self.parameters, self.body.condition)
-            return thm.instantiate(
-                    {i: _i, f: _f, g: _g, Q: _Q, 
-                    a: _a, b: _b, c: _c},
-                    preserve_expr=universal_eq).derive_consequent()
-        else:
-            return thm.instantiate(
-                    {i: _i, f: _f, g: _g, 
-                     a: _a, b: _b, c: _c},
-                     preserve_expr=universal_eq).derive_consequent()
-
+        repl_map[f] = _f
+        repl_map[g] = _g
+        return thm.instantiate(
+            repl_map, preserve_expr=universal_eq).derive_consequent()
 
     @prover
     def _deduce_canonically_equal(self, rhs, **defaults_config):

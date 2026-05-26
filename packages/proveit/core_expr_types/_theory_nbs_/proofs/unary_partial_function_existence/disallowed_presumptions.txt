@@ -1,0 +1,13 @@
+proveit.logic.sets
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.disjunction.commute
+proveit.logic.booleans.disjunction.leftward_commute
+proveit.logic.booleans.disjunction.rightward_commute
+proveit.logic.booleans.negation.negation_elim
+proveit.logic.booleans.disjunction.closure
+proveit.logic.booleans.conjunction.closure
+proveit.logic.booleans.disjunction.singular_constructive_multi_dilemma
+proveit.logic.booleans.quantification.universality.bundling
+proveit.numbers.numerals.decimals.tuple_len_1
+proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.negation.closure
