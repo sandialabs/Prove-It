@@ -83,8 +83,10 @@ def _make_decorated_prover(func):
             assumptions = defaults.assumptions
         if len(args) > 0:
             _self = args[0]
-            if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
-                # Include the assumptions of the Judgment or InnerExpr
+            if (('assumptions' not in kwargs or kwargs['assumptions'] is None)
+                and (isinstance(_self, Judgment) or isinstance(_self, InnerExpr))):
+                # If assumptions are not set manually,
+                # include the assumptions of the Judgment or InnerExpr.
                 if not _self.assumptions.issubset(assumptions):
                     assumptions = OrderedSet(assumptions, mutable=False)
                     assumptions += _self.assumptions
