@@ -281,10 +281,10 @@ class Forall(OperationOverInstances):
                 canonical_version.prove().instantiate(
                         num_forall_eliminations=len(
                                 self.instance_param_lists()),
-                        assumptions=canonical_version.all_conditions())
+                        append_assumptions=canonical_version.all_conditions())
             return self.prove().instantiate(
                     num_forall_eliminations=len(self.instance_param_lists()),
-                    assumptions=self.all_conditions())
+                    append_assumptions=self.all_conditions())
 
     """
     def equate_with_unfolded(self):
