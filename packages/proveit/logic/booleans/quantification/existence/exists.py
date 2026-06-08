@@ -3,6 +3,7 @@ from proveit import (Lambda, Conditional, Operation, OperationOverInstances,
                      prover, equality_prover, relation_prover)
 from proveit import defaults, Literal, Function, ExprTuple
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
+from IPython.display import display
 
 
 class Exists(OperationOverInstances):
@@ -67,8 +68,16 @@ class Exists(OperationOverInstances):
         quantification.  Certain forms may be proved automatically
         (e.g., existence of a conservative definition).
         '''
-        from proveit.logic import Equals, Forall
-        if self.instance_params.is_single() and (
+        from proveit.logic import Equals, Forall, And
+        if not hasattr(self, 'condition') and (
+                self.instance_expr.readily_provable()):
+            return True # trivial existence by example.
+        elif hasattr(self, 'condition') and (
+                And(self.condition, self.instance_expr).readily_provable()):
+            return True # simple existence by example.
+        elif self.as_defined().proven():
+            return True
+        elif self.instance_params.is_single() and (
                 len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Equals) and
                 self.instance_expr.lhs == self.instance_param and
@@ -92,11 +101,17 @@ class Exists(OperationOverInstances):
     @prover
     def conclude(self, **defaults_config):
         from proveit import Operation, free_vars
-        from proveit.logic import Forall, Equals, SubsetEq
-        if self.equivalent_universal_quantification().readily_provable():
+        from proveit.logic import And, Forall, Equals, SubsetEq
+        if (not hasattr(self, 'condition') and 
+            self.instance_expr.readily_provable()) or (
+                    hasattr(self, 'condition') and
+                    And(self.condition, self.instance_expr).readily_provable()):
+            # simple existence by example.
+            return self.conclude_via_example(self.instance_param_or_params)
+        elif self.as_defined().proven():
             return self.conclude_as_folded()
+        # is this obsolete? not sure. may resurrect:
         '''
-          # is this obsolete? not sure. may resurrect.
         elif self.instance_params.is_single() and (
                 len(self.conditions) == 0 and
                 isinstance(self.instance_expr, Forall) and
@@ -176,7 +191,8 @@ class Exists(OperationOverInstances):
         '''
         yield self.deduce_not_exists  # derive the NotExists form.
 
-    def choose(self, *skolem_constants, print_message=True):
+    def choose(self, *skolem_constants, print_message=True,
+               _append_new_assumption=True):
         '''
         From the existential expression
         self = exists_{x_1,...,x_n | Q(x_1,...,x_n)} P(x_1,...,x_n),
@@ -203,19 +219,22 @@ class Exists(OperationOverInstances):
 
         # Update the default assumptions with the Skolem versions
         # of the conditions and instance expression
-        defaults.assumptions = (*defaults.assumptions, P_skolem)
-        if print_message:
-            print(
-                "Creating Skolem 'constant(s)': {0}.\n"
-                "Call the Judgment.eliminate{0} to complete the "
-                "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
-                "Adding to defaults.assumptions:". format(skolem_constants))
+        if _append_new_assumption:
+            defaults.assumptions = (*defaults.assumptions, P_skolem)
+            if print_message:
+                print(
+                    "Creating Skolem 'constant(s)': {0}.\n"
+                    "Call the Judgment.eliminate{0} to complete the "
+                    "Skolemization\n(when the 'constant(s)' are no longer "
+                    "needed).\n"
+                    "Adding to defaults.assumptions:". format(skolem_constants))
 
         return P_skolem
 
     @staticmethod
     @prover
-    def eliminate(skolem_constant_or_constants, judgment, **defaults_config):
+    def eliminate(skolem_constant_or_constants, judgment,
+                  print_message=True, **defaults_config):
         '''
         For the provided judgment of the form S |– alpha and the tuple
         of Skolem constants skolem_constants that had been specified
@@ -262,40 +281,49 @@ class Exists(OperationOverInstances):
                     f"{judgment}, which is not allowed. ")
         existential = Exists.skolem_consts_to_existential[skolem_constants]
         skolem_assumption = existential.choose(
-            *skolem_constants, print_message=False)
-        with defaults.temporary() as temp_defaults:
-            temp_defaults.assumptions = (
-                    assumption for assumption in defaults.assumptions
-                    if assumption != skolem_assumption)
+            *skolem_constants, print_message=False,
+            _append_new_assumption=False)
+        # skolem_assumption no longer needed as an assumption.
+        if skolem_assumption not in defaults.assumptions:
+            raise Exception("Expecting %s in defaults.assumptions so it can "
+                            "be properly removed with this 'eliminate' call"
+                            %skolem_assumption)
+        if print_message:
+            print("Removing from defaults.assumptions:")
+            display(skolem_assumption)                
+        defaults.assumptions = (
+                assumption for assumption in defaults.assumptions
+                if assumption != skolem_assumption)
 
-            _P = Lambda(existential.instance_params,
-                        existential.operand.body)
-            _alpha = judgment
-    
-            # express the judgment as an implication to match details of
-            # the skolem_elim theorem being instantiated further below
-            P_implies_alpha = _alpha.as_implication(
-                hypothesis=_P.apply(*skolem_constants))
-            P_implies_alpha.generalize(skolem_constants)
-    
-            if hasattr(existential, 'instance_param'):
-                assert len(skolem_constants)==1
-                return skolem_elim.instantiate(
-                    {P: _P, alpha: _alpha,
-                     x: skolem_constants[0],
-                     y: existential.instance_param},
-                    preserve_all=True).derive_consequent()
-            else:
-                from proveit.logic.booleans.quantification.existence import (
-                    multi_skolem_elim)
-                _n = existential.instance_params.num_elements()
-                x_1_to__n = ExprTuple(x_1_to_n.basic_replaced({n: _n}))
-                y_1_to__n = ExprTuple(y_1_to_n.basic_replaced({n: _n}))
-                return multi_skolem_elim.instantiate(
-                    {n: _n, P: _P, alpha: _alpha,
-                     x_1_to__n: skolem_constants,
-                     y_1_to__n: existential.instance_params},
-                    preserve_all=True).derive_consequent()
+        _P = Lambda(existential.instance_params,
+                    existential.operand.body)
+        _alpha = judgment
+
+        # express the judgment as an implication to match details of
+        # the skolem_elim theorem being instantiated further below
+        P_implies_alpha = _alpha.as_implication(
+            hypothesis=_P.apply(*skolem_constants))
+        P_implies_alpha.generalize(skolem_constants)
+
+        if hasattr(existential, 'instance_param'):
+            assert len(skolem_constants)==1
+            inst = skolem_elim.instantiate(
+                {P: _P, alpha: _alpha,
+                 x: skolem_constants[0],
+                 y: existential.instance_param},
+                preserve_all=True)
+            return inst.derive_consequent()
+        else:
+            from proveit.logic.booleans.quantification.existence import (
+                multi_skolem_elim)
+            _n = existential.instance_params.num_elements()
+            x_1_to__n = ExprTuple(x_1_to_n.basic_replaced({n: _n}))
+            y_1_to__n = ExprTuple(y_1_to_n.basic_replaced({n: _n}))
+            return multi_skolem_elim.instantiate(
+                {n: _n, P: _P, alpha: _alpha,
+                 x_1_to__n: skolem_constants,
+                 y_1_to__n: existential.instance_params},
+                preserve_all=True).derive_consequent()
 
     @prover
     def unfold(self, **defaults_config):
@@ -482,21 +510,21 @@ class Exists(OperationOverInstances):
 
     def equivalent_universal_quantification(self):
         from proveit.logic import Forall, Not
-        if self.instance_params.is_single():
-            _x = self.instance_params[0]
-            if isinstance(self.instance_expr, Not):
-                _P = self.instance_expr.operand
-            else:
-                _P = Not(self.instance_expr)
-            if hasattr(self, 'condition'):
-                _Q = self.condition
-            else:
-                _Q = None
-            
-            if _Q is None:
-                return Not(Forall(_x, _P))
-            else:
-                return Not(Forall(_x, _P, condition=_Q))
+        _x = self.instance_params
+        if isinstance(self.instance_expr, Not):
+            _P = self.instance_expr.operand
+        else:
+            _P = Not(self.instance_expr)
+        if hasattr(self, 'condition'):
+            _Q = self.condition
+        else:
+            _Q = None
+        
+        if _Q is None:
+            return Not(Forall(_x, _P))
+        else:
+            return Not(Forall(_x, _P, condition=_Q))
+
 
     @prover
     def conclude_as_folded(self, **defaults_config):
