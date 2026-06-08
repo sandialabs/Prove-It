@@ -308,6 +308,11 @@ class TemporarySetter(object):
     def __init__(self, obj):
         self._obj = obj
         self._original_values = dict()
+        
+        # Treat the assumptions in a special way so that any manual
+        # changes of defaults.assumptions that are unrelated to the
+        # TemporarySetter changes will be preserved upon exit.
+        self._temporarily_set_assumptions = None
 
     def __setattr__(self, attr, val):
         '''
@@ -357,6 +362,9 @@ class TemporarySetter(object):
                 # extra attribute we need to remember
                 self._original_values[_attr] = self._obj.__dict__[_attr]
         setattr(self._obj, attr, val)
+        if attr == 'assumptions':
+            self._temporarily_set_assumptions = tuple(self._obj.assumptions)
+
     
     def __getattr__(self, attr):
         '''
@@ -378,6 +386,37 @@ class TemporarySetter(object):
         Restore the original values of the object.
         '''
         for attr, val in self._original_values.items():
+            if attr == 'assumptions':
+                # Preserve assumption changes (additions or removals) that
+                # were made directly, not through this TemporarySetter.
+                # To keep this simple, any additions will be appended to
+                # the end.
+                original_assumptions = set(val)
+                if self._temporarily_set_assumptions is None:
+                    temporary_assumptions = original_assumptions
+                else:
+                    temporary_assumptions = set(
+                        self._temporarily_set_assumptions)
+                current_assumptions = set(self._obj.__dict__[attr])
+
+                # If the assumption is in the original and the temporary
+                # but not the current, remove it.
+                to_remove = (
+                    original_assumptions.intersection(temporary_assumptions)
+                    - current_assumptions)
+                
+                # If the assumption is in the current but not the original
+                # or the temporary, add it.  Add them in the order in which
+                # they appear in the current but after everything else.
+                temp_union_original = temporary_assumptions.union(
+                    original_assumptions)
+                to_add = [_assumption for _assumption in current_assumptions
+                          if _assumption not in temp_union_original]
+                val = [_assumption for _assumption in val
+                       if _assumption not in to_remove]
+                val += to_add
+                val = self._obj.checked_assumptions(val)
+
             self._obj.__dict__[attr] = val
         
 
