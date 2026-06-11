@@ -1,7 +1,9 @@
 from .expr import (Expression, traverse_inner_expressions, 
                    used_vars, used_literals,
                    free_var_ranges, free_vars,
-                   expression_depth, MakeNotImplemented,
+                   expression_depth,
+                   expression_differences, display_expression_differences,
+                   MakeNotImplemented,
                    ImproperReplacement)
 from .style_options import StyleOptions
 from .inner_expr import (InnerExpr, InnerExprGenerator,

@@ -17,6 +17,7 @@ from ._core_ import (
     ArgumentExtractionError,
     Label, Variable, Literal, DuplicateLiteralError,
     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
+    expression_differences, display_expression_differences,
     MakeNotImplemented, ImproperReplacement,
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
