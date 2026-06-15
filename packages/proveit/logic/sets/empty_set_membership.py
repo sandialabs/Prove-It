@@ -1,4 +1,4 @@
-from proveit import x, prover
+from proveit import x, defaults, prover
 from proveit.logic import SetMembership, SetNonmembership
 
 class EmptySetMembership(SetMembership):
@@ -13,66 +13,20 @@ class EmptySetMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    # def side_effects(self, judgment):
-    #     '''
-    #     Unfold the enumerated set membership as a side-effect.
-    #     '''
-    #     yield self.unfold
+    def _readily_provable(self):
+        '''
+        Membership in the empty set is always FALSE, and thus is
+        never readily provable, regardless of the element in question.
+        '''
+        return False
 
-    # @equality_prover('defined', 'define')
-    # def definition(self, **defaults_config):
-    #     '''
-    #     Deduce and return 
-    #         [element in (A union B ...)] = 
-    #         [(element in A) or (element in B) ...]
-    #     where self = (A union B ...).
-    #     '''
-    #     from . import union_def
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return union_def.instantiate(
-    #             {m: _m, x: element, A: _A}, auto_simplify=False)
-
-    # def as_defined(self):
-    #     '''
-    #     From self=[elem in (A U B U ...)], return
-    #     [(element in A) or (element in B) or ...].
-    #     '''
-    #     from proveit.logic import Or, InSet
-    #     element = self.element
-    #     return Or(*self.domain.operands.map_elements(
-    #             lambda subset : InSet(element, subset)))
-
-    # @prover
-    # def unfold(self, **defaults_config):
-    #     '''
-    #     From [element in (A union B ...)], derive and return
-    #     [(element in A) or (element in B) ...],
-    #     where self represents [element in (A union B ...)].
-    #     '''
-    #     from . import membership_unfolding
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return membership_unfolding.instantiate(
-    #         {m: _m, x: element, A: _A}, auto_simplify=False)
-
-    # @prover
-    # def conclude(self, **defaults_config):
-    #     '''
-    #     Called on self = [elem in (A U B U ...)], and knowing or
-    #     assuming [[elem in A] OR [elem in B] OR ...], derive and
-    #     return self.
-    #     '''
-    #     from . import membership_folding
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return membership_folding.instantiate({m: _m, x: element, A: _A})
+    def _readily_disprovable(self):
+        '''
+        Membership in the empty set is always FALSE, and thus is
+        always readily disprovable, regardless of the element in
+        question.
+        '''
+        return True
 
     @prover
     def derive_contradiction(self, **defaults_config):
@@ -84,15 +38,22 @@ class EmptySetMembership(SetMembership):
         return empty_set_contradiction.instantiate({x: _x_sub})
 
     @prover
+    def affirm_via_contradiction(self, conclusion, **defaults_config):
+        '''
+        From self = [x in EmptySet], derive conclusion, provided that
+        the negation of conclusion implies [x in EmptySet] (because
+        [x in EmptySet] should never be true).
+        '''
+        from proveit.logic.booleans.implication import affirm_via_contradiction
+        return affirm_via_contradiction(self.expr, conclusion)
+
+    @prover
     def deny_via_contradiction(self, conclusion, **defaults_config):
         '''
         From self = x in EmptySet, derive the negated conclusion,
         provided that the conclusion implies x in EmptySet (because
         x in EmptySet should never be true).
         '''
-        print(f"Entering EmptySetMembership.deny_via_contradiction() with:")
-        print(f"    self = {self}")
-        display(self)
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self.expr, conclusion)
 
@@ -109,53 +70,38 @@ class EmptySetMembership(SetMembership):
 class EmptySetNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in the empty set
-    (EmptySet).
-    UNDER CONSTRUCTION
+    (EmptySet). Non-membership, i.e., x NotIn EmptySet, is always
+    TRUE.
     '''
 
     def __init__(self, element, domain):
         SetNonmembership.__init__(self, element, domain)
         self.domain = domain
 
-    # def _readily_provable(self):
-    #     '''
-    #     The Nonmembership is readily provabile if the element
-    #     is readily known to be a non-integer or its readily known to be 
-    #     below/above the lower/upper bound.
-    #     '''
-    #     _a = self.domain.lower_bound
-    #     _b = self.domain.upper_bound
-    #     _x = self.element
-    #     return InSet(_x, Integer).readily_disprovable() or (
-    #             Less(_x, _a).readily_provable() or
-    #             Less(_b, _x).readily_provable())
+    def _readily_provable(self):
+        '''
+        The Nonmembership is always TRUE, and thus is always readily
+        provable, regardless of the element in question.
+        '''
+        return True
 
-    # def side_effects(self, judgment):
-    #     '''
-    #     Yield some possible side effects of Interval set nonmembership:
-    #     (1) if element is an integer, deduce some possible bounds on it;
-    #     '''
-    #     if InSet(self.element, Integer).readily_provable():
-    #         yield self.deduce_int_element_bounds
+    def _readily_disprovable(self):
+        '''
+        The Nonmembership is always TRUE, and thus is never readily
+        disprovable, regardless of the element in question.
+        '''
+        return False
 
-    # @prover
-    # def conclude(self, **defaults_config):
-    #     '''
-    #     From x not in Integers, or an integer x such that x < a or x > b,
-    #     derive and return [element x not in Interval(a, b)],
-    #     where self is the IntervalNonmembership object.
-    #     '''
-    #     _a = self.domain.lower_bound
-    #     _b = self.domain.upper_bound
-    #     _x = self.element
-    #     if InSet(self.element, Integer).readily_provable():
-    #         from . import int_not_in_interval
-    #         return int_not_in_interval.instantiate(
-    #                 {a: _a, b: _b, x: _x})
-    #     else:
-    #         from . import not_int_not_in_interval
-    #         return not_int_not_in_interval.instantiate(
-    #                 {a: _a, b: _b, x: _x})
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Empty set non-membership is always True, regardless of the
+        element being considered. From self = [elem NotIn EmptySet],
+        return |- [elem Notin EmptySet].
+        '''
+        from proveit.logic.sets import nothing_is_in_empty
+        _x_sub = self.element
+        return nothing_is_in_empty.instantiate({x: _x_sub})
 
     def readily_in_bool(self):
         return True # EmptySetNonmembership is always boolean
@@ -165,3 +111,42 @@ class EmptySetNonmembership(SetNonmembership):
         from . import empty_set_nonmembership_is_bool
         _x_sub = self.element
         return empty_set_nonmembership_is_bool.instantiate({x: _x_sub})
+
+# General Functions Related to Empty Set Membership
+
+@prover
+def affirm_via_empty_set_contradiction(
+        claim_to_affirm, elem = None, **defaults_config):
+    '''
+    Derive and return the 'claim_to_affirm', provided
+    that (1) claim_to_affirm is Boolean and (2) the negation of
+    claim_to_affirm implies [elem in EmptySet] (because x in EmptySet
+    is FALSE for all x).
+    '''
+    from . import empty_set_contradiction
+    from proveit.logic import Not
+    if elem is None: elem = x
+    extended_assumptions = defaults.assumptions + (Not(claim_to_affirm),)
+    contradiction = empty_set_contradiction.instantiate(
+            {x:elem}, assumptions = extended_assumptions)
+    contradiction_as_impl = contradiction.as_implication(Not(claim_to_affirm))
+    return contradiction_as_impl.deny_antecedent(
+            assumptions = extended_assumptions)
+
+@prover
+def deny_via_empty_set_contradiction(
+        claim_to_deny, elem = None, **defaults_config):
+    '''
+    Derive and return the negation of the 'claim_to_deny', provided
+    that (1) claim_to_deny is Boolean and (2) claim_to_deny implies
+    [elem in EmptySet](because x in EmptySet is FALSE for all x).
+    '''
+    from . import empty_set_contradiction
+    if elem is None:
+        elem = x
+    extended_assumptions = defaults.assumptions + (claim_to_deny,)
+    contradiction = empty_set_contradiction.instantiate(
+            {x:elem}, assumptions = extended_assumptions)
+    contradiction_as_impl = contradiction.as_implication(claim_to_deny)
+    return contradiction_as_impl.deny_antecedent(
+            assumptions = extended_assumptions)
