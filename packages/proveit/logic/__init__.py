@@ -24,17 +24,16 @@ from .sets import (
     NotProperSubset, superset_eq, not_superset_eq, proper_superset,
     not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
-                   SetOfAll, CartProd, CartExp,
-                   PowerSet, Disjoint, Distinct, Card)
-from .sets import (IsFunction, Functions, IsInjection, Injections,
-                   IsSurjection, Surjections, IsBijection, Bijections,
-                   Image, InvImage)
+                   SetOfAll, CartProd, CartExp, PowerSet,
+                   AllDisjoint, Disjoint, AllDistinct, Distinct, Card)
+from .sets import (Bijections, Functions, Image, Injections, InvImage,
+        IsBijection, IsFunction, IsInjection, IsSurjection, Surjections)
 #from mapping.mapping_ops import Domain, CoDomain
 
 import proveit
 
 if proveit.defaults.running_theory_notebook is None:
-    # Import some fundamental theorems without quantifiers when not 
+    # Import some fundamental theorems without quantifiers when not
     # running an common/axioms/theorems theory notebook.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
