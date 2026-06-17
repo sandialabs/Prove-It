@@ -1356,9 +1356,10 @@ if __name__ == '__main__':
         '''
         print("Transfering pv_it.tar.gz file from gamified-database branch")
         if rank == 0:
-            process = subprocess.Popen(['git', 'fetch', 'origin', 'gamified-database'])
+            process = subprocess.Popen(['git', 'fetch', 'origin'])
             process.wait()
-            process = subprocess.Popen(['git', 'checkout', 'gamified-database',
+            process = subprocess.Popen(['git', 'checkout',
+                                        'origin/gamified-database',
                                         '--', 'pv_it.tar.gz'])
             process.wait()
             tar_file = 'pv_it.tar.gz'
