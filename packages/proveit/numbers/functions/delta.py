@@ -1,5 +1,6 @@
 from proveit import (
-        i, j, x, y, equality_prover, Literal, Operation, TransRelUpdater)
+        i, j, x, y, equality_prover, Literal, Operation,
+        relation_prover, TransRelUpdater)
 from proveit.logic import Equals, is_irreducible_value, NotEquals
 from proveit.logic.sets import Set
 from proveit.numbers import zero, one
@@ -123,4 +124,21 @@ class KroneckerDelta(Operation):
         _i_sub = self.operands[0]
         _j_sub = self.operands[1]
         return kron_delta_bounds.instantiate({i:_i_sub, j:_j_sub})
+
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
+        '''
+        Given a number set 'number_set', attempt to prove that the
+        given KroneckerDelta expression is in that number set.
+        Recall that KroneckerDelta in always in the set {0,1},
+        so this amounts to first deducing that this specific
+        KroneckerDelta expression, which might actually be 0
+        or 1, or just in {0,1} more generally, is in a subset
+        of the provided number_set, then returning the desired
+        InSet() judgment.
+        '''
+        from proveit.logic.sets import InSet, Set, SubsetEq
+        from proveit.numbers import zero, one
+        SubsetEq(self.deduce_image_set().rhs, number_set).prove()
+        return InSet(self, number_set).prove()
 
