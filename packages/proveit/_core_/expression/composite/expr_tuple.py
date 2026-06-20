@@ -1205,7 +1205,8 @@ class ExprTuple(Composite, Expression):
         from proveit.logic import NotEquals
         from proveit.numbers import num
 
-        if NotEquals(self, other_tuple).readily_provable():
+        if (len(self)==len(other_tuple) and 
+            NotEquals(self, other_tuple).readily_provable()):
             from proveit.core_expr_types.tuples import elem_neq_via_tuple_neq
             _a_sub = self.entries
             _b_sub = other_tuple.entries
@@ -1213,11 +1214,19 @@ class ExprTuple(Composite, Expression):
             return elem_neq_via_tuple_neq.instantiate(
                     {i:_i_sub, a:_a_sub, b:_b_sub})
         else:
-            raise UnsatisfiedPrerequisites(
-                    f"Error in applying ExprTuple.deduce_not_equal_entries(). "
-                    f"self = {self} not readily provably not equal to "
-                    f"other_tuple = {other_tuple}, and thus inequalities "
-                    f"of corresponding entries cannot be deduced.")
+            if (len(self) != len(other_tuple)):
+                raise ValueError("ExprTuple.deduce_not_equal_entries() "
+                        f"does not apply to tuples of unequal length. "
+                        f"|{self}| = {len(self)} while |{other_tuple}| = "
+                        f"{len(other_tuple)}.")
+            else:
+                raise UnsatisfiedPrerequisites(
+                        "Error in applying "
+                        "ExprTuple.deduce_not_equal_entries(). "
+                        f"self = {self} not readily provably not equal "
+                        f"to other_tuple = {other_tuple}, and thus "
+                        "inequalities of corresponding entries cannot "
+                        "be deduced.")
 
     @equality_prover('merged', 'merge')
     def merger(self, **defaults_config):
