@@ -1172,9 +1172,9 @@ class ExprTuple(Composite, Expression):
 
         if Equals(self, other_tuple).readily_provable():
             from proveit.core_expr_types.tuples import elem_eq_via_tuple_eq
-            _a_sub = self.entries
-            _b_sub = other_tuple.entries
-            _i_sub = num(self.num_entries())
+            _a_sub = self
+            _b_sub = other_tuple
+            _i_sub = self.num_elements()
             return elem_eq_via_tuple_eq.instantiate(
                     {i:_i_sub, a:_a_sub, b:_b_sub})
         else:
@@ -1202,15 +1202,16 @@ class ExprTuple(Composite, Expression):
         error.
         '''
         from proveit import a, b, i, UnsatisfiedPrerequisites
-        from proveit.logic import NotEquals
+        from proveit.logic import Equals, NotEquals
         from proveit.numbers import num
 
-        if (len(self)==len(other_tuple) and 
-            NotEquals(self, other_tuple).readily_provable()):
+        if (Equals(self.num_elements(),
+                   other_tuple.num_elements()).readily_provable()
+                and NotEquals(self, other_tuple).readily_provable()):
             from proveit.core_expr_types.tuples import elem_neq_via_tuple_neq
-            _a_sub = self.entries
-            _b_sub = other_tuple.entries
-            _i_sub = num(self.num_entries())
+            _a_sub = self
+            _b_sub = other_tuple
+            _i_sub = self.num_elements()
             return elem_neq_via_tuple_neq.instantiate(
                     {i:_i_sub, a:_a_sub, b:_b_sub})
         else:
