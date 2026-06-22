@@ -415,8 +415,8 @@ class TemporarySetter(object):
                 val = [_assumption for _assumption in val
                        if _assumption not in to_remove]
                 val += to_add
-                val = self._obj.checked_assumptions(val)
-
+                val = OrderedSet(
+                    self._obj.checked_assumptions(val), mutable=False)
             self._obj.__dict__[attr] = val
         
 
