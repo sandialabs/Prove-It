@@ -1,4 +1,4 @@
-from proveit import Judgment, USE_DEFAULTS
+from proveit import Judgment, USE_DEFAULTS, display_expression_differences
 
 
 class TransRelUpdater:
@@ -44,8 +44,11 @@ class TransRelUpdater:
             else:
                 relation = relation.with_direction_reversed()
         elif relation.lhs != self.expr:
+            display_expression_differences(relation.lhs, self.expr)
+            display_expression_differences(relation.rhs, self.expr)
             raise ValueError("Relation %s should match expression %s "
-                             "on one of its sides." % (relation, self.expr))
+                             "on one of its sides. See output for difference "
+                             "details" % (relation, self.expr))
         self.expr = relation.rhs
         self.relations.append(relation)
         return self.expr

@@ -2069,6 +2069,55 @@ def traverse_inner_expressions(expr):
             yield inner_expr
 
 
+def expression_differences(expr1, expr2):
+    '''
+    Yield sub-expressions of expr1 and expr2 respective that differ at that
+    level (and skip any deeper level).
+    If the expressions are equal, nothing is yielded.
+    '''
+    from proveit import Judgment
+    if isinstance(expr1, Judgment):
+        expr1 = expr1.expr
+    if isinstance(expr2, Judgment):
+        expr2 = expr1.expr
+    if expr1._core_info != expr2._core_info or (
+            len(expr1._sub_expressions) != len(expr2._sub_expressions)):
+        yield expr1, expr2
+        return # no need to dig deeper
+    for sub_expr1, sub_expr2 in zip(expr1.sub_expr_iter(),
+                                    expr2.sub_expr_iter()):
+        for diff1, diff2 in expression_differences(sub_expr1, sub_expr2):
+            yield diff1, diff2
+
+def display_expression_differences(expr1, expr2):
+    '''
+    Either display that expr1 and expr2 have the same meaning
+    or display that they differ and display the sub-expressions that differ.
+    '''
+    from IPython.display import display
+
+    if expr1 == expr2:
+        display(expr1)
+        print('has the same intinsic meaning as')
+        display(expr2)
+        return
+
+    display(expr1)
+    print('differs from')
+    display(expr2)
+    _first_diff = True
+    for sub_expr1, sub_expr2 in expression_differences(expr1, expr2):
+        if sub_expr1 == expr1: continue
+        if not _first_diff:
+            print('and')
+        else:
+            print('because')
+            _first_diff = False
+        display(sub_expr1)
+        print('differs from')
+        display(sub_expr2)    
+
+
 class MakeNotImplemented(NotImplementedError):
     def __init__(self, expr_sub_class):
         self.expr_sub_class = expr_sub_class
