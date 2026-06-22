@@ -1149,9 +1149,89 @@ class ExprTuple(Composite, Expression):
             equality = equality.inner_expr().rhs.substitute(_b_orig)
         return equality
 
+    @prover
+    def deduce_equal_entries(self, other_tuple, **defaults_config):
+        '''
+        Given an other_tuple known or assumed to be equal to self,
+        deduce and return a conjunction of equalities between
+        corresponding entries. For example, 
+
+          (a,b,c).deduce_equal_entries((d,e,f),
+              assumptions=[Equals((a,b,c),(d,e,f))])
+
+        returns
+
+          {(a,b,c)=(d,e,f)} |- (a=d) AND (b=e) AND (c=f)
+
+        If (self = other_tuple) is not readily provable, raise an
+        error.
+        '''
+        from proveit import a, b, i, UnsatisfiedPrerequisites
+        from proveit.logic import Equals
+        from proveit.numbers import num
+
+        if Equals(self, other_tuple).readily_provable():
+            from proveit.core_expr_types.tuples import elem_eq_via_tuple_eq
+            _a_sub = self
+            _b_sub = other_tuple
+            _i_sub = self.num_elements()
+            return elem_eq_via_tuple_eq.instantiate(
+                    {i:_i_sub, a:_a_sub, b:_b_sub})
+        else:
+            raise UnsatisfiedPrerequisites(
+                    f"Error in applying ExprTuple.deduce_equal_entries(). "
+                    f"self = {self} not readily provably equal to "
+                    f"other_tuple = {other_tuple}, and thus equality "
+                    f"of corresponding entries cannot be deduced.")
+
+    @prover
+    def deduce_not_equal_entries(self, other_tuple, **defaults_config):
+        '''
+        Given an other_tuple known or assumed to be not equal to self,
+        deduce and return a disjunction of inequalities between
+        corresponding entries. For example, 
+
+          (a,b,c).deduce_equal_entries((d,e,f),
+              assumptions=[NotEquals((a,b,c),(d,e,f))])
+
+        returns
+
+          {(a,b,c)≠(d,e,f)} |- (a≠d) OR (b≠e) OR (c≠f)
+
+        If (self ≠ other_tuple) is not readily provable, raise an
+        error.
+        '''
+        from proveit import a, b, i, UnsatisfiedPrerequisites
+        from proveit.logic import Equals, NotEquals
+        from proveit.numbers import num
+
+        if (Equals(self.num_elements(),
+                   other_tuple.num_elements()).readily_provable()
+                and NotEquals(self, other_tuple).readily_provable()):
+            from proveit.core_expr_types.tuples import elem_neq_via_tuple_neq
+            _a_sub = self
+            _b_sub = other_tuple
+            _i_sub = self.num_elements()
+            return elem_neq_via_tuple_neq.instantiate(
+                    {i:_i_sub, a:_a_sub, b:_b_sub})
+        else:
+            if (len(self) != len(other_tuple)):
+                raise ValueError("ExprTuple.deduce_not_equal_entries() "
+                        f"does not apply to tuples of unequal length. "
+                        f"|{self}| = {len(self)} while |{other_tuple}| = "
+                        f"{len(other_tuple)}.")
+            else:
+                raise UnsatisfiedPrerequisites(
+                        "Error in applying "
+                        "ExprTuple.deduce_not_equal_entries(). "
+                        f"self = {self} not readily provably not equal "
+                        f"to other_tuple = {other_tuple}, and thus "
+                        "inequalities of corresponding entries cannot "
+                        "be deduced.")
+
     @equality_prover('merged', 'merge')
     def merger(self, **defaults_config):
-        '''
+        r'''
         If this is an tuple of expressions that can be directly merged
         together into a single ExprRange, return this proven
         equivalence.  For example,
