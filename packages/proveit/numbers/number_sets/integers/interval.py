@@ -1,11 +1,10 @@
-from proveit import Literal, Operation, prover
+from proveit import (
+        equality_prover, Literal, Operation, prover,
+        SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, n, x
 
 
 class Interval(Operation):
-    # operator of the Interval operation.
-    _operator_ = Literal(string_format='Interval', theory=__file__)
-
     r'''
     The Interval class represents a set of of contiguous integers,
     from lower_bound to upper_bound (inclusively). For example:
@@ -13,7 +12,23 @@ class Interval(Operation):
     represents the integer set {2, 3, 4, 5, 6}. Once created, the
     resulting Interval is interpreted as a SET of elements with no
     assurances about the elements being in a particular order.
+
+    Default simplification directives will typically lead to routine
+    simplification of Intervals in the following ways:
+    • Interval(a, b), where b < a, will simplified to the empty set
+      (EmptySet). Such expressions might be created directly by the
+      user or might arise as variables a and b take on different
+      values in some processing context.
+    • Interval(a, b), where a = b, will be simplified to the singleton
+      enumerated set Set(a) = {a}.
+
     '''
+
+    # operator of the Interval operation.
+    _operator_ = Literal(string_format='Interval', theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            reduce_vacuous=True, reduce_single=True)
 
     def __init__(self, lower_bound, upper_bound, *, styles=None):
         Operation.__init__(self, Interval._operator_,
@@ -37,6 +52,50 @@ class Interval(Operation):
         from .interval_membership import IntervalNonmembership
         return IntervalNonmembership(element, self)
 
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this Interval
+        expression, using any specified simplification diretives,
+        as follows:
+
+        (1) If simplification directive reduce_vacuous = True, an
+            empty Interval(a, b), indicated when b < a, is reduced
+            to the empty set (Prove-It's EmptySet);
+
+        (2) If simplification directive reduce_single = True, a
+            single-element such as Interval(a, a) is reduced to
+            an enumerated set Set(a).
+
+        Otherwise returning the equality self = self.
+        '''
+
+        from proveit.logic import Equals
+        from proveit.numbers import Less
+
+        # For convenience in updating our equation, beginning with
+        # self = self
+        eq = TransRelUpdater(self)
+
+        
+        _lower_bound = self.lower_bound
+        _upper_bound = self.upper_bound
+
+        # Empty Interval:  Interval(a, b) with b < a
+        if Less(_upper_bound, _lower_bound).readily_provable():
+            from . import vacuous_interval
+            return vacuous_interval.instantiate(
+                {a:_lower_bound, b:_upper_bound})
+
+        # Singleton Interval: Interval(a, b) with a = b
+        if Equals(_upper_bound, _lower_bound).readily_provable():
+            from . import singleton_interval
+            return singleton_interval.instantiate(
+                {a:_lower_bound, b:_upper_bound})
+
+        return eq.relation # Might simply be self = self
+
     def readily_includes(self, other_set):
         '''
         Return True if this NumberSet includes the 'other_set' set.
@@ -53,7 +112,7 @@ class Interval(Operation):
 
     @prover
     def deduce_subset_eq_relation(self, sub_interval, **defaults_config):
-        '''
+        r'''
         Deduce that self of the form {a...d} has as a subset_eq the
         Interval of the form {b...c}, if a <= b <= c <= d. Example:
             {1...5}.deduce_subset_eq_relation({2...4})
