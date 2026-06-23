@@ -156,6 +156,7 @@ class KroneckerDelta(Operation):
                 return in_set
             # We must have proven we were in a subset of the
             # one we were looking for, so we take one more step.
+            from proveit.logic import InSet
             return InSet(self, number_set).prove()
 
         raise NotImplementedError(
