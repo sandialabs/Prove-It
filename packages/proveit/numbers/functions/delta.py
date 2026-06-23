@@ -3,7 +3,9 @@ from proveit import (
         relation_prover, TransRelUpdater)
 from proveit.logic import Equals, is_irreducible_value, NotEquals
 from proveit.logic.sets import Set
-from proveit.numbers import zero, one, Natural, ZeroSet
+from proveit.numbers import (
+        zero, one, Integer, IntegerNonZero, Natural, NaturalPos, Real,
+        RealNonZero, RealNonNeg, RealPos, ZeroSet)
 
 class KroneckerDelta(Operation):
     '''
@@ -68,8 +70,6 @@ class KroneckerDelta(Operation):
 
         return eq.relation # Might simply be self=self.
 
-
-
     @equality_prover('commuted', 'commute')
     def commutation(self, **defaults_config):
         '''
@@ -95,6 +95,8 @@ class KroneckerDelta(Operation):
         if (is_irreducible_value(_i) and is_irreducible_value(_j)
            and _i != _j):
             return ZeroSet
+        if (_i == _j):
+            return NaturalPos
         return Natural
 
     def deduce_image_set(self, **defaults_config):
@@ -127,17 +129,36 @@ class KroneckerDelta(Operation):
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
-        Given a number set 'number_set', attempt to prove that the
-        given KroneckerDelta expression is in that number set.
-        Recall that KroneckerDelta in always in the set {0,1},
-        so this amounts to first deducing that this specific
+        Given a standard number set 'number_set', attempt to prove
+        that the given KroneckerDelta expression is in that number set.
+        Recall that KroneckerDelta in always in the set {0,1}, so the
+        process amounts to first deducing that this specific
         KroneckerDelta expression, which might actually be 0
-        or 1, or just in {0,1} more generally, is in a subset
-        of the provided number_set, then returning the desired
-        InSet() judgment.
+        or 1, or just in {0,1} more generally, is in ZeroSet, Natural,
+        or NaturalPos, then if necessary checking if that deduced set
+        is the desired set or a subset of the desired set.
         '''
-        from proveit.logic.sets import InSet, Set, SubsetEq
-        from proveit.numbers import zero, one
-        SubsetEq(self.deduce_image_set().rhs, number_set).prove()
-        return InSet(self, number_set).prove()
+        import proveit.numbers.functions as fxns_pkg
+        thm = None
+        if number_set == ZeroSet:
+            thm = fxns_pkg.kron_delta_neq_in_zero_set
+        if number_set in (IntegerNonZero, NaturalPos, RealNonZero, RealPos):
+            thm = fxns_pkg.kron_delta_eq_in_nat_pos
+        if number_set in (Natural, Integer, Real, RealNonNeg):
+            thm = fxns_pkg.kron_delta_in_natural
+
+        if thm is not None:
+            _i_sub = self.operands[0]
+            _j_sub = self.operands[1]
+            in_set = thm.instantiate({i:_i_sub, j:_j_sub})
+            if in_set.domain == number_set:
+                # Exactly the domain we were looking for.
+                return in_set
+            # We must have proven we were in a subset of the
+            # one we were looking for, so we take one more step.
+            return InSet(self, number_set).prove()
+
+        raise NotImplementedError(
+            f"'deduce_in_number_set() on {self} not implemented for "
+            f"the {number_set} set.")
 
