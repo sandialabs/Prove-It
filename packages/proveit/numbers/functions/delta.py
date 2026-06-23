@@ -3,7 +3,7 @@ from proveit import (
         relation_prover, TransRelUpdater)
 from proveit.logic import Equals, is_irreducible_value, NotEquals
 from proveit.logic.sets import Set
-from proveit.numbers import zero, one
+from proveit.numbers import zero, one, Natural, ZeroSet
 
 class KroneckerDelta(Operation):
     '''
@@ -84,7 +84,7 @@ class KroneckerDelta(Operation):
 
     def readily_provable_number_set(self):
         '''
-        Return the most restrictive number set we can readily
+        Return the most restrictive standard number set we can readily
         prove contains the evaluation of this KroneckerDelta operation.
         If we have actual values for the arguments, we can return a
         singleton set {0} or {1}, otherwise we can return the two-elem
@@ -92,11 +92,10 @@ class KroneckerDelta(Operation):
         '''
         _i = self.operands[0]
         _j = self.operands[1]
-        if _i == _j: return Set(one)
         if (is_irreducible_value(_i) and is_irreducible_value(_j)
            and _i != _j):
-            return Set(zero)
-        return Set(zero, one)
+            return ZeroSet
+        return Natural
 
     def deduce_image_set(self, **defaults_config):
         '''
