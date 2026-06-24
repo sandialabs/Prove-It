@@ -28,6 +28,9 @@ class NotEquals(Relation):
         if self.rhs == FALSE:
             yield self.derive_via_double_negation  # A from A != False and A in Boolean
         yield self.unfold  # Not(x=y) from x != y
+        if hasattr(self.rhs, 'not_equals_side_effects'):
+            for side_effect in self.rhs.not_equals_side_effects(judgment):
+                yield side_effect
 
     def _readily_provable(self, try_readily_not_equal=True):
         '''
