@@ -44,7 +44,9 @@ class TransRelUpdater:
             else:
                 relation = relation.with_direction_reversed()
         elif relation.lhs != self.expr:
+            print("Comparing 'relation.lhs' with 'expr':")
             display_expression_differences(relation.lhs, self.expr)
+            print("Comparing 'relation.rhs' with 'expr':")
             display_expression_differences(relation.rhs, self.expr)
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides. See output for difference "
