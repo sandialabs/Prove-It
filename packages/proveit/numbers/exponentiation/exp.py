@@ -5,7 +5,7 @@ from proveit import (defaults, equality_prover, ExprRange, ExprTuple,
                      ProofFailure, prover, relation_prover, StyleOptions,
                      UnsatisfiedPrerequisites, USE_DEFAULTS)
 import proveit
-from proveit import a, b, c, d, k, m, n, r, x, y, S, theta
+from proveit import a, b, c, d, i, j, k, m, n, r, x, y, S, theta
 from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, greater_eq
 from proveit.numbers import (NumberOperation, deduce_number_set,
@@ -280,7 +280,7 @@ class Exp(NumberOperation):
         from proveit.numbers import (zero, one, two, Add, Neg, Mult, Div,
                                      is_numeric_int, is_numeric_rational,
                                      numeric_rational_ints,
-                                     Log, Rational, Abs)
+                                     Log, Rational, Abs, KroneckerDelta)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
 
@@ -415,6 +415,14 @@ class Exp(NumberOperation):
                 return self.double_exponent_reduction()
             except:
                 pass # number sets not proper
+        elif (isinstance(base, KroneckerDelta)
+              and InSet(exponent, RealPos).readily_provable()):
+            from proveit.numbers.functions import kron_delta_power_reduction
+            _i_sub = base.operands[0]
+            _j_sub = base.operands[1]
+            _n_sub = exponent
+            return kron_delta_power_reduction.instantiate(
+                    {i:_i_sub, j:_j_sub, n:_n_sub})
         if Exp._simplification_directives_.distribute_exponent and (
                 isinstance(base, Mult) or isinstance(base, Div)):
             # Distribute the exponent as directed.
