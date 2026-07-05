@@ -861,9 +861,6 @@ class VecSum(GroupSum, VecOperation):
                             idx_end = idx_beg
                         else:
                             idx_end = _i
-                if idx_beg==-1:
-                    # no extractable factors; nothing to do
-                    return eq.relation
             else:
                 # The alternative is that the summand is
                 # a ScalarMult with the scalar (but not the scaled)
@@ -874,7 +871,9 @@ class VecSum(GroupSum, VecOperation):
                 # 1 factor)
                 idx_beg = len(tensor_prod_expr.operands.entries) - 1
                 idx_end = idx_beg
-
+            if idx_beg==-1:
+                # no extractable factors; nothing to do
+                return eq.relation
 
         # Check that the provided idxs are within bounds
         # (it should refer to an actual TensorProd operand)
