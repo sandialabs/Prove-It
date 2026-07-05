@@ -861,6 +861,9 @@ class VecSum(GroupSum, VecOperation):
                             idx_end = idx_beg
                         else:
                             idx_end = _i
+                if idx_beg==-1:
+                    # no extractable factors; nothing to do
+                    return eq.relation
             else:
                 # The alternative is that the summand is
                 # a ScalarMult with the scalar (but not the scaled)
