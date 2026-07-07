@@ -1,4 +1,4 @@
-from proveit import Function, Literal, prover
+from proveit import n, A, B, equality_prover, Function, Literal, prover
 
 class Disjoint(Function):
     '''
@@ -15,18 +15,151 @@ class Disjoint(Function):
                           styles=styles)
         self.sets = self.operands
 
+    def side_effects(self, judgment):
+        '''
+        Unfold the disjointess claim as a side effect.
+        '''
+        yield self.unfold
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        For self = Disjoint(A,B) (i.e., the binary case), deduce and
+        return:
+                [Disjoint(A, B) = (Intersect(A,B) = EmptySet)].
+
+        For self = Disjoint(A1, A2, ..., An), deduce and return:
+
+                Disjoint(A1, A2, ..., An) =
+                Forall_{X, Y in {A1,...,An} | X ≠ Y} [Disjoint(X, Y)]
+
+        Worth noting that the more general second case will be
+        difficult to use when trying to move right-to-left, but can
+        still be quite useful moveing left-to-right and using the
+        result to then deduce that some (or any) particular pair in
+        {A1,...,An} is disjoint.
+        '''
+
+        if self.operands.is_double():
+            # self has the form Disjoint(A, B)
+            from . import disjoint_pair_def_eq
+            _A_sub = self.operands[0]
+            _B_sub = self.operands[1]
+            return disjoint_pair_def_eq.instantiate({A:_A_sub, B:_B_sub})
+
+        if self.operands.num_elements().as_int() > 2:
+            # self has the form Disjoint(A1, A2, ..., An)
+            from . import nary_disjoint_def
+            _n_sub = self.operands.num_elements()
+            _A_sub = self.operands
+            return nary_disjoint_def.instantiate({n:_n_sub, A:_A_sub})
+
+        else:
+            _num_ops = self.operands.num_elements()
+            raise NotImplementedError(
+                    "Disjoint.definition() only implemented for the "
+                    "binary case and cannot yet handle the current case "
+                    f"of {self} with {_num_ops} operands. ")
+
+    def as_defined(self, **defaults_config):
+        '''
+        For self = Disjoint(A,B) (i.e., the binary case), return the
+        definitional expression (i.e., NOT a judgment):
+        
+                (Intersect(A,B) = EmptySet)
+
+        For self = Disjoint(A1, A2, ..., An), return the definitional
+        expression (i.e., NOT a judgment):
+
+                Forall_{X, Y in {A1,...,An} | X ≠ Y} [Disjoint(X, Y)]
+        '''
+        _operands = self.operands
+        if _operands.is_double():
+            from proveit.logic import Equals
+            from proveit.logic.sets import EmptySet, Intersect
+            return Equals(Intersect(*_operands), EmptySet)
+
+        if _operands.num_elements().as_int() > 2:
+            from proveit import X, Y
+            from proveit.logic import NotEquals, Forall
+            from proveit.logic.sets import Disjoint, Set
+            return Forall((X, Y), Disjoint(X, Y),
+                    conditions=[NotEquals(X, Y)],
+                    domain=Set(*_operands))
+
+        raise NotImplementedError(
+                "Disjoint.definition() only implemented for cases "
+                f"with 2 or more operands; the case {self} has "
+                "1 or fewer operands.")
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = Disjoint(A, B), and knowing or assuming self,
+        derive and return:
+
+                |- Intersect(A, B) = EmptySet
+
+        From self = Disjoint(A1, A2, ..., An), and knowing or assuming
+        self, derive and return:
+
+                |- Forall_{X,Y in {A1,...,An}|X≠Y}[Disjoint(X, Y)]
+        '''
+        if self.operands.is_double():
+            # self has the form Disjoint(A, B)
+            from . import disjoint_pair_unfolding
+            _A_sub = self.operands[0]
+            _B_sub = self.operands[1]
+            return disjoint_pair_unfolding.instantiate(
+                    {A:_A_sub, B:_B_sub})
+
+        # otherwise we try the more general
+        if self.operands.num_elements().as_int() > 2:
+            # self has the form Disjoint(A1, A2, ..., An)
+            from . import nary_disjoint_unfolding
+            _n_sub = self.operands.num_elements()
+            _A_sub = self.operands
+            return nary_disjoint_unfolding.instantiate({n:_n_sub, A:_A_sub})
+
+        raise NotImplementedError(
+                "Disjoint.unfold() only implemented for cases "
+                f"with 2 or more operands; the case {self} has "
+                "1 or fewer operands.")
+
     @prover
     def conclude(self, **defaults_config):
         '''
-        Conclude that sets are Disjoint.  One of the sets must have
-        a 'deduce_disjointness' method for this to work.
+        Conclude that Disjoint(A1, A2, ..., An) is true (i.e. that
+        the sets A1, A2, ..., An are all pairwise disjoint.
+        If one of the sets has a 'deduce_disjointness' method, we try
+        that (which currently only works for integer Intervals).
+        Otherwise, this depends on knowing or assuming that all
+        pairwise operand comparisons are disjoint (or in the simple
+        binary case Disjoint(A, B), that Intersect(A, B) = EmptySet).
         '''
         for operand in self.sets:
             if hasattr(operand, 'deduce_disjointness'):
                 return operand.deduce_disjointness(self)
+        if self.operands.is_double():
+            # self has the form Disjoint(A, B)
+            from . import disjoint_pair_folding
+            _A_sub = self.operands[0]
+            _B_sub = self.operands[1]
+            return disjoint_pair_folding.instantiate(
+                    {A:_A_sub, B:_B_sub})
+        # otherwise we try the more general
+        if self.operands.num_elements().as_int() > 2:
+            # self has the form Disjoint(A1, A2, ..., An)
+            from . import nary_disjoint_folding
+            _n_sub = self.operands.num_elements()
+            _A_sub = self.operands
+            return nary_disjoint_folding.instantiate({n:_n_sub, A:_A_sub})
+
         raise NotImplementedError(
-                "Cannot conclude %s; non of the sets have a "
-                "'deduce_disjointness' method."%self)
+                f"Cannot conclude {self}; non of the sets have a "
+                "'deduce_disjointness' method, and it is unknown if the "
+                "sets are all pairwise disjoint and unknown if all "
+                "pairwise intersections are empty.")
 
 
 class AllDisjoint(Function):
