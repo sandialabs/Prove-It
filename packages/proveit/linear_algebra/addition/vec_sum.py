@@ -853,7 +853,7 @@ class VecSum(GroupSum, VecOperation):
                 
                 idx_beg = -1
                 idx_end = -1
-                for _i in range(len(expr.summand.operands.entries)):
+                for _i in range(len(tensor_prod_expr.operands.entries)):
                     if not free_vars(tensor_prod_expr.operands[_i]).isdisjoint(
                             indices):
                         if idx_beg == -1:
@@ -871,9 +871,6 @@ class VecSum(GroupSum, VecOperation):
                 # 1 factor)
                 idx_beg = len(tensor_prod_expr.operands.entries) - 1
                 idx_end = idx_beg
-            if idx_beg==-1:
-                # no extractable factors; nothing to do
-                return eq.relation
 
         # Check that the provided idxs are within bounds
         # (it should refer to an actual TensorProd operand)
