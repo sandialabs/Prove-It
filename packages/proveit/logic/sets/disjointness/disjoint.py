@@ -1,4 +1,5 @@
-from proveit import n, A, B, equality_prover, Function, Literal, prover
+from proveit import (
+        n, A, B, S, T, X, Y, equality_prover, Function, Literal, prover)
 
 class Disjoint(Function):
     '''
@@ -142,12 +143,54 @@ class Disjoint(Function):
                 return operand.deduce_disjointness(self)
         if self.operands.is_double():
             # self has the form Disjoint(A, B)
+            # We first check for some special cases
+            # (1) Disjoint(A-S, B-T)
+            # (2) Disjoint(A-S, B)
+            # (3) Disjoint(A, B-T)
+            from proveit.logic.sets import Difference
+            _diff_0 = isinstance(self.operands[0], Difference)
+            if _diff_0:
+                _A_sub = self.operands[0].operands[0]
+                _S_sub = self.operands[0].operands[1]
+            else:
+                _A_sub = self.operands[0]
+            _diff_1 = isinstance(self.operands[1], Difference)
+            if _diff_1:
+                _B_sub = self.operands[1].operands[0]
+                _T_sub = self.operands[1].operands[1]
+            else:
+                _B_sub = self.operands[1]
+            if Disjoint(_A_sub, _B_sub).readily_provable():
+                if (_diff_0 and _diff_1):
+                    from . import disjoint_imp_disjoint_diffs
+                    return (disjoint_imp_disjoint_diffs.instantiate(
+                        {A:_A_sub, B:_B_sub, S:_S_sub, T:_T_sub}).
+                        derive_consequent())
+                elif _diff_0:
+                    from . import disjoint_imp_disjoint_diff_left
+                    return (disjoint_imp_disjoint_diff_left.instantiate(
+                        {A:_A_sub, B:_B_sub, S:_S_sub}).
+                        derive_consequent())
+                elif _diff_1:
+                    from . import disjoint_imp_disjoint_diff_right
+                    return (disjoint_imp_disjoint_diff_right.instantiate(
+                        {A:_A_sub, B:_B_sub, T:_T_sub}).
+                        derive_consequent())
+
+            # We also have a general subset-related case where
+            # Disjoint(A,B) => Disjoint(X, Y),
+            # if SubsetEq(X,A) and SubsetEq(Y,B). But not clear how to
+            # find the supersets A, B that might apply. TBA
+
+            # Then the more general binary case, where we know
+            # or assume that the intersection is empty
             from . import disjoint_pair_folding
             _A_sub = self.operands[0]
             _B_sub = self.operands[1]
             return disjoint_pair_folding.instantiate(
                     {A:_A_sub, B:_B_sub})
-        # otherwise we try the more general
+
+        # otherwise we try the more general nary case
         if self.operands.num_elements().as_int() > 2:
             # self has the form Disjoint(A1, A2, ..., An)
             from . import nary_disjoint_folding
@@ -160,6 +203,45 @@ class Disjoint(Function):
                 "'deduce_disjointness' method, and it is unknown if the "
                 "sets are all pairwise disjoint and unknown if all "
                 "pairwise intersections are empty.")
+
+    @prover
+    def conclude_via_disjoint_supersets(self, supersets, **defaults_config):
+        '''
+        Conclude self of the form Disjoint(X, Y) given supersets [A, B]
+        such that SubsetEq(X,A) and SubsetEq(Y,B) and Disjoint(A,B).
+        That is: we can conclude two sets X, Y are disjoint if we know
+        X and Y are respectively subsets of two disjoint sets.
+        Currently only implemented for the binary Disjoint(X, Y) case.
+        '''
+        if (len(self.operands) != 2):
+            raise ValueError(
+                    "Disjoint.conclude_via_disjoint_supersets() called "
+                    f"self = {self}, but "
+                    "Disjoint.conclude_via_disjoint_supersets() is "
+                    "implemented only for the binary case (i.e. cases ) "
+                    "with exactly 2 operands).")
+
+        if not isinstance(supersets, (list, tuple)):
+            raise ValueError(
+                    "In calling Disjoint.conclude_via_disjoint_supersets() "
+                    "the supplied supersets should be a list or tuple "
+                    "of exactly two sets.")
+
+        if (len(supersets) != 2):
+            raise ValueError(
+                    "In calling Disjoint.conclude_via_disjoint_supersets() "
+                    "the supplied supersets should be a list or tuple "
+                    "of exactly two sets.")
+
+        from . import disjoint_imp_disjoint_subsets
+        _A_sub = supersets[0]
+        _B_sub = supersets[1]
+        _X_sub = self.operands[0]
+        _Y_sub = self.operands[1]
+        return (disjoint_imp_disjoint_subsets.instantiate(
+                {A:_A_sub, B:_B_sub, X:_X_sub, Y:_Y_sub}).
+                derive_consequent())
+
 
 
 class AllDisjoint(Function):
