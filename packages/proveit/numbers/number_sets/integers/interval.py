@@ -179,3 +179,22 @@ class Interval(Operation):
         _c, _d = interval2.operands
         return disjoint_intervals.instantiate(
                 {a:_a, b:_b, c:_c, d:_d})
+
+
+def int_interval_bounds(expr):
+    '''
+    Return (lower_bound, upper_bound) of the given expression
+    if it is an Interval. If it is a Set containing one element,
+    as an Interval with the same lower and upper bound will reduce to,
+    return this one element as both lower and upper bound.  If it is
+    the EmptySet, return (one, zero).
+    '''
+    from proveit.logic import Set, EmptySet
+    from proveit.numbers import zero, one
+    if isinstance(expr, Interval):
+        return (expr.lower_bound, expr.upper_bound)
+    if isinstance(expr, Set) and expr.operands.is_single():
+        return (expr.operand, expr.operand)
+    if expr==EmptySet:
+        return (one, zero)
+    raise ValueError("'expr' not a valid integer interval")
