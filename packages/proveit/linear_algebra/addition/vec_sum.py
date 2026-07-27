@@ -5,7 +5,7 @@ from proveit import (defaults, free_vars, Literal, Function, Lambda,
                      auto_relation_prover, auto_equality_prover,
                      TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, v, K, Q, V
-from proveit.logic import InSet
+from proveit.logic import InSet, Set
 from proveit.numbers import zero, one, Interval, Mult
 from proveit.abstract_algebra import GroupSum 
 from proveit.linear_algebra import IsVecSpace, VecOperation
@@ -91,13 +91,13 @@ class VecSum(GroupSum, VecOperation):
         '''
         from proveit.numbers import Complex
         from . import vec_sum_single
-        if (isinstance(self.domain,Interval) and
-                self.domain.lower_bound == self.domain.upper_bound):
+        if (isinstance(self.domain,Set) and
+                self.domain.operands.is_single()):
             # Reduce singular summation.
             if hasattr(self, 'index'):
                 return vec_sum_single.instantiate(
                     {Function(v, self.index): self.summand,
-                     a: self.domain.lower_bound})
+                     a: self.domain.operand})
         inner_assumptions = defaults.assumptions + self.conditions.entries
         if hasattr(self.summand, 'deduce_in_number_set'):
             # Maybe we can reduce the VecSum to a number Sum.

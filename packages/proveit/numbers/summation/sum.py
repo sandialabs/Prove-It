@@ -6,7 +6,7 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
                      auto_prover, auto_relation_prover, auto_equality_prover,
                      SimplificationDirectives, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
-from proveit.logic import Forall, InSet
+from proveit.logic import Forall, InSet, Set
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (ZeroSet, Complex, Integer, Interval, Natural,
                              NaturalPos, Rational, Real, RealInterval,
@@ -155,7 +155,7 @@ class Sum(OperationOverInstances):
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        explicit_conds = self.explicit_conditions()          
+        explicit_conds = self.explicit_conditions()
         if isinstance(self.domain, Interval) and len(explicit_conds)==0:
             formatted_operator = self.operator.formatted(format_type)
             formatted_index = self.index.formatted(format_type)
@@ -189,12 +189,12 @@ class Sum(OperationOverInstances):
         from proveit.numbers import Mult
         from . import sum_single, trivial_sum
         summand = self.summand
-        if (isinstance(self.domain,Interval) and
-            self.domain.lower_bound == self.domain.upper_bound):
+        if (isinstance(self.domain,Set) and
+            self.domain.operands.is_single()):
             if hasattr(self, 'index'):
                 return sum_single.instantiate(
                     {Function(f, self.index): summand,
-                     a: self.domain.lower_bound})
+                     a: self.domain.operand})
         if (isinstance(self.domain,Interval) and
                 self.instance_param not in free_vars(summand)
                 and len(self.conditions)==1):
