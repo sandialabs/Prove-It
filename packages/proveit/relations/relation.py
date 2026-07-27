@@ -228,7 +228,6 @@ class Relation(ClassMembership):
                 known_memberships.add(known_membership)
             for known_membership in InSet.yield_known_memberships(rhs_cf):
                 known_memberships.add(known_membership)
-            print('known_memberships', known_memberships)
             # These classes may contain '_both_sides' methods that could
             # be applied via the Relation (also attach corresponding
             # domains as applicable):
