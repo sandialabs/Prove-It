@@ -131,7 +131,6 @@ class IntervalMembership(NumberMembership):
     @prover
     def derive_element_in_restricted_number_set_if_known(
             self, **defaults_config):
-        from proveit import UnsatisfiedPrerequisites
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         if (InSet(_a, Natural).readily_provable() or 
@@ -140,10 +139,7 @@ class IntervalMembership(NumberMembership):
         if (InSet(_a, Natural).readily_provable() or 
                 InSet(_b, IntegerNonPos).readily_provable()):
             return self.derive_element_in_restricted_number_set()
-        raise UnsatisfiedPrerequisites(
-                "Must know that the lower bound is non-negative or the "
-                "upper bound is non-positive to perform "
-                "derive_element_in_restricted_number_set_if_known")
+        return self.derive_element_in_integer()
 
     @prover
     def derive_element_in_restricted_number_set(
@@ -153,6 +149,8 @@ class IntervalMembership(NumberMembership):
         deduce that the element is in Natural, NaturalPos, IntegerNeg,
         or IntegerNonPos as appropriate.
         '''
+        from proveit import UnsatisfiedPrerequisites
+
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _n = self.element
@@ -199,6 +197,10 @@ class IntervalMembership(NumberMembership):
                 b_bounding = LessEq(_b, zero)
                 upper_bounding.apply_transitivity(b_bounding)
                 return InSet(_n, IntegerNonPos).prove()
+        raise UnsatisfiedPrerequisites(
+                "Must know that the lower bound is non-negative or the "
+                "upper bound is non-positive to perform "
+                "derive_element_in_restricted_number_set().")
     
 
 class IntervalNonmembership(SetNonmembership):
