@@ -1,6 +1,6 @@
 from .integers import (
-        Integer, IntegerEven, IntegerNeg, IntegerNonZero,
-        IntegerNonPos, IntegerOdd, Interval, infinity, Prime)
+        Integer, IntegerEven, IntegerNeg, IntegerNonZero, IntegerNonPos,
+        IntegerOdd, Interval, int_interval_bounds, infinity, Prime)
 from .natural_numbers import ZeroSet, Natural, NaturalPos
 from .rational_numbers import (Rational, RationalNonZero,
                                RationalPos, RationalNeg,

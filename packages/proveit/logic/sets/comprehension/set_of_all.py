@@ -44,7 +44,10 @@ class SetOfAll(OperationOverInstances):
             *self.conditions[:num_param_mem_cond_entries])
         explicit_conditions = ExprTuple(
             *self.conditions[num_param_mem_cond_entries:])
-        inner_fence = (explicit_conditions.num_entries() > 0)
+        if isinstance(instance_element, ExprTuple):
+            inner_fence = True
+        else:
+            inner_fence = (explicit_conditions.num_entries() > 0)
         has_multi_domain = (formatted_class is None)
         if hasattr(self, 'condition'):
             with defaults.temporary() as temp_defaults:

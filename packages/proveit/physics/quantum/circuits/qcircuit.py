@@ -87,6 +87,7 @@ class Qcircuit(Function):
         Populate col_row_to_latex_kwargs appropriately while we
         are at it: (col, row) -> kwargs for formatting.
         '''
+        from proveit.numbers import int_interval_bounds
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP, I)
         down_wire_locations = set()
@@ -146,8 +147,12 @@ class Qcircuit(Function):
                     # MultiQubitElem entry.
                     elem = entry_expr.element
                     targets = entry_expr.targets
-                    if (next_part is not None and 
-                            not isinstance(targets, Interval)):
+                    try:
+                        (start_index, end_index) = int_interval_bounds(targets)
+                    except ValueError:
+                        start_index = end_index = None
+                    if next_part is not None and start_index is None and (
+                            type(elem) in (Gate, Input, Output, Measure)):
                         raise ValueError(
                                 "The MultiQubitElem expressions "
                                 "composing a multiqubit gate/input/output"
@@ -155,13 +160,12 @@ class Qcircuit(Function):
                                 "up until the end qubit positions: "
                                 "encountered %s before end of %s"
                                 %(entry_expr, active_multiqubit_op))
-                    if isinstance(targets, Interval):
+                    if start_index is not None and type(elem) in (
+                            Gate, Input, Output, Measure):
                         # A multi-gate/input/output/measure.  
-                        # The targets must an Interval covering all of 
+                        # The targets must be an Interval covering all of 
                         # the involved qubits and elements must 
                         # indicate consecutive "parts" starting from 1.
-                        start_index = targets.lower_bound
-                        end_index = targets.upper_bound
                         # This trick will remove any empty range:
                         start_index = quick_simplified_index(start_index)
                         end_index = quick_simplified_index(end_index)
@@ -178,9 +182,7 @@ class Qcircuit(Function):
                             elem_type = 'measure'
                             op_type = 'basis'
                         else:
-                            raise ValueError(
-                                    "A MultiQubitElem element should be "
-                                    "a Gate/Input/Output/Measure")
+                            assert False
                         if not hasattr(elem, 'part'):
                             raise ValueError(
                                     "A MultiQubitElem element should be "
@@ -252,13 +254,15 @@ class Qcircuit(Function):
                         # Explicit targets for a control, swap,
                         # or multi-qubit gate/input/output/measure
                         # operation.
+                        if type(elem) in (Gate, Input, Output, Measure):
+                            raise ValueError(
+                                    "To format a multi-gate/input/output/"
+                                    "measure in a Qcircuit, the targets must " 
+                                    "be an Interval, not %s"
+                                    %targets)
                         if elem not in (CONTROL, CLASSICAL_CONTROL, SWAP):
-                            if not isinstance(targets, Interval):
-                                raise ValueError(
-                                        "To format a multi-gate/input/output/"
-                                        "measure in a Qcircuit, the targets must " 
-                                        "be an Interval, not %s"
-                                        %targets)
+                            raise TypeError("Unexpected entry 'element': %s"%
+                                            elem)
                         multiqubit_positions_of_column.add(
                                 (qubit_pos,) + targets.operands.entries)
                         
@@ -297,12 +301,20 @@ class Qcircuit(Function):
                                             "two MultiQubitElems that are "
                                             "the same: %s ≠ %s."
                                             %(_other_entry_expr, entry_expr))
+
                             if isinstance(_other_entry_expr, MultiQubitElem):
-                                other_targets = (
-                                        _other_entry_expr.targets)
-                                if isinstance(other_targets, Interval):
+                                other_elem = _other_entry_expr.element
+                                other_targets = _other_entry_expr.targets
+                                try:
+                                    (other_start_index, _) = (
+                                        int_interval_bounds(other_targets))
+                                except ValueError:
+                                    other_start_index = None
+                                if other_start_index is not None and (
+                                        type(other_elem) in (
+                                               Gate, Input, Output, Measure)):
                                     other_top_pos = Add(
-                                            other_targets.lower_bound, 
+                                            other_start_index, 
                                             zero).quick_simplified()
                                     if (other_top_pos != _other_pos):
                                         raise ValueError(
@@ -406,6 +418,7 @@ class Qcircuit(Function):
         '''
         from proveit.numbers import one
         from proveit.physics.quantum import I
+        from proveit.numbers import int_interval_bounds
         if center_entry[-1] not in ('implicit', 'explicit', 
                        'param_independent'):
             return False # Not the center of an ExprRange.
@@ -418,7 +431,12 @@ class Qcircuit(Function):
             # Not a multiwire or multigate.
             return False
         range_expr_param = range_expr.parameter
-        if isinstance(range_expr_body.targets, Interval):
+        try:
+            (start_index, end_index) = int_interval_bounds(
+                range_expr_body.targets)
+        except ValueError:
+            start_index = None
+        if start_index is not None:
             # A confirmed multigate with an Interval of "targets".
             return True
         return False
@@ -426,6 +444,7 @@ class Qcircuit(Function):
     def latex(self, fence=False, **kwargs):
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP, SPACE)
+        from proveit.numbers import int_interval_bounds
         spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
@@ -566,14 +585,19 @@ class Qcircuit(Function):
                         entry = entry.body
                     multi_op = False
                     if isinstance(entry, MultiQubitElem):
-                        if (isinstance(entry.element, Output) or
-                                isinstance(entry.element, Measure)
-                                or entry.element == SPACE):
+                        elem = entry.element
+                        if (isinstance(elem, Output) or
+                            isinstance(elem, Measure) or elem == SPACE):
                             continue_wire = False
-                        if (isinstance(entry.targets, Interval) and 
+                        targets = entry.targets
+                        try:
+                            (start_index, _) = int_interval_bounds(targets)
+                        except ValueError:
+                            start_index = None
+                        if start_index is not None and (
+                                type(elem) in (Gate, Input, Output, Measure) and
                                 (col, row) in implicit_format_col_row_pairs):
                             multi_op = True
-                            elem = entry.element
                             # Double-checking (should have been checked
                             # in _find_down_wire_locations):
                             assert elem not in (
@@ -581,10 +605,8 @@ class Qcircuit(Function):
                             # A multi-gate/input/output (not a 
                             # control or swap and has explicit 
                             # qubit positions).
-                            targets = entry.targets
                             top_qubit_pos = Add(
-                                    targets.lower_bound,
-                                    zero).quick_simplified()
+                                    start_index, zero).quick_simplified()
                             top_row = qubit_position_to_row[top_qubit_pos]
                             formatted_entry = formatted_col_entries[top_row]
                             if outer_role in ('implicit', 'explicit',

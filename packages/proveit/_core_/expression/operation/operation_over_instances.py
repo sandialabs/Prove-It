@@ -223,7 +223,7 @@ class OperationOverInstances(Operation):
             lambda_map = OperationOverInstances._createOperand(
                 instance_param_or_params, instance_expr, conditions)
 
-        self.instance_expr = instance_expr
+        self.instance_expr = single_or_composite_expression(instance_expr)
         '''Expression corresponding to each 'instance' in the OperationOverInstances'''
 
         self.instance_params = instance_params
