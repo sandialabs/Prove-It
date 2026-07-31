@@ -82,6 +82,10 @@ class Exists(OperationOverInstances):
         '''
         Side-effect derivations to attempt automatically for an exists operations.
         '''
+        if hasattr(self.instance_expr, 'existential_side_effects'):
+            for side_effect in (
+                    self.instance_expr.existential_side_effects(judgment)):
+                yield side_effect
         return
         yield self.derive_negated_forall  # derive the negated forall form
 
