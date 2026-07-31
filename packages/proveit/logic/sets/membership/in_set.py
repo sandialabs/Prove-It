@@ -1,7 +1,7 @@
-from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
-                     ProofFailure, UnusableProof,
-                     single_or_composite_expression,
-                     prover, equality_prover, relation_prover)
+from proveit import (
+        defaults, equality_prover, Judgment, Literal, Operation,
+        ProofFailure, prover, relation_prover, single_or_composite_expression,
+        UnusableProof, USE_DEFAULTS)
 from proveit.util import OrderedSet
 from proveit.relations import Relation
 from proveit.classes import ClassMembership
@@ -100,6 +100,51 @@ class InSet(Relation):
             for side_effect in self.membership_object.side_effects(
                     judgment):
                 yield side_effect
+
+    def existential_side_effects(self, judgment):
+        '''
+        This method is intended to be called from Exists.side_effects()
+        for an Exists.instance_expr with a 'not_equals_side_effects'
+        attribute. For a judgment or assumption of the form
+
+           Exists(x, x in A),
+
+        derive the NotEquals Judgment:
+
+          |- NotEquals(A, EmptySet)
+
+        (i.e., if there exists an element x in A, then A must be
+        non-empty).
+        This side-effect method is called from Exists.side_effects().
+        Future development might also call this method from the InSet.
+        side_effects() method itself.
+        '''
+
+        from . import InSet
+        from proveit.logic import Exists
+        if not isinstance(judgment, Judgment):
+            raise ValueError(
+                    "InSet.existential_side_effects() expecting 'judgment' "
+                    f"argument to be Judgment but got {judgment}.")
+        if not isinstance(judgment.expr, (Exists, InSet)):
+            raise ValueError(
+                    "InSet.existential_side_effects() expecting "
+                    "'judgment' expr to be an Exists or InSet "
+                    f"but got {judgment}.")
+        if (isinstance(judgment.expr, Exists) and
+            not isinstance(judgment.expr.instance_expr, InSet)):
+            raise ValueError(
+                    "InSet.existential_side_effects() expecting "
+                    "'judgment' expr to be an Exists expr with an"
+                    "InSet instance_expr, but got judgment: "
+                    f"{judgment}.")
+        if not judgment.expr.instance_params.is_single():
+            return
+
+        from proveit import A
+        from proveit.logic.sets import non_empty_folding
+        _A_sub = judgment.expr.instance_expr.domain
+        yield (lambda : non_empty_folding.instantiate({A:_A_sub}))
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
