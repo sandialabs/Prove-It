@@ -32,6 +32,14 @@ class NotEquals(Relation):
             for side_effect in self.rhs.not_equals_side_effects(judgment):
                 yield side_effect
 
+    def negation_side_effects(self, judgment):
+        '''
+        Side-effect derivations to attempt automatically for a negated
+        NotEquals (such as Not(NotEquals(x,y))).
+        '''
+        # (x = y) from Not(NotEquals(x,y))
+        yield self.deduce_equals_from_not_not_equals
+
     def _readily_provable(self, try_readily_not_equal=True):
         '''
         Return True iff this NotEquals is readily provable:
@@ -298,6 +306,20 @@ class NotEquals(Relation):
         '''
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
+
+    @prover
+    def deduce_equals_from_not_not_equals(self, **defaults_config):
+        r'''
+        Deduce x = y knowing or assuming Not(x ≠ y), where self is
+        (x ≠ y). This is called as a side-effect/incidental from the
+        NotEquals.negation_side_effects() method, which is itself
+        "caught" and called by the Not.side_effects() method.
+        '''
+        from . import not_not_eq_implies_eq
+        _x_sub = self.operands[0]
+        _y_sub = self.operands[1]
+        return not_not_eq_implies_eq.instantiate(
+                {x:_x_sub, y:_y_sub}).derive_consequent()
 
     def readily_in_bool(self):
         return True # NotEquals is always boolean
