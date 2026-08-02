@@ -6,6 +6,7 @@ import glob
 import importlib
 import itertools
 import json
+import sqlite3
 from io import StringIO
 import re
 import urllib.request
@@ -152,6 +153,9 @@ class TheoryStorage:
         # objects.
         self._folder_storage_dict = dict()
 
+        # Track which SQLite database files have been initialized.
+        self._db_initialized = set()
+
     def is_root(self):
         '''
         Return True iff this TheoryStorage is a "root" TheoryStorage
@@ -187,10 +191,125 @@ class TheoryStorage:
         Return the TheoryFolderStorage object associated with the
         theory of this TheoryStorage and the folder.
         '''
+        self._ensure_sqlite_db_initialized(folder)
         if folder not in self._folder_storage_dict:
             self._folder_storage_dict[folder] = \
                 TheoryFolderStorage(self, folder)
         return self._folder_storage_dict[folder]
+
+    def _db_path(self, folder):
+        '''
+        Return the SQLite database path for the given storage folder.
+        For theorem proof folders, the folder name is used directly.
+        '''
+        if folder is None:
+            return None
+        return os.path.join(self.pv_it_dir, folder + '.db')
+
+    def _ensure_sqlite_db_initialized(self, folder):
+        '''
+        Lazily create the SQLite DB for the given folder, along with
+        the required tables and indexes, if it does not already exist.
+        '''
+        if folder is None:
+            return
+        db_path = self._db_path(folder)
+        if db_path in self._db_initialized:
+            return
+        if not os.path.isfile(db_path):
+            conn = sqlite3.connect(db_path)
+            try:
+                conn.execute('PRAGMA foreign_keys=ON')
+                conn.execute('PRAGMA journal_mode=WAL')
+                conn.execute('PRAGMA synchronous=NORMAL')
+                self._create_sqlite_schema(conn, folder)
+                conn.commit()
+            finally:
+                conn.close()
+        self._db_initialized.add(db_path)
+
+    def _create_sqlite_schema(self, conn, folder):
+        '''
+        Create the minimal SQLite schema for the given folder.
+        '''
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS objects (
+                content_hash TEXT PRIMARY KEY,
+                unique_rep TEXT NOT NULL
+            )
+        ''')
+
+        if folder == 'common':
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS special_common_expressions (
+                    name TEXT PRIMARY KEY,
+                    content_hash TEXT NOT NULL
+                )
+            ''')
+        elif folder == 'axioms':
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS axioms (
+                    name TEXT PRIMARY KEY,
+                    expression_hash TEXT NOT NULL,
+                    invocation_proof_hash TEXT NOT NULL
+                )
+            ''')
+        elif folder == 'theorems':
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS theorems (
+                    name TEXT PRIMARY KEY,
+                    expression_hash TEXT NOT NULL,
+                    invocation_proof_hash TEXT NOT NULL,
+                    proof_hash TEXT,
+                    complete INTEGER NOT NULL DEFAULT 0
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS used_axioms (
+                    theorem_name TEXT NOT NULL,
+                    full_axiom_name TEXT NOT NULL
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS used_theorems (
+                    theorem_name TEXT NOT NULL,
+                    full_used_theorem_name TEXT NOT NULL
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS used_by_axioms (
+                    full_axiom_name TEXT NOT NULL,
+                    used_by_theorem_name TEXT NOT NULL
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS used_by_theorems (
+                    full_theorem_name TEXT NOT NULL,
+                    used_by_theorem_name TEXT NOT NULL
+                )
+            ''')
+            cur.execute('''
+                CREATE UNIQUE INDEX IF NOT EXISTS uniq_used_axioms
+                ON used_axioms(theorem_name, full_axiom_name)
+            ''')
+            cur.execute('''
+                CREATE UNIQUE INDEX IF NOT EXISTS uniq_used_theorems
+                ON used_theorems(theorem_name, full_used_theorem_name)
+            ''')
+            cur.execute('''
+                CREATE UNIQUE INDEX IF NOT EXISTS uniq_used_by_axioms
+                ON used_by_axioms(full_axiom_name, used_by_theorem_name)
+            ''')
+            cur.execute('''
+                CREATE UNIQUE INDEX IF NOT EXISTS uniq_used_by_theorems
+                ON used_by_theorems(full_theorem_name, used_by_theorem_name)
+            ''')
+        elif folder == 'demonstrations':
+            pass
+        elif folder.startswith('_proof_'):
+            pass
+        cur.close()
 
     def _updatePath(self):
         '''
