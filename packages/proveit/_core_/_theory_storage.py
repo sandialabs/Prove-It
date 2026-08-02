@@ -1370,46 +1370,72 @@ class TheoryFolderStorage:
         # this hash value
         rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         hash_path = os.path.join(self.path, rep_hash)
-        # append the hash value with an index, avoiding collisions
-        # (that should be astronomically rare, but let's not risk it).
-        index = 0
-        while os.path.exists(hash_path + str(index)):
-            indexed_hash_path = hash_path + str(index)
-            unique_rep_filename = os.path.join(indexed_hash_path,
-                                               'unique_rep.pv_it')
-            if not os.path.isfile(unique_rep_filename):
-                # folder does not contain a unique_rep.pv_it file;
-                # it may not have been completely erased before, but
-                # let's just use it.
-                break
-            with open(unique_rep_filename, 'r') as f:
-                rep = f.read()
-                if rep != unique_rep:
-                    # there is a hashing collision (this should be
-                    # astronomically rare, but we'll make sure just
-                    # in case)
-                    index += 1  # increment the index and try again
-                    continue
-            # found a match; it is already in storage
-            # remember this for next time
-            result = (self, rep_hash + str(index))
-            self._record_storage(prove_it_object._style_id,
-                                 rep_hash + str(index))
+        
+        storage_hash = self._resolve_storage_hash(rep_hash, unique_rep)
+        indexed_hash_path = os.path.join(self.path, storage_hash)
+
+        if os.path.exists(indexed_hash_path):
+            # found a match or an existing slot; remember this for next time
+            result = (self, storage_hash)
+            self._record_storage(prove_it_object._style_id, storage_hash)
+            self._store_object_row(storage_hash, unique_rep)
             self._generateObjectNotebook(prove_it_object)
             return result
-        indexed_hash_path = hash_path + str(index)
-        # store the unique representation in the appropriate file
+
         if not os.path.exists(indexed_hash_path):
             os.mkdir(indexed_hash_path)
+
         with open(os.path.join(indexed_hash_path, 'unique_rep.pv_it'),
                   'w') as f:
             f.write(unique_rep)
+
         # remember this for next time
-        result = (self, rep_hash + str(index))
+        result = (self, storage_hash)
+        self._store_object_row(storage_hash, unique_rep)
         self._record_storage(prove_it_object._style_id,
-                             rep_hash + str(index))
+                             storage_hash)
         self._generateObjectNotebook(prove_it_object)
         return result
+
+    def _resolve_storage_hash(self, rep_hash, unique_rep):
+        '''
+        Resolve the final storage hash by checking for collisions and
+        returning the first usable candidate.  This preserves the
+        current filesystem-based behavior.
+        '''
+        index = 0
+        while True:
+            storage_hash = rep_hash + str(index)
+            hash_path = os.path.join(self.path, storage_hash)
+            if not os.path.exists(hash_path):
+                return storage_hash
+            unique_rep_filename = os.path.join(hash_path, 'unique_rep.pv_it')
+            if not os.path.isfile(unique_rep_filename):
+                return storage_hash
+            with open(unique_rep_filename, 'r') as f:
+                rep = f.read()
+            if rep == unique_rep:
+                return storage_hash
+            index += 1
+
+    def _store_object_row(self, content_hash, unique_rep):
+        '''
+        Store the object's unique_rep in the SQLite objects table for
+        this folder, if it is not already present.
+        '''
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None:
+            return
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.execute(
+                'INSERT OR IGNORE INTO objects (content_hash, unique_rep) '
+                'VALUES (?, ?)',
+                (content_hash, unique_rep)
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
     def _owningNotebook(self):
         '''
