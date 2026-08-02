@@ -1150,21 +1150,21 @@ class TheoryFolderStorage:
             if isinstance(prove_it_object_or_id, int):
                 # assumed to be a style id if it's an int
                 style_id = prove_it_object_or_id
-                (theory_folder_storage, hash_directory) = \
+                (theory_folder_storage, content_hash) = \
                     TheoryFolderStorage.proveit_object_to_storage[style_id]
             else:
-                (theory_folder_storage, hash_directory) = \
+                (theory_folder_storage, content_hash) = \
                     self._retrieve(prove_it_object_or_id)
             if theory_folder_storage.theory != self.theory:
                 theory = theory_folder_storage.theory
                 folder = theory_folder_storage.folder
                 self.theory_storage._includeReference(theory)
-                return theory.name + '.' + folder + '.' + hash_directory
+                return theory.name + '.' + folder + '.' + content_hash
             elif theory_folder_storage.folder != self.folder:
-                return theory_folder_storage.folder + '.' + hash_directory
+                return theory_folder_storage.folder + '.' + content_hash
             else:
-                #assert os.path.isdir(os.path.join(self.path, hash_directory))
-                return hash_directory
+                #assert os.path.isdir(os.path.join(self.path, content_hash))
+                return content_hash
 
     def _split(self, prove_it_storage_id):
         '''
@@ -1185,15 +1185,6 @@ class TheoryFolderStorage:
                 theory = Theory.get_theory(theory_name)
                 return theory._theory_folder_storage(folder), hash_folder
         return self, prove_it_storage_id
-
-    def _storagePath(self, prove_it_storage_id):
-        '''
-        Return the storage directory path for the Prove-It object with
-        the given storage id.
-        '''
-        theory_folder_storage, hash_directory = self._split(
-            prove_it_storage_id)
-        return os.path.join(theory_folder_storage.path, hash_directory)
 
     def _proveItObjUniqueRep(self, prove_it_object):
         '''
@@ -1303,7 +1294,10 @@ class TheoryFolderStorage:
         storage_hash = self._resolve_storage_hash(rep_hash, unique_rep)
         indexed_hash_path = os.path.join(self.path, storage_hash)
 
-        self._check_filesystem_consistency(storage_hash, unique_rep)
+        # Temporary check during migration from all filesystem incarnations
+        # to DB entries with a few necessary filesystem incarnations.
+        self._check_filesystem_consistency(prove_it_object, unique_rep,
+                                           storage_hash)
 
         # remember this for next time
         result = (self, storage_hash)
@@ -1347,7 +1341,7 @@ class TheoryFolderStorage:
             storage_hash = rep_hash + str(index)
 
             # First check the database.
-            db_unique_rep = self._get_object_row(storage_hash)
+            db_unique_rep = self._get_object_unique_rep(storage_hash)
             if db_unique_rep is None:
                 return storage_hash
             if db_unique_rep == unique_rep:
@@ -1356,28 +1350,6 @@ class TheoryFolderStorage:
             # If the database says this content_hash belongs to a different
             # unique_rep, treat it as a collision and keep searching.
             index += 1
-
-    def _get_object_row(self, content_hash):
-        '''
-        Return the unique_rep stored for the given content_hash in the
-        local SQLite objects table, or None if no row exists.
-        '''
-        db_path = self.theory_storage._db_path(self.folder)
-        if db_path is None:
-            return None
-        conn = sqlite3.connect(db_path)
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                'SELECT unique_rep FROM objects WHERE content_hash = ?',
-                (content_hash,)
-            )
-            row = cur.fetchone()
-            if row is None:
-                return None
-            return row[0]
-        finally:
-            conn.close()
 
     def _get_object_unique_rep(self, content_hash):
         '''
@@ -1419,7 +1391,8 @@ class TheoryFolderStorage:
         finally:
             conn.close()
 
-    def _check_filesystem_consistency(self, storage_hash, unique_rep):
+    def _check_filesystem_consistency(self, proveit_object, unique_rep,
+                                      storage_hash):
         '''
         Temporary migration/debug check: compare the filesystem incarnation
         against the SQLite row for the same storage_hash, if present.
@@ -1427,7 +1400,8 @@ class TheoryFolderStorage:
         hash_path = os.path.join(self.path, storage_hash)
         unique_rep_filename = os.path.join(hash_path, 'unique_rep.pv_it')
         if not os.path.isfile(unique_rep_filename):
-            assert False, "Where is %s for %s"%(storage_hash, unique_rep)
+            assert False, "Where is %s for %s with unique rep %s"%(
+                storage_hash, proveit_object, unique_rep)
             return
         with open(unique_rep_filename, 'r') as f:
             fs_unique_rep = f.read()
@@ -1539,11 +1513,11 @@ class TheoryFolderStorage:
             # Store this "special" notebook with the hash for the
             # Theorem.
             obj = Theorem(expr, theory_folder_storage.theory, name)
-        obj_theory_folder_storage, hash_directory = \
+        obj_theory_folder_storage, content_hash = \
             theory_folder_storage._retrieve(obj, do_incarnate=True)
         assert obj_theory_folder_storage == theory_folder_storage
         full_hash_dir = os.path.join(theory_folder_storage.path,
-                                     hash_directory)
+                                     content_hash)
 
         if (complete_special_expr_notebook or (
                 TheoryFolderStorage.owns_active_storage and
@@ -2317,18 +2291,15 @@ class TheoryFolderStorage:
         the purposes of displaying the proof.
         '''
         from proveit._core_.proof import Proof
-        theory_folder_storage, hash_directory = self._split(proof_id)
+        theory_folder_storage, content_hash = self._split(proof_id)
         theory = theory_folder_storage.theory
         folder = theory_folder_storage.folder
-        hash_path = theory_folder_storage._storagePath(proof_id)
-        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-            # extract the unique representation from the pv_it file
-            unique_rep = f.read()
+        unique_rep = theory_folder_storage._get_object_unique_rep(proof_id)
         # full storage id:
-        proof_id = theory.name + '.' + folder + '.' + hash_directory
+        proof_id = theory.name + '.' + folder + '.' + content_hash
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
-        proveit_obj_to_storage[proof_id] = (
-            theory_folder_storage, hash_directory)
+        proveit_obj_to_storage[proof_id] = (theory_folder_storage,
+                                            content_hash)
         return Proof._showProof(theory, folder, proof_id, unique_rep)
 
     def stored_common_expr_dependencies(self):
