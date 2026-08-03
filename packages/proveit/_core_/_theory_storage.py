@@ -1297,7 +1297,7 @@ class TheoryFolderStorage:
         # Temporary check during migration from all filesystem incarnations
         # to DB entries with a few necessary filesystem incarnations.
         self._check_filesystem_consistency(prove_it_object, unique_rep,
-                                           storage_hash)
+                                           storage_hash, first_pass=False)
 
         # remember this for next time
         result = (self, storage_hash)
@@ -1392,7 +1392,7 @@ class TheoryFolderStorage:
             conn.close()
 
     def _check_filesystem_consistency(self, proveit_object, unique_rep,
-                                      storage_hash):
+                                      storage_hash, *, first_pass):
         '''
         Temporary migration/debug check: compare the filesystem incarnation
         against the SQLite row for the same storage_hash, if present.
@@ -1400,8 +1400,9 @@ class TheoryFolderStorage:
         hash_path = os.path.join(self.path, storage_hash)
         unique_rep_filename = os.path.join(hash_path, 'unique_rep.pv_it')
         if not os.path.isfile(unique_rep_filename):
-            assert False, "Where is %s for %s with unique rep %s"%(
-                storage_hash, proveit_object, unique_rep)
+            if not first_pass:
+                assert False, "Where is %s for %s with unique rep %s"%(
+                    storage_hash, proveit_object, unique_rep)
             return
         with open(unique_rep_filename, 'r') as f:
             fs_unique_rep = f.read()
@@ -2177,7 +2178,8 @@ class TheoryFolderStorage:
             exprid_to_storage[expr_id] = (theory_folder_storage,
                                           content_hash)
             # Extract the unique representation from the database.
-            unique_rep = theory_folder_storage._get_object_unique_rep(expr_id)
+            unique_rep = theory_folder_storage._get_object_unique_rep(
+                content_hash)
             if unique_rep is None:
                 raise KeyError("Expression %s not found in database" % expr_id)
             # Parse the unique_rep to get the expression information.
@@ -2253,7 +2255,7 @@ class TheoryFolderStorage:
             # Make it from the proper TheoryFolderStorage.
             return theory_folder_storage.make_judgment_or_proof(storage_id)
         theory = self.theory
-        unique_rep = theory_folder_storage._get_object_unique_rep(storage_id)
+        unique_rep = theory_folder_storage._get_object_unique_rep(hash_folder)
         if unique_rep is None:
             raise KeyError("Judgment/Proof %s not found in database" % storage_id)
         subids = \
@@ -2294,7 +2296,7 @@ class TheoryFolderStorage:
         theory_folder_storage, content_hash = self._split(proof_id)
         theory = theory_folder_storage.theory
         folder = theory_folder_storage.folder
-        unique_rep = theory_folder_storage._get_object_unique_rep(proof_id)
+        unique_rep = theory_folder_storage._get_object_unique_rep(content_hash)
         # full storage id:
         proof_id = theory.name + '.' + folder + '.' + content_hash
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
