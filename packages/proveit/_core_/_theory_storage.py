@@ -1269,7 +1269,11 @@ class TheoryFolderStorage:
         from proveit._core_.proof import Axiom, Theorem
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
-            return proveit_obj_to_storage[prove_it_object._style_id]
+            theory_folder_storage, storage_hash = (
+                proveit_obj_to_storage[prove_it_object._style_id])
+            if do_incarnate:
+                theory_folder_storage._incarnate(prove_it_object, storage_hash)
+            return (theory_folder_storage, storage_hash)
         if isinstance(prove_it_object, Axiom):
             theory_folder_storage = \
                 prove_it_object.theory._theory_folder_storage('axioms')
@@ -1292,44 +1296,31 @@ class TheoryFolderStorage:
         rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         
         storage_hash = self._resolve_storage_hash(rep_hash, unique_rep)
-        indexed_hash_path = os.path.join(self.path, storage_hash)
 
         # Temporary check during migration from all filesystem incarnations
         # to DB entries with a few necessary filesystem incarnations.
         self._check_filesystem_consistency(prove_it_object, unique_rep,
-                                           storage_hash, first_pass=False)
+                                           storage_hash, first_pass=True)
 
         # remember this for next time
-        result = (self, storage_hash)
         self._store_object_row(storage_hash, unique_rep)
         self._record_storage(prove_it_object._style_id,
                              storage_hash)
 
-        if not do_incarnate:
-            return result
+        if do_incarnate:
+            self._incarnate(prove_it_object, storage_hash)
+        return (self, storage_hash)
 
+    def _incarnate(self, prove_it_object, storage_hash):
         # Make a filesystem incarnation of the object when it is needed
         # (e.g., for storing expression or proof notebooks or theorem
         # dependency information).
-        
-        if os.path.exists(indexed_hash_path):
-            # found a match or an existing slot; remember this for next time
-            result = (self, storage_hash)
-            self._record_storage(prove_it_object._style_id, storage_hash)
-            self._store_object_row(storage_hash, unique_rep)
-            self._generateObjectNotebook(prove_it_object)
-            return result
 
+        indexed_hash_path = os.path.join(self.path, storage_hash)
         if not os.path.exists(indexed_hash_path):
             os.mkdir(indexed_hash_path)
 
-        with open(os.path.join(indexed_hash_path, 'unique_rep.pv_it'),
-                  'w') as f:
-            f.write(unique_rep)
-
-        self._generateObjectNotebook(prove_it_object)
-
-        return result
+        #self._generateObjectNotebook(prove_it_object)
 
     def _resolve_storage_hash(self, rep_hash, unique_rep):
         '''
@@ -1431,6 +1422,7 @@ class TheoryFolderStorage:
             "%s not found.  Rerun %s" %
             (filepath, self._owningNotebook()))
 
+    """
     def _generateObjectNotebook(self, prove_it_object):
         '''
         If this is the active folder storage and the prove_it_object
@@ -1444,6 +1436,7 @@ class TheoryFolderStorage:
                 TheoryFolderStorage.expression_notebook(prove_it_object)
             elif isinstance(prove_it_object, Proof):
                 self.proof_notebook(prove_it_object)
+    """
 
     @staticmethod
     def expression_notebook(expr, name_kind_theory=None,
@@ -2250,12 +2243,12 @@ class TheoryFolderStorage:
         '''
         from proveit import Proof, Axiom, Theorem
         from proveit._core_.judgment import Judgment
-        theory_folder_storage, hash_folder = self._split(storage_id)
+        theory_folder_storage, content_hash = self._split(storage_id)
         if theory_folder_storage != self:
             # Make it from the proper TheoryFolderStorage.
             return theory_folder_storage.make_judgment_or_proof(storage_id)
         theory = self.theory
-        unique_rep = theory_folder_storage._get_object_unique_rep(hash_folder)
+        unique_rep = theory_folder_storage._get_object_unique_rep(content_hash)
         if unique_rep is None:
             raise KeyError("Judgment/Proof %s not found in database" % storage_id)
         subids = \
@@ -2282,8 +2275,7 @@ class TheoryFolderStorage:
             num_lit_gen_str = unique_rep[unique_rep.rfind(']')+1:]
             num_lit_gen = 0 if num_lit_gen_str == '' else int(num_lit_gen_str)
             obj = Judgment(truth_expr_id, assumptions, num_lit_gen=num_lit_gen)
-        theory_folder_storage._record_storage(obj._style_id,
-                                              hash_folder)
+        theory_folder_storage._record_storage(obj._style_id, content_hash)
         return obj
 
     def make_show_proof(self, proof_id):
