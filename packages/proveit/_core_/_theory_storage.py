@@ -943,7 +943,7 @@ class TheoryFolderStorage:
     # If owns_active_storage is True, this will record
     # all of the hash folders that are legitimately
     # owned.
-    owned_hash_folders = set()
+    owned_hash_ids = set()
 
     # Map style ids of Prove-It object (Expressions, Judgments, and
     # Proofs) to a (TheoryFolderStorage, hash_id) tuple where it is
@@ -1054,7 +1054,7 @@ class TheoryFolderStorage:
             self.theory_storage._theorem_names = None
             self.theory_storage._loadedTheorems = dict()
         if folder == 'common':
-            self.theory_storage._common_exp_names = None
+            self.theory_storage._common_expr_names = None
             self.theory_storage._loadedCommonExprs = dict()
         self.theory_storage._special_expr_hash_ids[kind] = None
         self.theory_storage._special_obj_hash_ids[kind] = None
@@ -1248,14 +1248,14 @@ class TheoryFolderStorage:
         '''
         Record the object's style id to (theory_folder_storage, hash_id)
         mapping in prove_it_object_to_storage for quick retrieval
-        and add the hash_id to the owned_hash_folders as appropriate
+        and add the hash_id to the owned_hash_ids as appropriate
         (if it is "owned").
         '''
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         proveit_obj_to_storage[obj_style_id] = (self, hash_id)
         if (TheoryFolderStorage.owns_active_storage and
                 self == TheoryFolderStorage.active_theory_folder_storage):
-            TheoryFolderStorage.owned_hash_folders.add(hash_id)
+            TheoryFolderStorage.owned_hash_ids.add(hash_id)
 
     def _retrieve(self, prove_it_object, *, do_incarnate=False):
         '''
@@ -2317,6 +2317,25 @@ class TheoryFolderStorage:
         If 'clear' is True, the entire folder will be removed
         (if possible).
         '''
+        owned_hash_ids = TheoryFolderStorage.owned_hash_ids
+
+        # Remove database entries that are no longer owned.
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is not None and os.path.isfile(db_path):
+            conn = sqlite3.connect(db_path)
+            try:
+                cur = conn.cursor()
+                cur.execute('SELECT content_hash FROM objects')
+                for (content_hash,) in cur.fetchall():
+                    if content_hash not in owned_hash_ids:
+                        cur.execute(
+                            'DELETE FROM objects WHERE content_hash = ?',
+                            (content_hash,)
+                        )
+                conn.commit()
+            finally:
+                conn.close()
+
         if clear:
             try:
                 os.remove(self.path)
@@ -2336,7 +2355,6 @@ class TheoryFolderStorage:
                 if literal.theory == self.theory:
                     self._retrieve(literal)
 
-        owned_hash_folders = TheoryFolderStorage.owned_hash_folders
         paths_to_remove = list()
         for hash_subfolder in os.listdir(self.path):
             if hash_subfolder == 'name_to_hash.txt':
@@ -2348,7 +2366,7 @@ class TheoryFolderStorage:
             if hash_subfolder == 'name_to_expr_and_obj_hashes.txt':
                 continue
             hashpath = os.path.join(self.path, hash_subfolder)
-            if hash_subfolder not in owned_hash_folders:
+            if hash_subfolder not in owned_hash_ids:
                 paths_to_remove.append(hashpath)
 
         if self.folder == 'theorems':
@@ -2510,7 +2528,7 @@ class StoredSpecialStmt:
         to_remove = set(theorems) - set(verified_theorems)
         for obsolete_thm in to_remove:
             try:
-                os.remove(os.path.join(used_by_dir, filename))
+                os.remove(os.path.join(used_by_dir, obsolete_thm))
             except OSError:
                 pass  # no worries
         return verified_theorems
@@ -2656,7 +2674,7 @@ class StoredTheorem(StoredSpecialStmt):
         Return the recorded set of eliminated theorems
         (via literal generalization).
         '''
-        return set(self._read_stmts('eliminated_theorems.text'))
+        return set(self._read_stmts('eliminated_theorems.txt'))
 
 
     def _read_stmts(self, filename):

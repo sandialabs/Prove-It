@@ -68,7 +68,7 @@ class Theory:
         Theory.storages.clear()
         TheoryFolderStorage.active_theory_folder_storage = None
         TheoryFolderStorage.proveit_object_to_storage.clear()
-        TheoryFolderStorage.owned_hash_folders.clear()
+        TheoryFolderStorage.owned_hash_ids.clear()
 
     # externals.txt at top level to track relative path to external
     # theories.
@@ -258,10 +258,10 @@ class Theory:
             theorem_definitions, 'theorem')
 
     def _clear_axioms(self):
-        self._setAxioms([], dict())
+        self._set_axioms([], dict())
 
     def _clear_theorems(self):
-        self._setTheorems([], dict())
+        self._set_theorems([], dict())
 
     def _clear_common_exressions(self):
         self._set_common_expressions([], dict(), clear=True)
