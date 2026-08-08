@@ -63,6 +63,9 @@ class Theory:
         Clear all references to Prove-It information in
         the Theory jurisdiction.
         '''
+        for storage in Theory.storages.values():
+            # close database connections
+            storage.close_all_connections()
         Theory._rootTheoryPaths.clear()
         Theory.default = None
         Theory.storages.clear()

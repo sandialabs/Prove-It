@@ -17,6 +17,12 @@ import bisect
 from collections import deque
 
 
+
+class TheoryDatabaseError(RuntimeError):
+    """General SQLite failure in a TheoryFolderStorage database."""
+    pass
+
+
 def relurl(path, start='.'):
     '''
     Return the relative path as a url
@@ -155,6 +161,7 @@ class TheoryStorage:
 
         # Track which SQLite database files have been initialized.
         self._db_initialized = set()
+    
 
     def is_root(self):
         '''
@@ -191,7 +198,6 @@ class TheoryStorage:
         Return the TheoryFolderStorage object associated with the
         theory of this TheoryStorage and the folder.
         '''
-        self._ensure_sqlite_db_initialized(folder)
         if folder not in self._folder_storage_dict:
             self._folder_storage_dict[folder] = \
                 TheoryFolderStorage(self, folder)
@@ -206,40 +212,12 @@ class TheoryStorage:
             return None
         return os.path.join(self.pv_it_dir, folder + '.db')
 
-    def _ensure_sqlite_db_initialized(self, folder):
+    def close_all_connections(self):
         '''
-        Lazily create the SQLite DB for the given folder, along with
-        the required tables and indexes, if it does not already exist.
+        Close all database connections.
         '''
-        if folder is None:
-            return
-        db_path = self._db_path(folder)
-        if db_path in self._db_initialized:
-            return
-        if not os.path.isfile(db_path):
-            conn = sqlite3.connect(db_path)
-            try:
-                conn.execute('PRAGMA foreign_keys=ON')
-                conn.execute('PRAGMA journal_mode=WAL')
-                conn.execute('PRAGMA synchronous=NORMAL')
-                self._create_sqlite_schema(conn, folder)
-                conn.commit()
-            finally:
-                conn.close()
-        self._db_initialized.add(db_path)
-
-    def _create_sqlite_schema(self, conn, folder):
-        '''
-        Create the minimal SQLite schema for the given folder.
-        '''
-        cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS objects (
-                content_hash TEXT PRIMARY KEY,
-                unique_rep TEXT NOT NULL
-            )
-        ''')
-        cur.close()
+        for folder_storage in self._folder_storage_dict.values():
+            folder_storage._close_ro_conn()
 
     def _updatePath(self):
         '''
@@ -975,6 +953,90 @@ class TheoryFolderStorage:
         # version.
         self._prev_objhash_to_names = dict()
 
+        self._ro_conn = None
+        self._db_snapshot = None
+
+    def _ensure_sqlite_db_initialized(self):
+        """
+        Lazily create the SQLite DB for this folder, along with the required
+        tables and indexes, if it does not already exist.
+        """
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None:
+            return
+    
+        if os.path.isfile(db_path):
+            return
+    
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.execute('PRAGMA foreign_keys=ON')
+            conn.execute('PRAGMA journal_mode=WAL')
+            conn.execute('PRAGMA synchronous=NORMAL')
+            self._create_sqlite_schema(conn)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _create_sqlite_schema(self, conn):
+        """
+        Create the minimal SQLite schema for this folder.
+        """
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS objects (
+                content_hash TEXT PRIMARY KEY,
+                unique_rep TEXT NOT NULL
+            )
+        ''')
+        cur.close()
+
+    def _snapshot_db_file(self):
+        """
+        Record the current filesystem signature of this folder's DB file.
+        """
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None or not os.path.isfile(db_path):
+            self._db_snapshot = None
+            return
+    
+        stat = os.stat(db_path)
+        self._db_snapshot = (
+            stat.st_dev,
+            stat.st_ino,
+            stat.st_size,
+            stat.st_mtime_ns,
+        )
+
+    def _get_ro_conn(self):
+        """
+        Return a persistent read-only SQLite connection for this storage.
+        Open it lazily if needed.
+        """
+        if self._ro_conn is not None:
+            return self._ro_conn
+    
+        # Ensure the DB exists before trying to open it read-only.
+        self._ensure_sqlite_db_initialized()
+    
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None:
+            return None
+    
+        uri = 'file:%s?mode=ro' % urllib.parse.quote(db_path)
+        conn = sqlite3.connect(uri, uri=True)
+        conn.execute('PRAGMA foreign_keys=ON')
+        self._ro_conn = conn
+        self._snapshot_db_file()
+        return self._ro_conn
+
+    def _close_ro_conn(self):
+        if self._ro_conn is not None:
+            try:
+                self._ro_conn.close()
+            finally:
+                self._ro_conn = None
+
     @staticmethod
     def get_folder_storage_of_obj(obj):
         '''
@@ -1267,6 +1329,7 @@ class TheoryFolderStorage:
         '''
         from proveit import Literal, Operation
         from proveit._core_.proof import Axiom, Theorem
+
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
             theory_folder_storage, storage_hash = (
@@ -1289,18 +1352,14 @@ class TheoryFolderStorage:
             theory_folder_storage = self
         if theory_folder_storage is not self:
             # Stored in a different folder.
-            return theory_folder_storage._retrieve(prove_it_object)
+            return theory_folder_storage._retrieve(prove_it_object,
+                                                   do_incarnate=do_incarnate)
         unique_rep = self._proveItObjUniqueRep(prove_it_object)
         # hash the unique representation and make a sub-directory of
         # this hash value
         rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         
         storage_hash = self._resolve_storage_hash(rep_hash, unique_rep)
-
-        # Temporary check during migration from all filesystem incarnations
-        # to DB entries with a few necessary filesystem incarnations.
-        self._check_filesystem_consistency(prove_it_object, unique_rep,
-                                           storage_hash, first_pass=True)
 
         # remember this for next time
         self._store_object_row(storage_hash, unique_rep)
@@ -1343,14 +1402,14 @@ class TheoryFolderStorage:
             index += 1
 
     def _get_object_unique_rep(self, content_hash):
-        '''
+        """
         Return the unique_rep stored for the given content_hash in the
         local SQLite objects table, or None if no row exists.
-        '''
-        db_path = self.theory_storage._db_path(self.folder)
-        if db_path is None:
+        """
+        conn = self._get_ro_conn()
+        if conn is None:
             return None
-        conn = sqlite3.connect(db_path)
+    
         try:
             cur = conn.cursor()
             cur.execute(
@@ -1361,47 +1420,49 @@ class TheoryFolderStorage:
             if row is None:
                 return None
             return row[0]
-        finally:
-            conn.close()
+        except sqlite3.Error as err:
+            self._close_ro_conn()
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(
+                    err, "Reading object unique representation")
+            ) from err
 
     def _store_object_row(self, content_hash, unique_rep):
-        '''
+        """
         Store or refresh the object row in the local SQLite objects table.
-        '''
+        On any sqlite3.Error, wrap and re-raise as a TheoryDatabaseError.
+        """
         db_path = self.theory_storage._db_path(self.folder)
         if db_path is None:
             return
-        conn = sqlite3.connect(db_path)
+    
+        conn = None
         try:
+            conn = sqlite3.connect(db_path)
+            # ensure foreign‐keys are on
+            conn.execute('PRAGMA foreign_keys=ON')
             conn.execute(
                 'INSERT OR REPLACE INTO objects (content_hash, unique_rep) '
                 'VALUES (?, ?)',
                 (content_hash, unique_rep)
             )
             conn.commit()
+        except sqlite3.Error as err:
+            # Wrap the low‐level error in a domain‐specific exception
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Writing object row")
+            ) from err
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
 
-    def _check_filesystem_consistency(self, proveit_object, unique_rep,
-                                      storage_hash, *, first_pass):
-        '''
-        Temporary migration/debug check: compare the filesystem incarnation
-        against the SQLite row for the same storage_hash, if present.
-        '''
-        hash_path = os.path.join(self.path, storage_hash)
-        unique_rep_filename = os.path.join(hash_path, 'unique_rep.pv_it')
-        if not os.path.isfile(unique_rep_filename):
-            if not first_pass:
-                assert False, "Where is %s for %s with unique rep %s"%(
-                    storage_hash, proveit_object, unique_rep)
-            return
-        with open(unique_rep_filename, 'r') as f:
-            fs_unique_rep = f.read()
-        if fs_unique_rep != unique_rep:
-            raise ValueError(
-                "Filesystem unique_rep mismatch for %s in %s" %
-                (storage_hash, self.folder)
-            )
+    def _sqlite_error_message(self, err, action):
+        db_path = self.theory_storage._db_path(self.folder)
+        return (
+            "%s failed for theory '%s', folder '%s', database '%s'. "
+            "SQLite error: %s"
+            % (action, self.theory.name, self.folder, db_path, err)
+        )
 
     def _owningNotebook(self):
         '''
