@@ -320,7 +320,9 @@ class ClassMembership(Operation):
         try:
             definition = self.definition()
         except NotImplementedError:
-            # Don't know what to do otherwise.
+            definition = None
+        if definition is None or (definition.lhs == definition.rhs):
+            # definition failed or is trivial
             return Operation.shallow_simplification(
                     self, must_evaluate=must_evaluate)
         try:
