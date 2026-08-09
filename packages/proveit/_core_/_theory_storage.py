@@ -15,8 +15,7 @@ import urllib.error
 import importlib
 import bisect
 from collections import deque
-
-
+from pathlib import Path
 
 class TheoryDatabaseError(RuntimeError):
     """General SQLite failure in a TheoryFolderStorage database."""
@@ -27,7 +26,8 @@ def relurl(path, start='.'):
     '''
     Return the relative path as a url
     '''
-    return urllib.request.pathname2url(os.path.relpath(path, start))
+    return urllib.request.pathname2url(
+        os.path.relpath(str(path), str(start)))
 
 
 class TheoryStorage:
@@ -46,19 +46,17 @@ class TheoryStorage:
             raise TheoryException("'theory' should be a Theory object")
         self.theory = theory
         self.name = name
+
+        # Normalize incoming paths once, but keep the rest of this module
+        # mostly string-based for now.
+        self.directory = str(Path(directory).expanduser().resolve())
+        self.pv_it_dir = os.path.join(self.directory, "__pv_it")
+
         if root_directory is None:
             self.root_theory_storage = self
         else:
-            self.root_theory_storage = Theory(root_directory)._storage
-        self.directory = directory
-        self.pv_it_dir = os.path.join(self.directory, '__pv_it')
-        if not os.path.isdir(self.pv_it_dir):
-            # make the __pv_it directory
-            try:
-                os.makedirs(self.pv_it_dir)
-            except (OSError, FileExistsError):
-                # maybe another processor beat us to it.
-                pass
+            self.root_theory_storage = Theory(str(root_directory))._storage
+        os.makedirs(self.pv_it_dir, exist_ok=True)
 
         if self.is_root():
             # If this is a root theory, let's add the directory above
@@ -85,7 +83,7 @@ class TheoryStorage:
             # set of theory root names that are referenced
             self.referenced_theory_roots = set()
             # associate the theory name with the directory
-            Theory._setRootTheoryPath(name, directory)
+            Theory._setRootTheoryPath(name, self.directory)
             # map theory names to paths for other known root theories
             # in paths.txt
             self.paths_filename = os.path.join(self.pv_it_dir, 'paths.txt')
@@ -94,7 +92,7 @@ class TheoryStorage:
                     for path_line in paths_file.readlines():
                         theory_name, path = path_line.split()
                         if theory_name == '.':
-                            if path != directory:
+                            if path != self.directory:
                                 # the directory of the theory associated with
                                 # this storage object has changed.
                                 self._updatePath()
@@ -104,7 +102,7 @@ class TheoryStorage:
             else:
                 with open(self.paths_filename, 'w') as paths_file:
                     # the first entry indicates the directory of this path
-                    paths_file.write('. ' + directory + '\n')
+                    paths_file.write('. ' + self.directory + '\n')
 
         # create the _sub_theories_.txt file if it does not already exist
         sub_theories_path = os.path.join(self.directory, '_sub_theories_.txt')
@@ -159,9 +157,6 @@ class TheoryStorage:
         # objects.
         self._folder_storage_dict = dict()
 
-        # Track which SQLite database files have been initialized.
-        self._db_initialized = set()
-    
 
     def is_root(self):
         '''
@@ -203,14 +198,14 @@ class TheoryStorage:
                 TheoryFolderStorage(self, folder)
         return self._folder_storage_dict[folder]
 
-    def _db_path(self, folder):
+    def _db_path(self, folder) -> Path:
         '''
         Return the SQLite database path for the given storage folder.
         For theorem proof folders, the folder name is used directly.
         '''
         if folder is None:
             return None
-        return os.path.join(self.pv_it_dir, folder + '.db')
+        return Path(self.pv_it_dir) / f"{folder}.db"
 
     def close_all_connections(self):
         '''
@@ -953,8 +948,12 @@ class TheoryFolderStorage:
         # version.
         self._prev_objhash_to_names = dict()
 
+        # Read-only database connection.
         self._ro_conn = None
-        self._db_snapshot = None
+
+        # For batching writes in one transaction per top-level incarnate call
+        self._write_conn = None
+        
 
     def _ensure_sqlite_db_initialized(self):
         """
@@ -965,10 +964,10 @@ class TheoryFolderStorage:
         if db_path is None:
             return
     
-        if os.path.isfile(db_path):
+        if db_path.is_file():
             return
     
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(str(db_path))
         try:
             conn.execute('PRAGMA foreign_keys=ON')
             conn.execute('PRAGMA journal_mode=WAL')
@@ -990,45 +989,30 @@ class TheoryFolderStorage:
             )
         ''')
         cur.close()
-
-    def _snapshot_db_file(self):
-        """
-        Record the current filesystem signature of this folder's DB file.
-        """
-        db_path = self.theory_storage._db_path(self.folder)
-        if db_path is None or not os.path.isfile(db_path):
-            self._db_snapshot = None
-            return
     
-        stat = os.stat(db_path)
-        self._db_snapshot = (
-            stat.st_dev,
-            stat.st_ino,
-            stat.st_size,
-            stat.st_mtime_ns,
-        )
-
     def _get_ro_conn(self):
         """
         Return a persistent read-only SQLite connection for this storage.
         Open it lazily if needed.
         """
-        if self._ro_conn is not None:
+        if self._ro_conn:
             return self._ro_conn
     
-        # Ensure the DB exists before trying to open it read-only.
+        # make sure the DB file & schema exist
         self._ensure_sqlite_db_initialized()
     
         db_path = self.theory_storage._db_path(self.folder)
         if db_path is None:
             return None
     
-        uri = 'file:%s?mode=ro' % urllib.parse.quote(db_path)
-        conn = sqlite3.connect(uri, uri=True)
-        conn.execute('PRAGMA foreign_keys=ON')
+        # path.as_uri() is cross-platform correct:
+        uri = db_path.resolve().as_uri() + "?mode=ro"
+    
+        conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA query_only = TRUE")
         self._ro_conn = conn
-        self._snapshot_db_file()
-        return self._ro_conn
+        return conn
 
     def _close_ro_conn(self):
         if self._ro_conn is not None:
@@ -1330,12 +1314,21 @@ class TheoryFolderStorage:
         from proveit import Literal, Operation
         from proveit._core_.proof import Axiom, Theorem
 
+        # If incarnating, start a deferred write transaction on 'self'
+        write_session = False
+        if do_incarnate:
+            self._begin_write()
+            write_session = True
+
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
             theory_folder_storage, storage_hash = (
                 proveit_obj_to_storage[prove_it_object._style_id])
             if do_incarnate:
                 theory_folder_storage._incarnate(prove_it_object, storage_hash)
+            # commit if we started a session here
+            if write_session:
+                self._end_write()
             return (theory_folder_storage, storage_hash)
         if isinstance(prove_it_object, Axiom):
             theory_folder_storage = \
@@ -1352,8 +1345,9 @@ class TheoryFolderStorage:
             theory_folder_storage = self
         if theory_folder_storage is not self:
             # Stored in a different folder.
-            return theory_folder_storage._retrieve(prove_it_object,
-                                                   do_incarnate=do_incarnate)
+            if do_incarnate:
+                raise Exception("Expecting 'do_incarnate' to act only locally")
+            return theory_folder_storage._retrieve(prove_it_object)
         unique_rep = self._proveItObjUniqueRep(prove_it_object)
         # hash the unique representation and make a sub-directory of
         # this hash value
@@ -1368,6 +1362,9 @@ class TheoryFolderStorage:
 
         if do_incarnate:
             self._incarnate(prove_it_object, storage_hash)
+        # commit batched writes now
+        if write_session:
+            self._end_write()
         return (self, storage_hash)
 
     def _incarnate(self, prove_it_object, storage_hash):
@@ -1427,41 +1424,92 @@ class TheoryFolderStorage:
                     err, "Reading object unique representation")
             ) from err
 
-    def _store_object_row(self, content_hash, unique_rep):
+    def _begin_write(self):
         """
-        Store or refresh the object row in the local SQLite objects table.
-        On any sqlite3.Error, wrap and re-raise as a TheoryDatabaseError.
+        Begin a deferred write transaction for this folder's DB.
+        Subsequent _store_object_row calls will use this connection
+        and defer commits until _end_write is called.
         """
+        if self._write_conn is not None:
+            return
+        self._ensure_sqlite_db_initialized()
         db_path = self.theory_storage._db_path(self.folder)
         if db_path is None:
             return
-    
-        conn = None
+        conn = sqlite3.connect(str(db_path))
+        conn.execute('PRAGMA foreign_keys=ON')
+        # Start a transaction.  You can use 'BEGIN IMMEDIATE' if you want
+        # to lock sooner.
+        conn.execute('BEGIN')
+        self._write_conn = conn
+
+    def _get_write_conn(self):
+        """
+        Return the write connection:
+        - if inside a deferred session, return that connection,
+        - otherwise open a new ephemeral connection (which will auto-commit).
+        """
+        if self._write_conn is not None:
+            return self._write_conn
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None:
+            return None
+        conn = sqlite3.connect(str(db_path))
+        conn.execute('PRAGMA foreign_keys=ON')
+        return conn
+
+    def _end_write(self):
+        """
+        Commit and close the deferred write transaction.
+        """
+        if self._write_conn is None:
+            return
         try:
-            conn = sqlite3.connect(db_path)
-            # ensure foreign‐keys are on
-            conn.execute('PRAGMA foreign_keys=ON')
+            self._write_conn.commit()
+        finally:
+            self._write_conn.close()
+            self._write_conn = None
+
+    def _store_object_row(self, content_hash, unique_rep):
+        """
+        Store or refresh the object row in the local SQLite objects table.
+        Batches commits if inside a write session, otherwise commits
+        immediately and closes the connection.
+        """
+        conn = self._get_write_conn()
+        if conn is None:
+            return
+    
+        # Are we in a deferred‐write session?
+        is_session_conn = (conn is self._write_conn)
+    
+        try:
             conn.execute(
                 'INSERT OR REPLACE INTO objects (content_hash, unique_rep) '
                 'VALUES (?, ?)',
                 (content_hash, unique_rep)
             )
-            conn.commit()
+            # If this is *not* the session connection, commit right away
+            if not is_session_conn:
+                conn.commit()
+    
         except sqlite3.Error as err:
-            # Wrap the low‐level error in a domain‐specific exception
+            # Wrap low-level SQLite error in domain‐specific exception
             raise TheoryDatabaseError(
                 self._sqlite_error_message(err, "Writing object row")
             ) from err
+    
         finally:
-            if conn is not None:
+            # Close ephemeral connections
+            if not is_session_conn:
                 conn.close()
-
+    
     def _sqlite_error_message(self, err, action):
         db_path = self.theory_storage._db_path(self.folder)
         return (
             "%s failed for theory '%s', folder '%s', database '%s'. "
             "SQLite error: %s"
-            % (action, self.theory.name, self.folder, db_path, err)
+            % (action, self.theory.name, self.folder, str(db_path), err)
         )
 
     def _owningNotebook(self):
@@ -2382,7 +2430,7 @@ class TheoryFolderStorage:
 
         # Remove database entries that are no longer owned.
         db_path = self.theory_storage._db_path(self.folder)
-        if db_path is not None and os.path.isfile(db_path):
+        if db_path is not None and db_path.is_file():
             conn = sqlite3.connect(db_path)
             try:
                 cur = conn.cursor()
@@ -2399,7 +2447,7 @@ class TheoryFolderStorage:
 
         if clear:
             try:
-                os.remove(self.path)
+                shutil.rmtree(self.path)
             except OSError:
                 print("Unable to clear '%s'" % self.path)
             return
