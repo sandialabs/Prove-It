@@ -72,6 +72,7 @@ class Theory:
         Theory.storages.clear()
         TheoryFolderStorage.active_theory_folder_storage = None
         TheoryFolderStorage.proveit_object_to_storage.clear()
+        TheoryFolderStorage.exprid_to_expression.clear()
         TheoryFolderStorage.owned_hash_ids.clear()
 
     # externals.txt at top level to track relative path to external

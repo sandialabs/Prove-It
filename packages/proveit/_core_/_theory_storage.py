@@ -212,6 +212,7 @@ class TheoryStorage:
         Close all database connections.
         '''
         for folder_storage in self._folder_storage_dict.values():
+            assert folder_storage._write_conn is None
             folder_storage._close_ro_conn()
 
     def _updatePath(self):
@@ -922,6 +923,10 @@ class TheoryFolderStorage:
     # Proofs) to a (TheoryFolderStorage, hash_id) tuple where it is
     # being stored.
     proveit_object_to_storage = dict()
+    
+    # Map hash-ids to Expression objects as they are build for future
+    # reference so they don't need to be re-built.
+    exprid_to_expression = dict()
 
     clean_nb_method = None
 
@@ -931,6 +936,8 @@ class TheoryFolderStorage:
         self.pv_it_dir = self.theory_storage.pv_it_dir
         self.folder = folder
         self.path = os.path.join(self.pv_it_dir, folder)
+        self.db_path = self.theory_storage._db_path(self.folder)
+
         if not os.path.isdir(self.path):
             # make the folder
             try:
@@ -960,7 +967,7 @@ class TheoryFolderStorage:
         Lazily create the SQLite DB for this folder, along with the required
         tables and indexes, if it does not already exist.
         """
-        db_path = self.theory_storage._db_path(self.folder)
+        db_path = self.db_path
         if db_path is None:
             return
     
@@ -1001,7 +1008,7 @@ class TheoryFolderStorage:
         # make sure the DB file & schema exist
         self._ensure_sqlite_db_initialized()
     
-        db_path = self.theory_storage._db_path(self.folder)
+        db_path = self.db_path
         if db_path is None:
             return None
     
@@ -1353,10 +1360,12 @@ class TheoryFolderStorage:
         # this hash value
         rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         
-        storage_hash = self._resolve_storage_hash(rep_hash, unique_rep)
+        storage_hash, needs_write = self._resolve_storage_hash(rep_hash,
+                                                               unique_rep)
 
         # remember this for next time
-        self._store_object_row(storage_hash, unique_rep)
+        if needs_write:
+            self._store_object_row(storage_hash, unique_rep)
         self._record_storage(prove_it_object._style_id,
                              storage_hash)
 
@@ -1382,20 +1391,24 @@ class TheoryFolderStorage:
         '''
         Resolve the final storage hash using the SQLite objects table as
         the source of truth, while still allowing for rare hash collisions.
+    
+        Returns:
+            (storage_hash, needs_write)
         '''
         index = 0
         while True:
             storage_hash = rep_hash + str(index)
-
-            # First check the database.
+    
             db_unique_rep = self._get_object_unique_rep(storage_hash)
             if db_unique_rep is None:
-                return storage_hash
+                # No row exists yet; we need to write it.
+                return storage_hash, True
+    
             if db_unique_rep == unique_rep:
-                return storage_hash
-
-            # If the database says this content_hash belongs to a different
-            # unique_rep, treat it as a collision and keep searching.
+                # Already stored exactly as-is; no write needed.
+                return storage_hash, False
+    
+            # Hash collision with different content.
             index += 1
 
     def _get_object_unique_rep(self, content_hash):
@@ -1433,7 +1446,7 @@ class TheoryFolderStorage:
         if self._write_conn is not None:
             return
         self._ensure_sqlite_db_initialized()
-        db_path = self.theory_storage._db_path(self.folder)
+        db_path = self.db_path
         if db_path is None:
             return
         conn = sqlite3.connect(str(db_path))
@@ -1465,7 +1478,12 @@ class TheoryFolderStorage:
         if self._write_conn is None:
             return
         try:
+            if self._ro_conn is not None:
+                self._ro_conn.close()
+                self._ro_conn = None
+
             self._write_conn.commit()
+            self._write_conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
         finally:
             self._write_conn.close()
             self._write_conn = None
@@ -1502,6 +1520,7 @@ class TheoryFolderStorage:
         finally:
             # Close ephemeral connections
             if not is_session_conn:
+                conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
                 conn.close()
     
     def _sqlite_error_message(self, err, action):
@@ -2266,11 +2285,19 @@ class TheoryFolderStorage:
             local_theory_name = None
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
 
+        built_expr_map = dict()
+
         def get_dependent_expr_ids(expr_id):
             '''
             Given an expression id, yield the ids of all of its
             sub-expressions.
             '''
+            if expr_id in TheoryFolderStorage.exprid_to_expression:
+                # This expression has already been built. Mark this and
+                # don't bother with it's sub-expressions.
+                built_expr_map[expr_id] = (
+                    TheoryFolderStorage.exprid_to_expression[expr_id])
+                return []
             theory_folder_storage, content_hash = self._split(expr_id)
             if theory_folder_storage.theory != self.theory:
                 # Load the "special names" of the theory so we
@@ -2307,6 +2334,7 @@ class TheoryFolderStorage:
 
         expr_ids = ordered_dependency_nodes(expr_id, get_dependent_expr_ids)
         for expr_id in reversed(expr_ids):
+            if expr_id in built_expr_map: continue
             if expr_id in expr_class_rel_strs:
                 # there exists a relative path
                 try:
@@ -2326,8 +2354,9 @@ class TheoryFolderStorage:
                 import_fn(expr_class_strs[expr_id])
         # map expr-ids to "built" expressions
         # (whatever expr_builder_fn returns):
-        built_expr_map = dict()
         for expr_id in reversed(expr_ids):
+            if expr_id in built_expr_map:
+                continue # already built
             sub_expressions = [built_expr_map[sub_expr_id] for sub_expr_id
                                in sub_expr_ids_map[expr_id]]
             expr = expr_builder_fn(
@@ -2341,7 +2370,9 @@ class TheoryFolderStorage:
                     exprid_to_storage[expr_id]
                 theory_folder_storage._record_storage(
                     expr_style_id, hash_id)
+            # Remember this going forward.
             built_expr_map[expr_id] = expr
+            TheoryFolderStorage.exprid_to_expression[expr_id] = expr                
 
         return built_expr_map[master_expr_id]
 
