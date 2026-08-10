@@ -993,6 +993,7 @@ def _db_notebook_path_generator_of_folder(folder_dir, filebases):
         new_dirs = set(os.listdir(folder_dir)) - prev_dirs
         if len(new_dirs) == 0:
             return # Nothing new -- we're done.
+        prev_dirs.update(new_dirs)
         for hash_directory in new_dirs:
             hash_path = os.path.join(
                 folder_dir, hash_directory)
