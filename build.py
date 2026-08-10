@@ -978,42 +978,32 @@ def database_notebook_path_generator(top_level_paths, filebases):
                 for folder in os.listdir(pv_it_dir):
                     folder_dir = os.path.join(pv_it_dir, folder)
                     if os.path.isdir(folder_dir):
-                        for hash_directory in os.listdir(folder_dir):
-                            hash_path = os.path.join(
-                                folder_dir, hash_directory)
-                            if os.path.isdir(hash_path):
-                                # if hash_path in executed_hash_paths:
-                                #    continue # already executed this case
-                                for filebase in filebases:
-                                    notebook_path = os.path.join(
-                                        hash_path, filebase + '.ipynb')
-                                    if os.path.isfile(notebook_path):
-                                        yield notebook_path
+                        for nb_path in _db_notebook_path_generator_of_folder(
+                                folder_dir, filebases):
+                            yield nb_path
 
-                                    """
-                                        html_path = os.path.join(hash_path, filebase+'.html')
-                                        notebook_path = os.path.join(hash_path, filebase+'.ipynb')
-                                        if os.path.isfile(notebook_path):
-                                            if no_execute:
-                                                export_notebook_to_html(notebook_path)
-                                            else:
-                                                # if expr_html doesn't exist or is older than expr_notebook, generate it
-                                                if not os.path.isfile(html_path) or os.path.getmtime(html_path) < os.path.getmtime(notebook_path):
-                                                    # execute the expr.ipynb notebook
-                                                    execute_and_export_notebook(
-                                                            execute_processor,
-                                                            notebook_path,
-                                                            no_latex=no_latex, git_clear=False)
-                                                    executed_hash_paths.add(hash_path) # done
-                                    # always execute the dependencies notebook for now to be safes
-                                    dependencies_notebook = os.path.join(hash_path, 'dependencies.ipynb')
-                                    if os.path.isfile(dependencies_notebook):
-                                        # execute the dependencies.ipynb notebook
-                                        execute_and_export_notebook(
-                                                execute_processor, dependencies_notebook,
-                                                no_execute=no_execute, no_latex=no_latex,
-                                                git_clear=False)
-                                    """
+def _db_notebook_path_generator_of_folder(folder_dir, filebases):
+    '''
+    Yield the database notebook files within a subfolder of a __pv_it
+    directory.  If new hash folders are generated in the process, these
+    will also be yielded.
+    '''
+    prev_dirs = set()
+    while True:
+        new_dirs = set(os.listdir(folder_dir)) - prev_dirs
+        if len(new_dirs) == 0:
+            return # Nothing new -- we're done.
+        for hash_directory in new_dirs:
+            hash_path = os.path.join(
+                folder_dir, hash_directory)
+            if os.path.isdir(hash_path):
+                # if hash_path in executed_hash_paths:
+                #    continue # already executed this case
+                for filebase in filebases:
+                    notebook_path = os.path.join(
+                        hash_path, filebase + '.ipynb')
+                    if os.path.isfile(notebook_path):
+                        yield notebook_path
 
 if __name__ == '__main__':
     if os.path.sep != '/':
