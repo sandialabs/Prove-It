@@ -1718,8 +1718,13 @@ class TheoryFolderStorage:
                     with open(filepath, 'w') as expr_file:
                         expr_file.write(nb)
         else:
-            with open(filepath, 'w') as expr_file:
-                expr_file.write(nb)
+            try:
+                with open(filepath, 'x') as expr_file:
+                    expr_file.write(nb)
+            except FileExistsError:
+                # another process may be attempting to write to the same file,
+                # presumably with the same data so it doesn't matter.
+                pass
         # return the relative url to the new proof file
         return relurl(filepath)
 

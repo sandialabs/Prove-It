@@ -648,7 +648,9 @@ class ProveItMagicCommands:
                 hash_id).proven_truth.expr
         else:
             stored_expr = theory.get_stored_expr(hash_id)
-        theory.set_active_folder(None)
+        # turn on ownership to allow expression notebooks to generate
+        # sub-expression notebooks.
+        theory.set_active_folder(active_folder=kind, owns_active_folder=False)
         self.shell.user_ns['stored_expr'] = stored_expr
 
     def show_proof(self):
