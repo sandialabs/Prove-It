@@ -640,6 +640,7 @@ class TheoryStorage:
         of a common expression, axiom, or theorem, generate and return
         the corresponding object.
         '''
+        import proveit
         from proveit._core_.proof import Axiom, Theorem
         from .theory import Theory
         folder = TheoryStorage._kind_to_folder(kind)
@@ -659,7 +660,8 @@ class TheoryStorage:
         Theory.default = self.theory
         try:
             theory_folder_storage = self.theory_folder_storage(folder)
-            if (TheoryFolderStorage.owns_active_storage
+            if (proveit.defaults._running_theory_notebook
+                and TheoryFolderStorage.owns_active_storage
                 and theory_folder_storage ==
                     TheoryFolderStorage.active_theory_folder_storage):
                 # Don't allow anything to be imported from the folder
@@ -1718,8 +1720,13 @@ class TheoryFolderStorage:
                     with open(filepath, 'w') as expr_file:
                         expr_file.write(nb)
         else:
-            with open(filepath, 'w') as expr_file:
-                expr_file.write(nb)
+            try:
+                with open(filepath, 'x') as expr_file:
+                    expr_file.write(nb)
+            except FileExistsError:
+                # another process may be attempting to write to the same file,
+                # presumably with the same data so it doesn't matter.
+                pass
         # return the relative url to the new proof file
         return relurl(filepath)
 
