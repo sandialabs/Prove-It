@@ -46,6 +46,9 @@ def clean_nb(input_stream):
     s['cells'] = [clean_cell(o) for o in s['cells']]
     s['metadata'] = {k: s['metadata'][k]
                      for k in s['metadata'].keys() if k in nb_metadata_keep}
+    if 'kernelspec' in s['metadata']:
+        # 'display_name' is not important and changes for silly reasons
+        s['metadata']['kernelspec'].pop('display_name', None)
     # Hopefully the minor format won't matter and we can use the lowest common
     # denominator for now:
     s['nbformat_minor'] = 0
