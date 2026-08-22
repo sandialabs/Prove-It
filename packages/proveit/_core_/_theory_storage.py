@@ -1103,8 +1103,9 @@ class TheoryFolderStorage:
 
     def _get_theory_folder_id(self, theory_name, folder_name):
         key = (theory_name, folder_name)
-        cached = self.theory_storage._theory_folder_ids.get(key)
+        cached = self._theory_folder_ids.get(key)
         if cached is not None:
+            assert cached != 0
             return cached
     
         conn = self._get_write_conn()
@@ -1128,7 +1129,8 @@ class TheoryFolderStorage:
                 )
                 folder_id = cur.lastrowid
     
-            self.theory_storage._theory_folder_ids[key] = folder_id
+            self._theory_folder_ids[key] = folder_id
+            assert folder_id != 0
             return folder_id
     
         except sqlite3.Error as err:
@@ -1153,7 +1155,7 @@ class TheoryFolderStorage:
 
     def _get_theory_folder_storage_by_id(self, folder_id):
         from proveit._core_.theory import Theory
-        cached = self.theory_storage._theory_folder_storage_by_id_cache.get(
+        cached = self._theory_folder_storage_by_id_cache.get(
             folder_id)
         if cached is not None:
             return cached
@@ -1163,7 +1165,7 @@ class TheoryFolderStorage:
         theory_name, folder_name = row
         theory = Theory.get_theory(theory_name)
         storage = theory._theory_folder_storage(folder_name)
-        self.theory_storage._theory_folder_storage_by_id_cache[
+        self._theory_folder_storage_by_id_cache[
             folder_id] = storage
         return storage
 
@@ -1245,7 +1247,7 @@ class TheoryFolderStorage:
         '''
         Helper method of retrieve_png.
         '''
-        (theory_folder_storage, hash_directory) = self._retrieve(
+        (theory_folder_storage, hash_directory, _) = self._retrieve(
             expr, do_incarnate=True)
         assert theory_folder_storage == self, \
             "How did the theory end up different from expected??"
@@ -1318,7 +1320,7 @@ class TheoryFolderStorage:
                 (theory_folder_storage, content_hash, _) = \
                     TheoryFolderStorage.proveit_object_to_storage[style_id]
             else:
-                (theory_folder_storage, content_hash) = \
+                (theory_folder_storage, content_hash, _) = \
                     self._retrieve(prove_it_object_or_id)
             if theory_folder_storage.theory != self.theory:
                 theory = theory_folder_storage.theory
@@ -1448,7 +1450,7 @@ class TheoryFolderStorage:
             # commit if we started a session here
             if write_session:
                 self._end_write()
-            return (theory_folder_storage, storage_hash)
+            return (theory_folder_storage, storage_hash, obj_id)
         if isinstance(prove_it_object, Axiom):
             theory_folder_storage = \
                 prove_it_object.theory._theory_folder_storage('axioms')
@@ -1472,11 +1474,11 @@ class TheoryFolderStorage:
         # this hash value
         rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
         
-        storage_hash, obj_id, needs_write = self._resolve_storage_hash(
+        storage_hash, obj_id = self._resolve_storage_hash(
             rep_hash, unique_rep)
 
         # remember this for next time
-        if needs_write:
+        if obj_id is None:
             obj_id = self._store_object_in_db(
                 prove_it_object, storage_hash, unique_rep)
         self._record_storage(prove_it_object._style_id,
@@ -1487,7 +1489,7 @@ class TheoryFolderStorage:
         # commit batched writes now
         if write_session:
             self._end_write()
-        return (self, storage_hash)
+        return (self, storage_hash, obj_id)
 
     def _incarnate(self, prove_it_object, storage_hash):
         # Make a filesystem incarnation of the object when it is needed
@@ -1527,12 +1529,13 @@ class TheoryFolderStorage:
             # Hash collision with different content.
             index += 1
 
-    def _get_object_row(self, content_hash):
+    def _get_object_row(self, content_hash, *, must_exist=False):
         """
         Return (id, unique_rep) for a stored object hash, or None.
         """
         conn = self._get_ro_conn()
         if conn is None:
+            raise Exception('Unable to connect to %s'%self.db_path)
             return None
         try:
             cur = conn.cursor()
@@ -1540,7 +1543,11 @@ class TheoryFolderStorage:
                 'SELECT id, unique_rep FROM objects WHERE content_hash = ?',
                 (content_hash,)
             )
-            return cur.fetchone()
+            row = cur.fetchone()
+            if row is None and must_exist:
+                raise Exception('%s not found objects table of %s'
+                                %(content_hash, self.db_path))
+            return row
         except sqlite3.Error as err:
             self._close_ro_conn()
             raise TheoryDatabaseError(
@@ -1548,12 +1555,10 @@ class TheoryFolderStorage:
             ) from err
 
     def _get_object_id(self, content_hash):
-        row = self._get_object_row(content_hash)
-        return None if row is None else row[0]
+        return self._get_object_row(content_hash, must_exist=True)[0]
 
     def _get_object_unique_rep(self, content_hash):
-        row = self._get_object_row(content_hash)
-        return None if row is None else row[1]
+        return self._get_object_row(content_hash, must_exist=True)[1]
 
     def _get_object_row_by_id(self, obj_id):
         """
@@ -1697,24 +1702,25 @@ class TheoryFolderStorage:
                 )
             obj_id = row[0]
             
-            # Cache the local folder id if needed.
-            local_folder_id = self._local_theory_folder_id()
+            # Cache the local folder id when needed.
+            local_folder_id = None
 
             if isinstance(prove_it_object, Expression):
                 # add to expression_subexpression table as appropriate
                 for seq, sub_expr in enumerate(prove_it_object.sub_expr_iter()):
                     sub_storage = self._retrieve(sub_expr)
-                    child_tfs, child_hash = sub_storage
-                    child_id = child_tfs._get_object_id(child_hash)
+                    child_tfs, child_hash, child_id = sub_storage
 
                     if child_tfs is self:
+                        if local_folder_id is None:
+                            local_folder_id = self._local_theory_folder_id()
                         child_folder_id = local_folder_id
                     else:
                         child_folder_id = self._get_theory_folder_id(
                             child_tfs.theory.name, child_tfs.folder
                         )
                     cur.execute(
-                        'INSERT OR IGNORE INTO expression_subexpression '
+                        'INSERT INTO expression_subexpression '
                         '(parent_id, seq, child_theory_folder_id, child_id) '
                         'VALUES (?, ?, ?, ?)',
                         (obj_id, seq, child_folder_id, child_id)
@@ -1849,7 +1855,7 @@ class TheoryFolderStorage:
             # Store this "special" notebook with the hash for the
             # Theorem.
             obj = Theorem(expr, theory_folder_storage.theory, name)
-        obj_theory_folder_storage, content_hash = \
+        obj_theory_folder_storage, content_hash, _ = \
             theory_folder_storage._retrieve(obj, do_incarnate=True)
         assert obj_theory_folder_storage == theory_folder_storage
         full_hash_dir = os.path.join(theory_folder_storage.path,
@@ -2424,7 +2430,7 @@ class TheoryFolderStorage:
         '''
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
-        (theory_folder_storage, hash_directory) = self._retrieve(
+        (theory_folder_storage, hash_directory, _) = self._retrieve(
             proof, do_incarnate=True)
         filename = os.path.join(theory_folder_storage.path, hash_directory,
                                 'proof.ipynb')
@@ -2539,8 +2545,8 @@ class TheoryFolderStorage:
             row = theory_folder_storage._get_object_row_by_id(expr_id)
             if row is None:
                 raise KeyError(
-                    "Expression id %s not found in database for folder %s"
-                    % (expr_id, theory_folder_storage.folder)
+                    "Expression id %s not found in %s database"
+                    % (expr_id, theory_folder_storage.db_path)
                 )
 
             if theory_folder_storage.theory != self.theory:
@@ -2609,8 +2615,7 @@ class TheoryFolderStorage:
                 continue # already built
             sub_expressions = [
                 built_expr_map[sub_expr_node]
-                for sub_expr_node in sub_expr_nodes_map.get(expr_node, [])
-            ]
+                for sub_expr_node in sub_expr_nodes_map[expr_node]]
             expr = expr_builder_fn(
                 expr_class_strs[expr_node], core_info_map[expr_node],
                 styles_map[expr_node], sub_expressions)
@@ -2642,7 +2647,8 @@ class TheoryFolderStorage:
         theory = self.theory
         unique_rep = theory_folder_storage._get_object_unique_rep(content_hash)
         if unique_rep is None:
-            raise KeyError("Judgment/Proof %s not found in database" % storage_id)
+            raise KeyError("Judgment/Proof %s not found in database %s" %
+                           (storage_id, theory_folder_storage.db_path))
         subids = \
             theory_folder_storage._extractReferencedStorageIds(unique_rep)
 
