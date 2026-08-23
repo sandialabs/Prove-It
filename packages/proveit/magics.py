@@ -945,9 +945,10 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         if kind in ('axioms', 'theorems', 'common'):
             from proveit import defaults
             # Unload anything previously loaded from this folder
-            # to force it to regenerate expression notebooks,
-            # etc.
-            self.theory._theory_folder_storage(kind).unload()
+            # to force it to regenerate expression notebooks, etc.
+            # Also, for kind=='common', put _operator_ literals
+            # in the database.
+            self.theory._theory_folder_storage(kind).unload_and_prep()
             if defaults.sideeffect_automation or defaults.conclude_automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "

@@ -1011,7 +1011,7 @@ class TheoryFolderStorage:
             );
 
             CREATE TABLE IF NOT EXISTS objects (
-                id INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 content_hash TEXT NOT NULL UNIQUE,
                 unique_rep TEXT NOT NULL
             );
@@ -1184,7 +1184,7 @@ class TheoryFolderStorage:
             name = name + '.expr'
         return kind, self.theory_storage.name, name
 
-    def unload(self):
+    def unload_and_prep(self):
         '''
         "Forget" the special objects stored in this folder and
         their sub-expressions to force them to be re-retrieved.
@@ -1192,6 +1192,8 @@ class TheoryFolderStorage:
         that generates these objects to be sure the expression
         notebooks all get regenerated (at least checked to see
         if they should change).
+        Also retrieve all _operator_ literals of the package
+        to store them in the db.
         '''
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         to_remove = set()
@@ -1225,6 +1227,17 @@ class TheoryFolderStorage:
             self.theory_storage._loadedCommonExprs = dict()
         self.theory_storage._special_expr_hash_ids[kind] = None
         self.theory_storage._special_obj_hash_ids[kind] = None
+        if folder == 'common':
+            from proveit import Literal
+            # Make sure we reference any literals that are in this
+            # theory.  First, import the module of the theory
+            # which should import any modules containing operation
+            # classes with _operator_ Literals, then "retreive"
+            # Literals of the theory as currently referenced objects.
+            importlib.import_module(self.theory.name)
+            for literal in Literal.instances.values():
+                if literal.theory == self.theory:
+                    self._retrieve(literal, do_incarnate=True)
 
     @staticmethod
     def retrieve_png(expr, latex, config_latex_tool_fn):
@@ -1434,6 +1447,7 @@ class TheoryFolderStorage:
         '''
         from proveit import Literal, Operation
         from proveit._core_.proof import Axiom, Theorem
+        from proveit._core_.theory import TheoryPackage
 
         # If incarnating, start a deferred write transaction on 'self'
         write_session = False
@@ -1451,6 +1465,7 @@ class TheoryFolderStorage:
             if write_session:
                 self._end_write()
             return (theory_folder_storage, storage_hash, obj_id)
+        literal_operator_operation = None
         if isinstance(prove_it_object, Axiom):
             theory_folder_storage = \
                 prove_it_object.theory._theory_folder_storage('axioms')
@@ -1459,6 +1474,8 @@ class TheoryFolderStorage:
                 prove_it_object.theory._theory_folder_storage('theorems')
         elif (isinstance(prove_it_object, Literal) and
                 prove_it_object in Operation.operation_class_of_operator):
+            literal_operator_operation = Operation.operation_class_of_operator[
+                prove_it_object]
             # _operator_'s of Operations are to be stored in 'common'.
             theory_folder_storage = \
                 prove_it_object.theory._theory_folder_storage('common')
@@ -1468,7 +1485,25 @@ class TheoryFolderStorage:
             # Stored in a different folder.
             if do_incarnate:
                 raise Exception("Expecting 'do_incarnate' to act only locally")
-            return theory_folder_storage._retrieve(prove_it_object)
+            try:
+                return theory_folder_storage._retrieve(prove_it_object)
+            except TheoryDatabaseError as e:
+                if literal_operator_operation is not None:
+                    # Another common expression notebook should be executed
+                    # to store operator literals; force a
+                    # CommonExpressionDependencyError
+                    theory = theory_folder_storage.theory
+                    _pkg = TheoryPackage(theory.name, theory.get_path(), dict())
+                    # This name isn't as important as the fact that it
+                    # should not be a name of an existing common expression
+                    # (the '.' would not be allowed) and it's informative.
+                    operator_lit_name = (literal_operator_operation.__name__
+                                         + '._operator_')
+                    self._write_conn = None
+                    getattr(_pkg, operator_lit_name).raise_attempted_use_error()
+                else:
+                    raise TheoryDatabaseError(
+                        "Error loading", str(prove_it_object)) from e
         unique_rep = self._proveItObjUniqueRep(prove_it_object)
         # hash the unique representation and make a sub-directory of
         # this hash value
@@ -1629,6 +1664,7 @@ class TheoryFolderStorage:
         # to lock sooner.
         conn.execute('BEGIN')
         self._write_conn = conn
+        return conn
 
     def _get_write_conn(self):
         """
@@ -1671,12 +1707,12 @@ class TheoryFolderStorage:
         immediately and closes the connection.
         """
         from proveit import Expression
-        conn = self._get_write_conn()
+        conn = self._write_conn
         if conn is None:
-            return None
-    
-        # Are we in a deferred‐write session?
-        is_session_conn = (conn is self._write_conn)
+            raise TheoryDatabaseError(
+                "Not expecting a call to '_store_object_in_db' outside of "
+                "a _retrieve with do_incarnate=True at the top level within "
+                "the same theory storage folder (for %s)"%prove_it_object)
     
         try:
             cur = conn.cursor()
@@ -1726,21 +1762,12 @@ class TheoryFolderStorage:
                         (obj_id, seq, child_folder_id, child_id)
                     )
 
-            # If this is *not* the session connection, commit right away
-            if not is_session_conn:
-                conn.commit()
-    
         except sqlite3.Error as err:
             # Wrap low-level SQLite error in domain‐specific exception
             raise TheoryDatabaseError(
                 self._sqlite_error_message(err, "Writing object row")
             ) from err
-    
-        finally:
-            # Close ephemeral connections
-            if not is_session_conn:
-                conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
-                conn.close()
+
         return obj_id
     
     def _sqlite_error_message(self, err, action):
@@ -2723,10 +2750,14 @@ class TheoryFolderStorage:
         # Remove database entries that are no longer owned.
         db_path = self.theory_storage._db_path(self.folder)
         if db_path is not None and db_path.is_file():
-            conn = sqlite3.connect(db_path)
-            conn.execute('PRAGMA foreign_keys=ON')
+            conn = self._begin_write()
             try:
                 cur = conn.cursor()
+
+                # Preserve the local theory_folder row even if it is not referenced
+                # by any expression_subexpression entry.
+                local_folder_id = self._local_theory_folder_id()
+
                 cur.execute('SELECT content_hash FROM objects')
                 for (content_hash,) in cur.fetchall():
                     if content_hash not in owned_content_hashes:
@@ -2734,9 +2765,39 @@ class TheoryFolderStorage:
                             'DELETE FROM objects WHERE content_hash = ?',
                             (content_hash,)
                         )
-                conn.commit()
-            finally:
-                conn.close()
+
+                # Prune theory_folder rows that are no longer referenced.
+                # Since child_theory_folder_id references theory_folder.id,
+                # we keep only those folder ids still referenced by some edge.
+                cur.execute(
+                    'SELECT DISTINCT child_theory_folder_id '
+                    'FROM expression_subexpression'
+                )
+                referenced_folder_ids = {
+                    row[0] for row in cur.fetchall()
+                }
+                # Always keep the local folder id -- why not
+                referenced_folder_ids.add(local_folder_id)
+    
+                cur.execute('SELECT id FROM theory_folder')
+                for (folder_id,) in cur.fetchall():
+                    if folder_id not in referenced_folder_ids:
+                        cur.execute(
+                            'DELETE FROM theory_folder WHERE id = ?',
+                            (folder_id,)
+                        )
+
+                self._end_write()
+            except Exception:
+                # Make sure the write connection is cleaned up properly
+                # if anything goes wrong.
+                if self._write_conn is not None:
+                    try:
+                        self._write_conn.rollback()
+                    finally:
+                        self._write_conn.close()
+                        self._write_conn = None
+                raise
 
         if clear:
             try:
@@ -2744,18 +2805,6 @@ class TheoryFolderStorage:
             except OSError:
                 print("Unable to clear '%s'" % self.path)
             return
-
-        if self.folder == 'common':
-            from proveit import Literal
-            # Make sure we reference any literals that are in this
-            # theory.  First, import the module of the theory
-            # which should import any modules containing operation
-            # classes with _operator_ Literals, then "retreive"
-            # Literals of the theory as currently referenced objects.
-            importlib.import_module(self.theory.name)
-            for literal in Literal.instances.values():
-                if literal.theory == self.theory:
-                    self._retrieve(literal)
 
         paths_to_remove = list()
         for hash_subfolder in os.listdir(self.path):
