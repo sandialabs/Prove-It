@@ -18,6 +18,7 @@ import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 #from nbconvert.preprocessors.execute import executenb
 from nbconvert import HTMLExporter
+from nbclient.exceptions import CellExecutionError
 import IPython
 from IPython.lib.latextools import LaTeXTool
 import base64
@@ -27,7 +28,7 @@ import tarfile
 import urllib.request  # Comment in for Python 3
 import zmq  # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
-from proveit import Theory
+from proveit._core_.theory import Theory, CommonExpressionDependencyError
 import functools
 print = functools.partial(print, flush=True)
 
@@ -867,9 +868,10 @@ def mpi_build(
                         no_execute=no_execute, git_clear=git_clear,
                         export_to_html=export_to_html)
                     successful_execution_notification(notebook_path)
-                except Exception as e:
-                    if not should_retry_after_failed_execution(notebook_path,
-                                                               str(e)):
+                except CellExecutionError as e:
+                    if not (e.ename =='CommonExpressionDependencyError' and
+                            should_retry_after_failed_execution(notebook_path,
+                                                                e.evalue)):
                         raise e
     elif rank > 0:
         # These ranks will request assignments from rank 0
