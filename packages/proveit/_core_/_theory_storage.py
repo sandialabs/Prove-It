@@ -2550,11 +2550,11 @@ class TheoryFolderStorage:
         # Cache folder storage lookups for speed
         folder_storage_cache = dict()
 
-        def resolve_folder_storage(folder_id):
-            if folder_id not in folder_storage_cache:
-                folder_storage_cache[folder_id] = \
-                    self._get_theory_folder_storage_by_id(folder_id)
-            return folder_storage_cache[folder_id]
+        def resolve_folder_storage(theory_folder_storage, folder_id):
+            if (theory_folder_storage, folder_id) not in folder_storage_cache:
+                folder_storage_cache[(theory_folder_storage, folder_id)] = \
+                    theory_folder_storage._get_theory_folder_storage_by_id(folder_id)
+            return folder_storage_cache[(theory_folder_storage, folder_id)]
 
         def get_dependent_expr_nodes(expr_node):
             '''
@@ -2602,7 +2602,8 @@ class TheoryFolderStorage:
             dependent_nodes = []
             child_refs = theory_folder_storage._get_child_refs_by_parent_id(expr_id)
             for child_theory_folder_id, child_id in child_refs:
-                child_storage = resolve_folder_storage(child_theory_folder_id)
+                child_storage = resolve_folder_storage(
+                    theory_folder_storage, child_theory_folder_id)
                 if child_storage is None:
                     raise KeyError(
                         "Unable to resolve theory folder id %s for parent %s"
