@@ -1,12 +1,12 @@
 from proveit import (Judgment, Expression, Operation,
                      Function, Literal, IndexedVar,
-                     ConditionalSet, Conditional, ExprRange,
+                     Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
                      StyleOptions, free_vars, prover, 
                      equality_prover, relation_prover,
                      defaults, safe_dummy_var, TransRelUpdater)
 from proveit import i, j, k, l, m, n, A, B, U, V, N
-from proveit.core_expr_types import n_k
+from proveit.core_expr_types import ConditionalSet, n_k
 from proveit.logic import Equals, NotEquals, deduce_equal_or_not, Set, InSet
 from proveit.relations import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,

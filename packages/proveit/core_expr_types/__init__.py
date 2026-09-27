@@ -1,5 +1,6 @@
 from .tuples import Len
-
+from .conditionals import ConditionalSet
+from .lambda_maps import Composition
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
