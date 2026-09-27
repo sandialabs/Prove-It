@@ -288,6 +288,7 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
         self.nb = nb
+        orig_first_cell = nb.cells[0]
         init_modules_source = """
 import sys
 from proveit import *
@@ -315,6 +316,8 @@ __init_modules # avoid Prove-It magic assignment
             # are actually recycling the Kernel).
             exec_count = 0
             for index, cell in enumerate(nb.cells):
+                if index==0:
+                    cell=orig_first_cell
                 if hasattr(cell, 'source') and cell['source'].strip() != '':
                     cell, resources = self.preprocess_cell(
                         cell, resources, index)
@@ -326,7 +329,8 @@ __init_modules # avoid Prove-It magic assignment
                             for output in cell['outputs']:
                                 if 'execution_count' in output:
                                     output['execution_count'] = exec_count
-                nb.cells[index]
+                if index==0:
+                    executed_orig_first_cell=cell
 
             if display_latex:
                 # for notebooks with no %end or %qed
@@ -370,7 +374,8 @@ len(gc.get_objects()) # used to check for memory leaks
                 cell_type='code', source=garbage_collect_source, metadata=dict())
             cell, _ = self.preprocess_cell(garbage_collect_cell, resources, 0)
             # Useful debugging to check for memory leaks:
-            #print('num gc objects', cell['outputs'][0]['data']['text/plain'])
+            print('num gc objects', cell['outputs'][0]['data']['text/plain'])
+        nb.cells[0] = executed_orig_first_cell
         return nb, resources
 
     def execute_notebook(self, notebook_path, no_latex=False, git_clear=True,
@@ -995,6 +1000,7 @@ def _db_notebook_path_generator_of_folder(folder_dir, filebases):
         new_dirs = set(os.listdir(folder_dir)) - prev_dirs
         if len(new_dirs) == 0:
             return # Nothing new -- we're done.
+        prev_dirs.update(new_dirs)
         for hash_directory in new_dirs:
             hash_path = os.path.join(
                 folder_dir, hash_directory)
