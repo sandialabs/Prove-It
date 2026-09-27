@@ -1226,15 +1226,15 @@ if __name__ == '__main__':
 
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/common.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_axioms or args.build_all or args.build_essential:
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/axioms.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_theorems or args.build_all or args.build_essential:
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/theorems.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if (args.build_theories or args.build_axioms or args.build_theorems
                 or args.build_all or args.build_essential):
             # Update the theory after updating axioms/theorems so all the
@@ -1244,7 +1244,7 @@ if __name__ == '__main__':
             theory_nb_gen = notebook_path_generator(paths, '_theory_nbs_/theory.ipynb')
             mpi_build(itertools.chain(theory_nb_gen, ('index.ipynb', 'guide.ipynb')),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_demos or args.build_all:
             # Build demonstration and 'extra' notebooks.
             def extra_notebook_gen():
@@ -1268,39 +1268,39 @@ if __name__ == '__main__':
                 extra_notebook_gen())
             mpi_build(notebook_paths,
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
                             
         if args.build_theorem_proofs or args.build_all:
             mpi_build(theoremproof_path_generator(paths),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
             # Rebuild the theorem notebooks after the theorem proofs
             # so they will indicate an updated status of theorems.
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/theorems.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
 
         # This seems to be necessary to rerun these after rerunning the
         # theorem notebooks, though it shouldn't be.  Why?
         if args.build_demos or args.build_all:
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_theorem_proofs or args.build_all:
             mpi_build(theoremproof_path_generator(paths),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
 
 
         if args.build_dependencies or args.build_all:
             mpi_build(database_notebook_path_generator(paths, ('dependencies',)),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_expr_and_proofs or args.build_all:
             filebases = ('expr', 'common_expr', 'axiom_expr', 'theorem_expr', 'proof')
             mpi_build(database_notebook_path_generator(paths, filebases),
                       no_latex=args.nolatex, git_clear=False,
-                      no_execute=args.noexecute, export_to_html=True)
+                      no_execute=args.noexecute, export_to_html=not nohtml)
 
 
     tar_file = args.tar
