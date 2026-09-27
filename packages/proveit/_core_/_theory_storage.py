@@ -143,9 +143,9 @@ class TheoryStorage:
 
         # store special expressions that have been loaded so they are
         # readily available on the next request.
-        self._loadedCommonExprs = dict()
-        self._loadedAxioms = dict()
-        self._loadedTheorems = dict()
+        self._loaded_common_exprs = dict()
+        self._loaded_axioms = dict()
+        self._loaded_theorems = dict()
 
         # Reflects the contents of the 'theorem_dependency_order.txt' file
         # which lists the theorems of the theory in order with other
@@ -366,9 +366,6 @@ class TheoryStorage:
                 definitions = {name: Theorem(expr, self.theory, name)
                                for name, expr in definitions.items()}
                 self._theorem_names = None  # force a reload
-            # "Retrieve" the proofs to make sure they are stored
-            # for future needs.
-            self.theory_folder_storage(kind + 's')
         self._set_special_objects(definitions, kind)
 
     def _set_special_objects(self, definitions, kind):
@@ -616,31 +613,31 @@ class TheoryStorage:
         Return the Expression of the common expression in this theory
         with the given name.
         '''
-        expr = self._getSpecialObject('common', name)
-        self._loadedCommonExprs[name] = expr
+        expr = self._get_special_object('common', name)
+        self._loaded_common_exprs[name] = expr
         return expr
 
     def get_axiom(self, name):
         '''
         Return the Axiom of the given name in this theory.
         '''
-        if name in self._loadedAxioms:
-            return self._loadedAxioms[name]
-        axiom = self._getSpecialObject('axiom', name)
-        self._loadedAxioms[name] = axiom
+        if name in self._loaded_axioms:
+            return self._loaded_axioms[name]
+        axiom = self._get_special_object('axiom', name)
+        self._loaded_axioms[name] = axiom
         return axiom
 
     def get_theorem(self, name):
         '''
         Return the Theorem of the given name in this theory.
         '''
-        if name in self._loadedTheorems:
-            return self._loadedTheorems[name]
-        thm = self._getSpecialObject('theorem', name)
-        self._loadedTheorems[name] = thm
+        if name in self._loaded_theorems:
+            return self._loaded_theorems[name]
+        thm = self._get_special_object('theorem', name)
+        self._loaded_theorems[name] = thm
         return thm
 
-    def _getSpecialObject(self, kind, name):
+    def _get_special_object(self, kind, name):
         '''
         Given a kind ('common', 'axiom', or 'theorem'), and the name
         of a common expression, axiom, or theorem, generate and return
@@ -675,12 +672,17 @@ class TheoryStorage:
                 raise KeyError("Self importing is not allowed")
 
             expr_id = self._kindname_to_exprhash[(kind, name)]
-            expr = theory_folder_storage.make_expression(expr_id)
+            expr, force_storage_fn = theory_folder_storage.make_expression(
+                expr_id)
 
             # make and return common expression, axiom, or theorem
             if kind == 'common':
                 obj = expr
-            elif kind == 'axiom':
+                return obj
+            elif kind not in ('axiom', 'theorem'):
+                raise ValueError(
+                    "'kind' expected to be 'common', 'axiom', or 'theorem'.")
+            if kind == 'axiom':
                 obj = Axiom(expr, self.theory, name)
                 if not isinstance(obj, Axiom):
                     raise TypeError("Expecting Axiom, not %s" % obj.__class__)
@@ -694,9 +696,16 @@ class TheoryStorage:
                         obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
-            else:
-                raise ValueError(
-                    "'kind' expected to be 'common', 'axiom', or 'theorem'.")
+            if obj.proven_truth.proof() == obj:
+                # As long as obj its own actual proof, let's force
+                # recording the storage of the expression.  That way,
+                # we will be sure to locally store an axiom/theorem
+                # expression that happens to also be part of a common
+                # or axiom expression, but we won't overwrite something
+                # that has already been proven (e.g., if the same
+                # theorem expression appears in multiple theories).
+                if force_storage_fn is not None:
+                    force_storage_fn()
         finally:
             # reset the default Theory
             Theory.default = prev_theory_default
@@ -1218,13 +1227,13 @@ class TheoryFolderStorage:
         self._objhash_to_names.clear()
         if folder == 'axioms':
             self.theory_storage._axiom_names = None
-            self.theory_storage._loadedAxioms = dict()
+            self.theory_storage._loaded_axioms = dict()
         if folder == 'theorems':
             self.theory_storage._theorem_names = None
-            self.theory_storage._loadedTheorems = dict()
+            self.theory_storage._loaded_theorems = dict()
         if folder == 'common':
             self.theory_storage._common_expr_names = None
-            self.theory_storage._loadedCommonExprs = dict()
+            self.theory_storage._loaded_common_exprs = dict()
         self.theory_storage._special_expr_hash_ids[kind] = None
         self.theory_storage._special_obj_hash_ids[kind] = None
         if folder == 'common':
@@ -1446,8 +1455,14 @@ class TheoryFolderStorage:
         representation with an index for collision avoidance).
         '''
         from proveit import Literal, Operation
-        from proveit._core_.proof import Axiom, Theorem
+        from proveit._core_.proof import Axiom, Theorem, Proof
         from proveit._core_.theory import TheoryPackage
+
+        if isinstance(prove_it_object, Proof):
+            # In case the proof has been replaced with something else.
+            # For example, two Theorems proving the same judgment
+            # (e.g., in different packages) can cause this to occur.
+            prove_it_object = prove_it_object.proven_truth.proof()
 
         # If incarnating, start a deferred write transaction on 'self'
         write_session = False
@@ -1653,11 +1668,11 @@ class TheoryFolderStorage:
         and defer commits until _end_write is called.
         """
         if self._write_conn is not None:
-            return
+            return self._write_conn
         self._ensure_sqlite_db_initialized()
         db_path = self.db_path
         if db_path is None:
-            return
+            return None
         conn = sqlite3.connect(str(db_path))
         conn.execute('PRAGMA foreign_keys=ON')
         # Start a transaction.  You can use 'BEGIN IMMEDIATE' if you want
@@ -1712,7 +1727,9 @@ class TheoryFolderStorage:
             raise TheoryDatabaseError(
                 "Not expecting a call to '_store_object_in_db' outside of "
                 "a _retrieve with do_incarnate=True at the top level within "
-                "the same theory storage folder (for %s)"%prove_it_object)
+                "the same theory storage folder "
+                "(for %s with unique_rep %s in database %s)"%(
+                    prove_it_object, unique_rep, self.db_path))
     
         try:
             cur = conn.cursor()
@@ -2459,6 +2476,8 @@ class TheoryFolderStorage:
         proveit_path = os.path.split(proveit.__file__)[0]
         (theory_folder_storage, hash_directory, _) = self._retrieve(
             proof, do_incarnate=True)
+        # Store Judgment for future use from any theory package:
+        self._retrieve(proof.proven_truth, do_incarnate=True)
         filename = os.path.join(theory_folder_storage.path, hash_directory,
                                 'proof.ipynb')
         is_owned_storage = (
@@ -2478,7 +2497,9 @@ class TheoryFolderStorage:
     def make_expression(self, expr_storage_id):
         '''
         Return the Expression object that is represented in storage by
-        the given expression id.
+        the given expression id.  Also return a function that may be
+        called to force the storage of this particular way to construct
+        this expression (i.e., the theory and folder).
         '''
         import importlib
 
@@ -2520,8 +2541,8 @@ class TheoryFolderStorage:
             # by in the process of rebuilding.
             pass
 
-        expr = self._make_expression(expr_id, import_fn, expr_builder_fn)
-        return expr
+        expr, force_storage_fn = self._make_expression(expr_id, import_fn, expr_builder_fn)
+        return expr, force_storage_fn
 
     def _make_expression(self, expr_id, import_fn, expr_builder_fn):
         '''
@@ -2628,10 +2649,14 @@ class TheoryFolderStorage:
                     # consistency sake (we want different imports of
                     # something to be regarded as the same)
                     import_fn(expr_class_strs[expr_node])
-                except BaseException:
+                except BaseException as e:
                     # If importing the absolute path fails, maybe the
                     # relative path will work.
-                    import_fn(expr_class_rel_strs[expr_node])
+                    try:
+                        import_fn(expr_class_rel_strs[expr_node])
+                    except:
+                        raise e
+
                     # use the relative path
                     expr_class_strs[expr_node] = expr_class_rel_strs[expr_node]
             else:
@@ -2657,9 +2682,22 @@ class TheoryFolderStorage:
                     expr_style_id, content_hash, expr_id)
             # Remember this going forward.
             built_expr_map[expr_node] = expr
-            theory_folder_storage.exprid_to_expression[expr_id] = expr                
+            theory_folder_storage.exprid_to_expression[expr_id] = expr
 
-        return built_expr_map[master_expr_node]
+        assert expr_node == master_expr_node
+        if expr_node in exprnode_to_content_hash:
+            # Possibly force the top-level storage; this is done for
+            # axiom or theorem expressions, but only if they are their
+            # own proof (to avoid inconsistency if two theorems of
+            # different theories have the same expression).
+            expr_style_id = expr._style_id
+            content_hash = exprnode_to_content_hash[expr_node]
+            force_storage_fn = lambda : theory_folder_storage._record_storage(
+                expr_style_id, content_hash, expr_id)
+        else:
+            force_storage_fn = None
+
+        return built_expr_map[master_expr_node], force_storage_fn
 
     def make_judgment_or_proof(self, storage_id):
         '''
@@ -2695,12 +2733,12 @@ class TheoryFolderStorage:
                 judgment = self.make_judgment_or_proof(judgment_id)
                 obj = Theorem(judgment.expr, theory, name)
         elif unique_rep[:9] == 'Judgment:':
-            truth_expr_id = self.make_expression(subids[0])
+            truth_expr, _ = self.make_expression(subids[0])
             assumptions = [self.make_expression(
-                exprid) for exprid in subids[1:]]
+                exprid)[0] for exprid in subids[1:]]
             num_lit_gen_str = unique_rep[unique_rep.rfind(']')+1:]
             num_lit_gen = 0 if num_lit_gen_str == '' else int(num_lit_gen_str)
-            obj = Judgment(truth_expr_id, assumptions, num_lit_gen=num_lit_gen)
+            obj = Judgment(truth_expr, assumptions, num_lit_gen=num_lit_gen)
         obj_id = theory_folder_storage._get_object_id(content_hash)
         theory_folder_storage._record_storage(obj._style_id, content_hash,
                                               obj_id)
