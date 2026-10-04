@@ -1,5 +1,5 @@
-from .disjoint import Disjoint
-from .distinct import Distinct
+from .disjoint import AllDisjoint, Disjoint
+from .distinct import AllDistinct, Distinct
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
