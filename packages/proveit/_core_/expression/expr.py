@@ -1919,24 +1919,29 @@ class Expression(metaclass=ExprType):
         (%end_[common/axioms/theorems] has not been called yet in the special
         expressions notebook).
         '''
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
+        # Let's create an expression notebook, with or without display_latex
         if not hasattr(self._style_data, 'png'):
             self._style_data.png, png_url = Theory._stored_png(
                 self, self.latex(), self._config_latex_tool)
             self._style_data.png_url = png_url
-        if self._style_data.png_url is not None:
-            expr_notebook_rel_url = Theory.expression_notebook(
-                self, unofficial_name_kind_theory)
-            html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
-            if defaults.inline_pngs:
-                encoded_png = encodebytes(self._style_data.png).decode("utf-8")
-                html += '<img src="data:image/png;base64,' + encoded_png + \
-                    r'" style="display:inline;vertical-align:middle;" />'
-            else:
-                html += '<img src="' + self._style_data.png_url + \
-                    r'" style="display:inline;vertical-align:middle;" />'
-            html += '</a>'
+        expr_notebook_rel_url = Theory.expression_notebook(
+            self, unofficial_name_kind_theory)
+        if unofficial_name_kind_theory is not None:
+            # Also generate the notebook for the expression itself,
+            # not just, for example, the special Axiom/Theorem Proof object.
+            Theory.expression_notebook(self)
+        html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
+        png = self._style_data.png
+        if png is None:
+            html += self.string() # show the string version
+        elif defaults.inline_pngs:
+            encoded_png = encodebytes(png).decode("utf-8")
+            html += '<img src="data:image/png;base64,' + encoded_png + \
+                r'" style="display:inline;vertical-align:middle;" />'
+        else:
+            html += '<img src="' + self._style_data.png_url + \
+                r'" style="display:inline;vertical-align:middle;" />'
+        html += '</a>'
         return html
 
     def _config_latex_tool(self, lt):
