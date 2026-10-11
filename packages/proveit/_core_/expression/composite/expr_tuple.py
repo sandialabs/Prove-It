@@ -1385,6 +1385,7 @@ class ExprTuple(Composite, Expression):
         '''
         from proveit import (ExprRange, ProofFailure,
                              UnsatisfiedPrerequisites)
+        from .expr_range import simplified_index
         from proveit.relations import TransRelUpdater
         from proveit.logic import Equals
         from proveit.numbers import zero, one, Less, LessEq, Add, Neg
@@ -1504,9 +1505,9 @@ class ExprTuple(Composite, Expression):
                         if min_entry_length == one:
                             partition_idx = entry.true_start_index
                         else:
-                            partition_idx = Add(
+                            partition_idx = simplified_index(Add(
                                     entry.true_start_index, min_entry_length,
-                                    Neg(one)).simplified_index()
+                                    Neg(one)))
                         updater.update(
                                 updater.inner_expr()[idx].partition(
                                         partition_idx,
