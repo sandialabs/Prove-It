@@ -885,6 +885,8 @@ class VecSum(GroupSum, VecOperation):
                            tensor_prod_factors_list,
                            len(tensor_prod_factors_list)-1))
         if idx_beg is not None and idx_end is not None:
+            if (idx_beg==0 and idx_end==num_vec_factors-1):
+                return eq.relation # extracting everything is vacuous
             if (idx_end < idx_beg or idx_beg >= num_vec_factors or
                 idx_end >= num_vec_factors):
                 raise ValueError(
