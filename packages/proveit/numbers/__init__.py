@@ -2,8 +2,8 @@
 
 from .number_sets import (
     ZeroSet, Natural, NaturalPos, Integer, IntegerEven,
-    IntegerNonZero, IntegerNeg, IntegerNonPos, IntegerOdd,
-    Prime, Rational, RationalNonZero, RationalPos, RationalNeg,
+    IntegerNonZero, IntegerNeg, IntegerNonPos, IntegerOdd, Prime,
+     Rational, RationalNonZero, RationalPos, RationalNeg,
     RationalNonNeg, RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
     Complex, ComplexNonZero, Conjugate,
