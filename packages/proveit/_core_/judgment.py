@@ -1379,8 +1379,6 @@ class Judgment:
         storage if previously generated) with a links to
         expr.ipynb notebooks for displaying the expression information.
         '''
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
         if not self.is_usable():
             self.raise_unusable_proof()
         html = ''

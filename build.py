@@ -557,64 +557,6 @@ def fix_theory(theory_path):
             fw.write(mode + '\n')
 
 
-def record_presuming_info(theorem, proof_notebook_path):
-    '''
-    Given a Theorem object and corresponding proof notebook path,
-    record the presuming information from information on the
-    "%proving" command line.  We need to execute preceeding commands
-    because some of the presumed things may be local variables generated
-    in the notebook.
-    '''
-    with open(proof_notebook_path) as f:
-        nb = nbformat.read(f, as_version=4)
-    print("Record presuming info:", proof_notebook_path)
-
-    # use '__' to prepend important local variables because we will start
-    # running exec on user code and we don't want to pollute our locals.
-    __owd = os.getcwd()
-    os.chdir(os.path.split(proof_notebook_path)[0])
-    __theorem = theorem
-    try:
-        for __cell in nb['cells']:
-            if __cell['cell_type'] == 'code':
-                __cellsource = __cell['source']
-                __locls = locals()
-                __begin_proof_str = '%proving '
-                if __cellsource[:len(
-                        __begin_proof_str)] == __begin_proof_str or '\n%proving' in __cellsource:
-                    __start = __cellsource.find("%proving")
-                    exec(__cellsource[:__start])
-                    # intercept the proving command
-                    __line = __cellsource[__start + len(__begin_proof_str):]
-                    __theorem_name, __presuming_str = str(
-                        __line.strip()).split(' ', 1)
-                    if __theorem_name != __theorem.name:
-                        raise ValueError(
-                            "Theorem name, %s, does not match expectation, %s, according to filename" %
-                            (__theorem_name, theorem.name))
-                    if not __presuming_str.find('presuming ') == 0:
-                        raise ValueError(
-                            "Bad presuming format: %s" %
-                            __presuming_str)
-                    __args = __presuming_str.split(
-                        ' ', 1)[-1].strip('[]').split(',')
-                    __args = [__arg.strip(" \\\n") for __arg in __args]
-                    __presumptions = [__arg for __arg in __args if __arg != '']
-                    # Some of the presumptions are simply strings, but some are local variables
-                    # we need to extract.  That is why we had to execute the
-                    # previous lines.
-                    __presumptions = [str(__locls[__presumption].proof(
-                    )) if __presumption in __locls else __presumption for __presumption in __presumptions]
-                    __theorem.proven_truth.begin_proof(
-                        __theorem, __presumptions, just_record_presuming_info=True)
-                    return
-                # skip other magic commands (only the imports should really
-                # matter)
-                elif __cellsource[0] != '%':
-                    exec(__cellsource)
-    finally:
-        os.chdir(__owd)
-
 def extract_tar_with_limitations(filename, paths):
     '''
     Extract the given tar file into the directory of this 'build.py'
@@ -1166,6 +1108,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     paths = args.path
     save_notebooks = args.save_notebooks
+    nohtml = args.nohtml
 
     # Get all the theories of the given top-level paths
     # in the order indicated in _sub_theory_.txt files.

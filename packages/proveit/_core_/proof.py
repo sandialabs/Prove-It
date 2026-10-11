@@ -828,8 +828,6 @@ class Proof:
         return requirements
 
     def _repr_html_(self):
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
         proof_steps = self.enumerated_proof_steps()
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
@@ -2683,8 +2681,6 @@ class _ShowProof:
         _ShowProof.show_proof_by_id[proof_id] = self
 
     def _repr_html_(self):
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
         return Proof._repr_html_(self)
 
     def step_type(self):

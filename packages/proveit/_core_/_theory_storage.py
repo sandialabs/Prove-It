@@ -673,7 +673,7 @@ class TheoryStorage:
 
             expr_id = self._kindname_to_exprhash[(kind, name)]
             expr, force_storage_fn = theory_folder_storage.make_expression(
-                expr_id)
+                expr_id, _return_force_storage_fn=True)
 
             # make and return common expression, axiom, or theorem
             if kind == 'common':
@@ -777,6 +777,7 @@ class TheoryStorage:
         # move the proof.
         theory_folder_storage = \
             self.theory._theory_folder_storage('theorems')
+        theory_folder_storage._retrieve(expr, do_incarnate=True)
         expr_id = theory_folder_storage._prove_it_storage_id(expr)
         expr_id = theory_folder_storage._relative_to_explicit_prefix(expr_id)
         if expr_id in theory_folder_storage._prev_objhash_to_names:
@@ -1246,7 +1247,8 @@ class TheoryFolderStorage:
             importlib.import_module(self.theory.name)
             for literal in Literal.instances.values():
                 if literal.theory == self.theory:
-                    self._retrieve(literal, do_incarnate=True)
+                    self.expression_notebook(literal)
+
 
     @staticmethod
     def retrieve_png(expr, latex, config_latex_tool_fn):
@@ -1269,6 +1271,7 @@ class TheoryFolderStorage:
         '''
         Helper method of retrieve_png.
         '''
+        from proveit import defaults
         (theory_folder_storage, hash_directory, _) = self._retrieve(
             expr, do_incarnate=True)
         assert theory_folder_storage == self, \
@@ -1294,9 +1297,13 @@ class TheoryFolderStorage:
         with open(latex_path, 'wb') as latex_file:
             latex_file.write(latex.encode('ascii'))
         # generate, store and return the png file
-        png = self._generate_png(latex, config_latex_tool_fn)
-        with open(png_path, 'wb') as png_file:
-            png_file.write(png)
+        if not defaults.display_latex:
+            # Just show the raw latex
+            png = None
+        else:
+            png = self._generate_png(latex, config_latex_tool_fn)
+            with open(png_path, 'wb') as png_file:
+                png_file.write(png)
         return png, relurl(png_path)
 
     def _generate_png(self, latex, config_latex_tool_fn):
@@ -1545,7 +1552,6 @@ class TheoryFolderStorage:
         # Make a filesystem incarnation of the object when it is needed
         # (e.g., for storing expression or proof notebooks or theorem
         # dependency information).
-
         indexed_hash_path = os.path.join(self.path, storage_hash)
         if not os.path.exists(indexed_hash_path):
             os.mkdir(indexed_hash_path)
@@ -2494,7 +2500,7 @@ class TheoryFolderStorage:
             shutil.copyfile(template_filename, filename)
         return relurl(filename)
 
-    def make_expression(self, expr_storage_id):
+    def make_expression(self, expr_storage_id, _return_force_storage_fn=False):
         '''
         Return the Expression object that is represented in storage by
         the given expression id.  Also return a function that may be
@@ -2507,7 +2513,9 @@ class TheoryFolderStorage:
         # switching to the proper theory_folder_storage object if needed.
         theory_folder_storage, content_hash = self._split(expr_storage_id)
         if theory_folder_storage != self:
-            return theory_folder_storage.make_expression(expr_storage_id)
+            return theory_folder_storage.make_expression(
+                expr_storage_id,
+                _return_force_storage_fn=_return_force_storage_fn)
         expr_id = self._get_object_id(content_hash)
         if expr_id is None:
             raise TheoryDatabaseError("Expression not found in database by "
@@ -2541,8 +2549,10 @@ class TheoryFolderStorage:
             # by in the process of rebuilding.
             pass
 
-        expr, force_storage_fn = self._make_expression(expr_id, import_fn, expr_builder_fn)
-        return expr, force_storage_fn
+        expr, force_storage_fn = self._make_expression(
+            expr_id, import_fn, expr_builder_fn)
+        if _return_force_storage_fn: return expr, force_storage_fn
+        return expr
 
     def _make_expression(self, expr_id, import_fn, expr_builder_fn):
         '''
@@ -2733,9 +2743,9 @@ class TheoryFolderStorage:
                 judgment = self.make_judgment_or_proof(judgment_id)
                 obj = Theorem(judgment.expr, theory, name)
         elif unique_rep[:9] == 'Judgment:':
-            truth_expr, _ = self.make_expression(subids[0])
+            truth_expr = self.make_expression(subids[0])
             assumptions = [self.make_expression(
-                exprid)[0] for exprid in subids[1:]]
+                exprid) for exprid in subids[1:]]
             num_lit_gen_str = unique_rep[unique_rep.rfind(']')+1:]
             num_lit_gen = 0 if num_lit_gen_str == '' else int(num_lit_gen_str)
             obj = Judgment(truth_expr, assumptions, num_lit_gen=num_lit_gen)
