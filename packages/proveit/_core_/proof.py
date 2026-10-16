@@ -2101,6 +2101,12 @@ class Instantiation(Proof):
                         # even though the param is an ExprRange.
                         new_param = param_var
                         new_operands = (param_var_repl,)
+                    elif (isinstance(param_var_repl, Lambda)
+                            and isinstance(param, ExprRange)):
+                        # Instantiate a variable with a Lambda
+                        # even though the param is an ExprRange.
+                        new_param = param_var
+                        new_operands = (param_var_repl,)
                     elif (isinstance(param, ExprRange) 
                              or isinstance(param, IndexedVar)):
                         subbed_param = instantiate(param)
