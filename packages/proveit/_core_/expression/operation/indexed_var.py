@@ -86,7 +86,7 @@ class IndexedVar(Function):
                 repl_map[base_var] = base_var_sub
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
-        return Expression.basic_replaced(
+        return Function.basic_replaced(
                 self, repl_map, allow_relabeling=allow_relabeling,
                 requirements=requirements)
 

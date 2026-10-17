@@ -1437,7 +1437,8 @@ class ExprRange(Expression):
                         reduction.inner_expr().rhs[0].true_end_index)      
         return reduction
     
-    def _replaced_entries(self, repl_map, allow_relabeling, requirements):
+    def _replaced_entries(self, repl_map, allow_relabeling, requirements,
+                          *, allow_index_replacements=True):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -1506,11 +1507,15 @@ class ExprRange(Expression):
             return repl_map[self]
 
         # Do replacements for the start and end indices.
-        subbed_start_index, subbed_end_index = (
+        if allow_index_replacements:
+            subbed_start_index, subbed_end_index = (
                 sub_expr.basic_replaced(
                     repl_map, allow_relabeling=allow_relabeling,
                     requirements=requirements)
-            for sub_expr in (self.true_start_index, self.true_end_index))
+                for sub_expr in (self.true_start_index, self.true_end_index))
+        else:
+            subbed_start_index, subbed_end_index = (
+                self.true_start_index, self.true_end_index)
         # See if we should reduce to a singular instance, according to
         # whether the start and end indices are the same.
         if subbed_start_index==subbed_end_index:

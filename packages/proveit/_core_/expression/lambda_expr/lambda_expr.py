@@ -983,9 +983,10 @@ class Lambda(Expression):
         
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
+                # don't allow index replacements -- that was done above.
                 for subbed_param in parameter._replaced_entries(
-                        inner_repl_map, allow_relabeling,
-                        requirements):
+                        inner_repl_map, allow_relabeling, requirements,
+                        allow_index_replacements=False):
                     new_params.append(subbed_param)
             else:
                 subbed_param = parameter.basic_replaced(
