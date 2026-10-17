@@ -2875,7 +2875,8 @@ class TheoryFolderStorage:
             # obsolete.
             thm_names = set(self.theory.get_theorem_names())
             for _folder in os.listdir(self.pv_it_dir):
-                if _folder[:7] == '_proof_':
+                if _folder[:7] == '_proof_' and os.path.isdir(
+                        os.path.join(self.pv_it_dir, _folder)):
                     thm_name = _folder[7:]
                     if thm_name not in thm_names:
                         paths_to_remove.append(os.path.join(
