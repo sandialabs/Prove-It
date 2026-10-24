@@ -53,7 +53,7 @@ class Not(Operation):
 
     def _readily_disprovable(self):
         '''
-        Not(A) is readily provable if A is readily provable.
+        Not(A) is readily disprovable if A is readily provable.
         '''
         return self.operand.readily_provable()
 
