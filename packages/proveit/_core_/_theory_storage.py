@@ -1461,6 +1461,7 @@ class TheoryFolderStorage:
         storage_hash is the 'content_hash' (based upon a hash of the unique
         representation with an index for collision avoidance).
         '''
+        import proveit
         from proveit import Literal, Operation
         from proveit._core_.proof import Axiom, Theorem, Proof
         from proveit._core_.theory import TheoryPackage
@@ -1469,7 +1470,11 @@ class TheoryFolderStorage:
             # In case the proof has been replaced with something else.
             # For example, two Theorems proving the same judgment
             # (e.g., in different packages) can cause this to occur.
-            prove_it_object = prove_it_object.proven_truth.proof()
+            # An exception is when running a theory notebook where,
+            # for example, there may be two alternative theorems
+            # of the same statement with different proofs.
+            if not proveit.defaults._running_theory_notebook:
+                prove_it_object = prove_it_object.proven_truth.proof()
 
         # If incarnating, start a deferred write transaction on 'self'
         write_session = False
@@ -2240,7 +2245,7 @@ class TheoryFolderStorage:
                         name)
                 else:
                     see_proof_str = ''
-                dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str)
+                dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str).strip()
 
             # Save the dependencies notebook unless it is unchanged.
             if os.path.isfile(dependencies_filename):
