@@ -919,7 +919,8 @@ def theoremproof_path_generator(top_level_paths):
                                    'proofs', theorem_name, 'thm_proof.ipynb')
 
 
-def database_notebook_path_generator(top_level_paths, filebases):
+def database_notebook_path_generator(top_level_paths, filebases,
+                                     processed_paths=None):
     for path in top_level_paths:
         for theory_path in find_theory_paths(path):
             pv_it_dir = os.path.join(theory_path, '__pv_it')
@@ -929,6 +930,10 @@ def database_notebook_path_generator(top_level_paths, filebases):
                     if os.path.isdir(folder_dir):
                         for nb_path in _db_notebook_path_generator_of_folder(
                                 folder_dir, filebases):
+                            if processed_paths is not None:
+                                if nb_path in processed_paths:
+                                    continue # already processed
+                                processed_paths.add(nb_path)
                             yield nb_path
 
 def _db_notebook_path_generator_of_folder(folder_dir, filebases):
@@ -937,23 +942,17 @@ def _db_notebook_path_generator_of_folder(folder_dir, filebases):
     directory.  If new hash folders are generated in the process, these
     will also be yielded.
     '''
-    prev_dirs = set()
-    while True:
-        new_dirs = set(os.listdir(folder_dir)) - prev_dirs
-        if len(new_dirs) == 0:
-            return # Nothing new -- we're done.
-        prev_dirs.update(new_dirs)
-        for hash_directory in new_dirs:
-            hash_path = os.path.join(
-                folder_dir, hash_directory)
-            if os.path.isdir(hash_path):
-                # if hash_path in executed_hash_paths:
-                #    continue # already executed this case
-                for filebase in filebases:
-                    notebook_path = os.path.join(
-                        hash_path, filebase + '.ipynb')
-                    if os.path.isfile(notebook_path):
-                        yield notebook_path
+    for hash_directory in os.listdir(folder_dir):
+        hash_path = os.path.join(
+            folder_dir, hash_directory)
+        if os.path.isdir(hash_path):
+            # if hash_path in executed_hash_paths:
+            #    continue # already executed this case
+            for filebase in filebases:
+                notebook_path = os.path.join(
+                    hash_path, filebase + '.ipynb')
+                if os.path.isfile(notebook_path):
+                    yield notebook_path
 
 if __name__ == '__main__':
     if os.path.sep != '/':
@@ -1247,9 +1246,16 @@ if __name__ == '__main__':
                       no_execute=args.noexecute, export_to_html=not nohtml)
         if args.build_expr_and_proofs or args.build_all:
             filebases = ('expr', 'common_expr', 'axiom_expr', 'theorem_expr', 'proof')
-            mpi_build(database_notebook_path_generator(paths, filebases),
-                      no_latex=args.nolatex, git_clear=False,
-                      no_execute=args.noexecute, export_to_html=not nohtml)
+            # Run twice -- the first time will generate all expr.ipynb
+            # that are sub-expressions of top-level expressions and the
+            # second time will make sure those new expr.ipynb notebooks
+            # execute.
+            processed_paths = set() # process each path only once
+            for _ in range(2):
+                mpi_build(database_notebook_path_generator(paths, filebases,
+                                                           processed_paths),
+                          no_latex=args.nolatex, git_clear=False,
+                          no_execute=args.noexecute, export_to_html=not nohtml)
 
 
     tar_file = args.tar
