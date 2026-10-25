@@ -13,9 +13,68 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import importlib
+import tempfile
 import bisect
 from collections import deque
 from pathlib import Path
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
+def acquire_lock(lock_path):
+    lock_f = open(lock_path, "a+")
+    if os.name == "nt":
+        msvcrt.locking(lock_f.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        fcntl.flock(lock_f, fcntl.LOCK_EX)
+    return lock_f
+
+def release_lock(lock_f):
+    try:
+        if os.name == "nt":
+            lock_f.seek(0)
+            msvcrt.locking(lock_f.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl.flock(lock_f, fcntl.LOCK_UN)
+    finally:
+        lock_f.close()
+
+def copy_if_missing(src, dst):
+    # Safely copy a file only if it is missing
+    # (generated using ai.sandia.gov)
+    src = Path(src)
+    dst = Path(dst)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+
+    lock_path = str(dst) + ".lock"
+    lock_f = acquire_lock(lock_path)
+    try:
+        if dst.exists():
+            return False  # already present, leave it alone
+
+        # Copy to a temp file in the same directory
+        fd, tmp_path = tempfile.mkstemp(dir=str(dst.parent))
+        os.close(fd)
+        try:
+            shutil.copyfile(src, tmp_path)
+            with open(tmp_path, "rb+") as f:
+                f.flush()
+                os.fsync(f.fileno())
+
+            # Now that we hold the lock and know dst doesn't exist,
+            # move temp into place.
+            os.rename(tmp_path, dst)
+            return True
+        finally:
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except FileNotFoundError:
+                pass
+    finally:
+        release_lock(lock_f)
 
 class TheoryDatabaseError(RuntimeError):
     """General SQLite failure in a TheoryFolderStorage database."""
@@ -2502,7 +2561,7 @@ class TheoryFolderStorage:
             # Copy the template.  Nothing needs to be edited for these.
             template_filename = os.path.join(proveit_path, '..',
                                              '_proof_template_.ipynb')
-            shutil.copyfile(template_filename, filename)
+            copy_if_missing(template_filename, filename)
         return relurl(filename)
 
     def make_expression(self, expr_storage_id, _return_force_storage_fn=False):
