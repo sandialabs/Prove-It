@@ -119,7 +119,11 @@ class OperationOverInstances(Operation):
                 # Has conditions.
                 instance_expr = lambda_map.body.value
                 if (isinstance(lambda_map.body.condition, And) and
+                        not lambda_map.body.condition.get_style(
+                            'as_total_ordering', False) and
                         not is_single(lambda_map.body.condition.operands)):
+                    # treat conjunction condition as multiple
+                    # conditions (unless there is total ordering)
                     conditions = composite_expression(
                         lambda_map.body.condition.operands)
                 else:
