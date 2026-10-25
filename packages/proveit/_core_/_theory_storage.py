@@ -1040,7 +1040,9 @@ class TheoryFolderStorage:
 
         # For batching writes in one transaction per top-level incarnate call
         self._write_conn = None
-        
+
+        # Used in _retrieve to indicate a do_incarnate=True at a top level
+        self._incarnating = False
 
     def _ensure_sqlite_db_initialized(self):
         """
@@ -1535,22 +1537,14 @@ class TheoryFolderStorage:
             if not proveit.defaults._running_theory_notebook:
                 prove_it_object = prove_it_object.proven_truth.proof()
 
-        # If incarnating, start a deferred write transaction on 'self'
-        write_session = False
-        if do_incarnate:
-            self._begin_write()
-            write_session = True
-
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
             theory_folder_storage, storage_hash, obj_id = (
                 proveit_obj_to_storage[prove_it_object._style_id])
             if do_incarnate:
                 theory_folder_storage._incarnate(prove_it_object, storage_hash)
-            # commit if we started a session here
-            if write_session:
-                self._end_write()
             return (theory_folder_storage, storage_hash, obj_id)
+
         literal_operator_operation = None
         if isinstance(prove_it_object, Axiom):
             theory_folder_storage = \
@@ -1590,26 +1584,47 @@ class TheoryFolderStorage:
                 else:
                     raise TheoryDatabaseError(
                         "Error loading", str(prove_it_object)) from e
-        unique_rep = self._proveItObjUniqueRep(prove_it_object)
-        # hash the unique representation and make a sub-directory of
-        # this hash value
-        rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
-        
-        storage_hash, obj_id = self._resolve_storage_hash(
-            rep_hash, unique_rep)
 
-        # remember this for next time
-        if obj_id is None:
-            obj_id = self._store_object_in_db(
-                prove_it_object, storage_hash, unique_rep)
-        self._record_storage(prove_it_object._style_id,
-                             storage_hash, obj_id)
 
+        # If incarnating, prepare to start a deferred write transaction on 'self'
         if do_incarnate:
-            self._incarnate(prove_it_object, storage_hash)
-        # commit batched writes now
-        if write_session:
-            self._end_write()
+            self._incarnating = True
+
+        try:
+            unique_rep = self._proveItObjUniqueRep(prove_it_object)
+            # hash the unique representation and make a sub-directory of
+            # this hash value
+            rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
+        
+            storage_hash, obj_id = self._resolve_storage_hash(
+                rep_hash, unique_rep)
+
+            # remember this for next time
+            if obj_id is None:
+                if self._write_conn is None:
+                    # start or continue a batched write session
+                    is_owned_storage = (
+                        TheoryFolderStorage.owns_active_storage and
+                        self == TheoryFolderStorage.active_theory_folder_storage)
+                    if not is_owned_storage:
+                        raise Exception("Attempting to write to a database that "
+                                        "is not properly owned: %s"%self.db_path)
+                    if not self._incarnating:
+                        raise Exception("Attempting to write to a database "
+                                        "without a top-level incarnation")
+                    self._begin_write()
+                obj_id = self._store_object_in_db(
+                    prove_it_object, storage_hash, unique_rep)
+            self._record_storage(prove_it_object._style_id,
+                                 storage_hash, obj_id)
+            if do_incarnate:
+                self._incarnate(prove_it_object, storage_hash)
+        finally:
+            if do_incarnate:
+                if self._write_conn is not None:
+                    self._end_write()
+                self._incarnating = False
+
         return (self, storage_hash, obj_id)
 
     def _incarnate(self, prove_it_object, storage_hash):
@@ -1737,12 +1752,10 @@ class TheoryFolderStorage:
         Subsequent _store_object_row calls will use this connection
         and defer commits until _end_write is called.
         """
-        if self._write_conn is not None:
-            return self._write_conn
+        assert self._write_conn is None
         self._ensure_sqlite_db_initialized()
         db_path = self.db_path
-        if db_path is None:
-            return None
+        assert db_path is not None
         conn = sqlite3.connect(str(db_path))
         conn.execute('PRAGMA foreign_keys=ON')
         # Start a transaction.  You can use 'BEGIN IMMEDIATE' if you want
@@ -1770,8 +1783,7 @@ class TheoryFolderStorage:
         """
         Commit and close the deferred write transaction.
         """
-        if self._write_conn is None:
-            return
+        assert self._write_conn is not None
         try:
             if self._ro_conn is not None:
                 self._ro_conn.close()
