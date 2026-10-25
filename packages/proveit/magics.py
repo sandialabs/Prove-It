@@ -658,7 +658,9 @@ class ProveItMagicCommands:
         _, folder = os.path.split(theory_and_folder)
         theory = Theory(active_folder=folder)
         show_proof = theory.get_show_proof(hash_id)
-        theory.set_active_folder(None)
+        # turn on ownership to allow proof notebooks to generate
+        # sub-proof notebooks.
+        theory.set_active_folder(active_folder=folder, owns_active_folder=True)
         return show_proof
 
     def proving(self, theorem_name):
