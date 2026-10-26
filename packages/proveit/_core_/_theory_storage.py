@@ -1579,7 +1579,6 @@ class TheoryFolderStorage:
                     # (the '.' would not be allowed) and it's informative.
                     operator_lit_name = (literal_operator_operation.__name__
                                          + '._operator_')
-                    self._write_conn = None
                     getattr(_pkg, operator_lit_name).raise_attempted_use_error()
                 else:
                     raise TheoryDatabaseError(
@@ -1607,11 +1606,13 @@ class TheoryFolderStorage:
                         TheoryFolderStorage.owns_active_storage and
                         self == TheoryFolderStorage.active_theory_folder_storage)
                     if not is_owned_storage:
-                        raise Exception("Attempting to write to a database that "
-                                        "is not properly owned: %s"%self.db_path)
+                        raise TheoryDatabaseError(
+                            "Attempting to write to a database that "
+                            "is not properly owned: %s"%self.db_path)
                     if not self._incarnating:
-                        raise Exception("Attempting to write to a database "
-                                        "without a top-level incarnation")
+                        raise TheoryDatabaseError(
+                            "Attempting to write to a database "
+                            "without a top-level incarnation")
                     self._begin_write()
                 obj_id = self._store_object_in_db(
                     prove_it_object, storage_hash, unique_rep)
