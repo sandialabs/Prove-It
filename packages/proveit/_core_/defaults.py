@@ -102,10 +102,18 @@ class Defaults:
         # Will be set to a (theory, kind) object when a common
         # expressions, axioms, or theorms notebook is being executed.
         self._running_theory_notebook = None
+        # Will be set to a (theory, active_folder) object when a
+        # thm_proof.ipynb notebook is being executed.
+        self._running_theorem_proof_notebook = None
+
         # When running a common expressions notebook, this will be
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
         self.import_failure_filename = None
+        # When running a theorem proof notebook, this will be
+        # set to the appropriate file to send information about failed
+        # literal generalization (e.g., an unproven required theorem)
+        self.import_literal_generalization_filename = None
         
         # Set to true when processing notebooks using build.py.
         self._executing_auto_build = False

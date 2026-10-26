@@ -568,17 +568,22 @@ class Expression(metaclass=ExprType):
     #self._class_path() + '[' + ','.join(core_info) + ']' + style_str + ';[' +  + ']'
 
     def _class_path(self):
+        import proveit._core_
         ExprClass = self.__class__
         if ExprClass in Expression.class_paths:
             return Expression.class_paths[ExprClass]
         class_module = sys.modules[ExprClass.__module__]
-        if hasattr(class_module, '__file__'):
-            theory = Theory(class_module.__file__)
+        if hasattr(class_module, '__name__') and (
+                class_module.__name__.startswith(proveit._core_.__name__)):
+            theory_name = class_module.__package__
+        elif hasattr(class_module, '__file__'):
+            theory_name = Theory(class_module.__file__).name
         else:
-            theory = Theory()  # use the current directory if using the main module
+            # use the current directory if using the main module
+            theory_name = Theory().name
         # get the full class path relative to the root theory where the class
         # is defined
-        class_path = theory.name + '.' + \
+        class_path = theory_name + '.' + \
             ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
         # Store for future reference:
         Expression.class_paths[ExprClass] = class_path

@@ -553,7 +553,7 @@ class ProveItMagicCommands:
             if count == 0:
                 display(HTML('This sub-theory contains no theorems.'))
 
-    def prepare_notebook(self, kind):
+    def prepare_theory_notebook(self, kind):
         import proveit
         proveit.defaults.automation = False
         #proveit.defaults.use_consistent_styles = False
@@ -568,6 +568,18 @@ class ProveItMagicCommands:
             proveit.defaults.import_failure_filename = \
                 import_failure_filename
         proveit.defaults._running_theory_notebook = (theory, kind)
+
+    def prepare_thm_proof_notebook(self, theory, active_folder):
+        import proveit
+        literal_generalization_filename = os.path.join(
+            theory._theory_folder_storage(active_folder).path,
+            'literal_generalization_failure.txt')
+        if os.path.isfile(literal_generalization_filename):
+            # Start with a clean slate
+            os.remove(literal_generalization_filename)
+        proveit.defaults.literal_generalization_filename = \
+            literal_generalization_filename
+        proveit.defaults._running_theorem_proof_notebook = (theory, active_folder)
 
     def begin_axioms(self):
         # theory based upon current working directory
@@ -667,7 +679,7 @@ class ProveItMagicCommands:
         # the theory should be up a directory from the _proofs_ directory
         import proveit
         active_folder = '_proof_' + theorem_name
-        self.theory = Theory(
+        self.theory = theory = Theory(
             '..',
             active_folder=active_folder,
             owns_active_folder=True)
@@ -676,8 +688,9 @@ class ProveItMagicCommands:
             # Disable automation when we are getting this theorem
             # to be proven.
             tmp_defaults.automation = False
-            proving_theorem = self.theory.get_theorem(theorem_name)
+            proving_theorem = theory.get_theorem(theorem_name)
         proving_theorem_truth = proving_theorem.proven_truth
+        self.prepare_thm_proof_notebook(theory, active_folder)
         return proving_theorem_truth.begin_proof(proving_theorem)
 
     def qed(self):
@@ -689,6 +702,7 @@ class ProveItMagicCommands:
         if proveit.defaults.display_latex:
             self.theory.clean_active_folder()
         self.theory = None
+        proveit.defaults._running_theorem_proof_notebook = None
         return proof
 
     def end(self, kind):
@@ -914,21 +928,21 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         Prepare for defining common expressions of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'common')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'common')
 
     @line_magic
     def axioms_notebook(self, line):
         '''
         Prepare for defining axioms of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'axioms')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'axioms')
 
     @line_magic
     def theorems_notebook(self, line):
         '''
         Prepare for defining theorems of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'theorems')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'theorems')
 
     def _extract_kind(self, line):
         kind = line.strip()

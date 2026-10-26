@@ -706,15 +706,17 @@ def mpi_build(
     assert export_to_html or not no_execute, "Nothing to do, in that case??"
 
     # Set of notebooks that should be attempted after prerequisites
-    # have been satisfied (e.g., other common expression notebooks):
+    # have been satisfied (e.g., other common expression notebooks
+    # or theorem proof notebooks for LiteralGeneralization):
     retry_notebooks = set()
-    # Map notebooks, to be retried, to theory names:
-    retry_notebook_to_theory_name = dict()
+    # Map notebooks, that may need to be retried, to an identifier
+    # as appropriate (theory or theorem name)
+    retry_notebook_to_identifier = dict()
     # Map notebooks that need to be retried to their original error
     # message:
     retry_orig_err_msg = dict()
-    # Map notebooks that need to be retried to the theory whose common
-    # expression notebook must be executed first:
+    # Map notebooks that need to be retried to the identifier for
+    # the notebook must be executed first (theory or theorem name):
     retry_prerequisite = dict()
     # retry_prerequisite values that have not been satisfied:
     unmet_prerequisites = set()
@@ -742,8 +744,8 @@ def mpi_build(
             yielded_retry = False
             if len(retry_notebooks) > 0:
                 for to_retry in retry_notebooks:
-                    retry_theory_name = retry_notebook_to_theory_name[to_retry]
-                    prerequisite = retry_prerequisite[retry_theory_name]
+                    retry_identifier = retry_notebook_to_identifier[to_retry]
+                    prerequisite = retry_prerequisite[retry_identifier]
                     if prerequisite in unmet_prerequisites:
                         if (prerequisite not in retry_prerequisite.keys() and
                                 len(unfinished_ranks) == 0):
@@ -760,9 +762,9 @@ def mpi_build(
                 # We have to wait for unfinished notebooks.
                 yield None
 
-    def should_retry_after_failed_execution(notebook_path, orig_err_msg):
-        common_notebook_name = 'common.ipynb'
-        if notebook_path[-len(common_notebook_name):] != common_notebook_name:
+    def _should_retry_after_failed_common(notebook_path, orig_err_msg):
+        notebook_name = 'common.ipynb'
+        if notebook_path[-len(notebook_name):] != notebook_name:
             # Only retry for common expression notebooks.
             return False
         theory = Theory(notebook_path)
@@ -773,7 +775,7 @@ def mpi_build(
             # There was a failure to import a common expression from
             # a different theory, so we should try again.
             retry_notebooks.add(notebook_path)
-            retry_notebook_to_theory_name[notebook_path] = theory.name
+            retry_notebook_to_identifier[notebook_path] = theory.name
             with open(import_failure_filename, 'r') as f:
                 failed_import = f.read().strip()
             retry_prerequisite[theory.name] = failed_import
@@ -791,17 +793,69 @@ def mpi_build(
             return True
         else:
             return False
+
+    def _full_thm_name(notebook_path):
+        _path = os.path.split(notebook_path)[0]
+        _proofs_path, _thm_name = os.path.split(_path)
+        assert os.path.split(_proofs_path)[1] == 'proofs'
+        theory = Theory(os.path.split(_proofs_path)[0])
+        return theory.name + '.' + _thm_name
+
+    def _should_retry_after_failed_thm_proof(notebook_path, orig_err_msg):
+        notebook_name = 'thm_proof.ipynb'
+        if notebook_path[-len(notebook_name):] != notebook_name:
+            # Only retry for theorem-proof notebooks.
+            return False
+        full_thm_name = _full_thm_name(notebook_path)
+        literal_generalization_failure_filename = os.path.join(
+            os.path.split(notebook_path)[0],
+            'literal_generalization_failure.txt')
+        if os.path.isfile(literal_generalization_failure_filename):
+            # There was a LiteralGeneralization failure where a
+            # prerequisite theorem was not proven.
+            retry_notebooks.add(notebook_path)
+            retry_notebook_to_identifier[notebook_path] = full_thm_name
+            with open(literal_generalization_failure_filename, 'r') as f:
+                failed_lit_gen_prerequisite = f.read().strip()
+            retry_prerequisite[full_thm_name] = failed_lit_gen_prerequisite
+            if (failed_lit_gen_prerequisite in retry_prerequisite and
+                    (retry_prerequisite[failed_lit_gen_prerequisite]
+                     == full_thm_name)):
+                raise Exception("Cyclic dependency between %s and %s theorem "
+                                "proof notebooks w.r.t. literal generalization "
+                                "detected" % (failed_lit_gen_prerequisite,
+                                              theorem_name))
+            retry_orig_err_msg[notebook_path] = orig_err_msg
+            if failed_lit_gen_prerequisite not in successful_execution_theories:
+                # Note: the prerequisite may have been satisfied
+                # while this was being executed; that's why we
+                # track the 'successful_execution_theories'.
+                unmet_prerequisites.add(failed_lit_gen_prerequisite)
+            return True
+        else:
+            return False
+
+    def should_retry_after_failed_execution(notebook_path, orig_err_msg):
+        if _should_retry_after_failed_common(notebook_path, orig_err_msg):
+            return True
+        return _should_retry_after_failed_thm_proof(notebook_path, orig_err_msg)
+
     count = 0
 
     def successful_execution_notification(notebook_path):
         nonlocal count
         count += 1
         common_filename = 'common.ipynb'
+        thm_proof_filename = 'thm_proof.ipynb'
         if notebook_path[-len(common_filename):] == common_filename:
             theory = Theory(notebook_path)
             successful_execution_theories.add(theory.name)
             unmet_prerequisites.discard(theory.name)
-    
+        elif notebook_path[-len(thm_proof_filename):] == thm_proof_filename:
+            full_thm_name = _full_thm_name(notebook_path)
+            successful_execution_theories.add(full_thm_name)
+            unmet_prerequisites.discard(full_thm_name)
+
     if nranks == 1:
         # The boring single rank case.
         execute_processor = RecyclingExecutePreprocessor(kernel_name='python3', timeout=-1)
@@ -816,7 +870,8 @@ def mpi_build(
                         export_to_html=export_to_html)
                     successful_execution_notification(notebook_path)
                 except CellExecutionError as e:
-                    if not (e.ename =='CommonExpressionDependencyError' and
+                    if not ((e.ename == 'CommonExpressionDependencyError' or
+                             e.ename == 'LiteralGeneralizationFailure') and
                             should_retry_after_failed_execution(notebook_path,
                                                                 e.evalue)):
                         raise e
