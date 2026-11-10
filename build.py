@@ -794,21 +794,23 @@ def mpi_build(
         else:
             return False
 
-    def _full_thm_name(notebook_path):
+    def _theory_and_thm_name(notebook_path):
         _path = os.path.split(notebook_path)[0]
         _proofs_path, _thm_name = os.path.split(_path)
         assert os.path.split(_proofs_path)[1] == 'proofs'
         theory = Theory(os.path.split(_proofs_path)[0])
-        return theory.name + '.' + _thm_name
+        return theory, _thm_name
 
     def _should_retry_after_failed_thm_proof(notebook_path, orig_err_msg):
         notebook_name = 'thm_proof.ipynb'
         if notebook_path[-len(notebook_name):] != notebook_name:
             # Only retry for theorem-proof notebooks.
             return False
-        full_thm_name = _full_thm_name(notebook_path)
+        theory, thm_name = _theory_and_thm_name(notebook_path)
+        full_thm_name = theory.name + '.' + thm_name
+        proof_folder = '_proof_' + thm_name
         literal_generalization_failure_filename = os.path.join(
-            os.path.split(notebook_path)[0],
+            theory._theory_folder_storage(proof_folder).path,
             'literal_generalization_failure.txt')
         if os.path.isfile(literal_generalization_failure_filename):
             # There was a LiteralGeneralization failure where a
@@ -852,7 +854,8 @@ def mpi_build(
             successful_execution_theories.add(theory.name)
             unmet_prerequisites.discard(theory.name)
         elif notebook_path[-len(thm_proof_filename):] == thm_proof_filename:
-            full_thm_name = _full_thm_name(notebook_path)
+            theory, thm_name = _theory_and_thm_name(notebook_path)
+            full_thm_name = theory.name + '.' + thm_name
             successful_execution_theories.add(full_thm_name)
             unmet_prerequisites.discard(full_thm_name)
 

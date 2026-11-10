@@ -113,7 +113,7 @@ class Defaults:
         # When running a theorem proof notebook, this will be
         # set to the appropriate file to send information about failed
         # literal generalization (e.g., an unproven required theorem)
-        self.import_literal_generalization_filename = None
+        self.literal_generalization_failure_filename = None
         
         # Set to true when processing notebooks using build.py.
         self._executing_auto_build = False

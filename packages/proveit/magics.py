@@ -571,14 +571,14 @@ class ProveItMagicCommands:
 
     def prepare_thm_proof_notebook(self, theory, active_folder):
         import proveit
-        literal_generalization_filename = os.path.join(
+        literal_generalization_failure_filename = os.path.join(
             theory._theory_folder_storage(active_folder).path,
             'literal_generalization_failure.txt')
-        if os.path.isfile(literal_generalization_filename):
+        if os.path.isfile(literal_generalization_failure_filename):
             # Start with a clean slate
-            os.remove(literal_generalization_filename)
-        proveit.defaults.literal_generalization_filename = \
-            literal_generalization_filename
+            os.remove(literal_generalization_failure_filename)
+        proveit.defaults.literal_generalization_failure_filename = \
+            literal_generalization_failure_filename
         proveit.defaults._running_theorem_proof_notebook = (theory, active_folder)
 
     def begin_axioms(self):
