@@ -17,7 +17,7 @@ import argparse
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 #from nbconvert.preprocessors.execute import executenb
-from nbconvert import HTMLExporter
+from nbconvert import HTMLExporter, TemplateExporter
 from nbclient.exceptions import CellExecutionError
 import IPython
 from IPython.lib.latextools import LaTeXTool
@@ -221,8 +221,9 @@ class ProveItHTMLPreprocessor(Preprocessor):
         return nb, resources
 
 
-html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()])
-# html_exporter.template_file = os.path.abspath('proveit_html.tpl')
+TemplateExporter.extra_template_basedirs = ['templates']
+html_exporter = HTMLExporter(preprocessors=[ProveItHTMLPreprocessor()],
+                             template_name='proveit_html')
 
 def is_git_diff_empty(notebook_path):
     '''
