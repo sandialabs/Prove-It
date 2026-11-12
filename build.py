@@ -294,12 +294,13 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
 import sys
 from proveit import *
 from proveit import defaults
-defaults.display_latex=%s
+defaults.display_latex=float(%s)
 defaults._executing_auto_build=True
+defaults._auto_build_start_time=%s
 import proveit.magics
 __init_modules = list(sys.modules.keys())
 __init_modules # avoid Prove-It magic assignment
-""" % display_latex
+""" % (display_latex, build_start_time_str)
 
         init_modules_cell = nbformat.NotebookNode(
             cell_type='code', source=init_modules_source, metadata=dict())
@@ -1014,6 +1015,7 @@ def _db_notebook_path_generator_of_folder(folder_dir, filebases):
                     yield notebook_path
 
 if __name__ == '__main__':
+    build_start_time_str = str(time.time())
     if os.path.sep != '/':
         # use the appropriate path separator for the OS
         default_paths = [path.replace('/', os.path.sep)

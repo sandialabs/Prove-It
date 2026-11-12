@@ -551,14 +551,14 @@ class Theory:
         return theory_folder_storage.make_show_proof(proof_id)
 
     @staticmethod
-    def _stored_png(expr, latex, config_latex_tool_fn):
+    def _stored_png(expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Find the .png file for the stored Expression.
         Create it if it did not previously exist.
         Return the png data and path where the png is stored as a tuple.
         '''
         return TheoryFolderStorage.retrieve_png(
-            expr, latex, config_latex_tool_fn)
+            expr, latex, config_latex_tool_fn, just_need_link=just_need_link)
 
     def _theory_folder_storage(self, folder=None):
         '''

@@ -1312,7 +1312,7 @@ class TheoryFolderStorage:
 
 
     @staticmethod
-    def retrieve_png(expr, latex, config_latex_tool_fn):
+    def retrieve_png(expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Find the expr.png file for the stored Expression.
         Create it if it did not previously exist using _generate_png.
@@ -1326,9 +1326,9 @@ class TheoryFolderStorage:
                             "command before displaying LaTeX Prove-It "
                             "expressions")
         return theory_folder_storage._retrieve_png(
-            expr, latex, config_latex_tool_fn)
+            expr, latex, config_latex_tool_fn, just_need_link=just_need_link)
 
-    def _retrieve_png(self, expr, latex, config_latex_tool_fn):
+    def _retrieve_png(self, expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Helper method of retrieve_png.
         '''
@@ -1337,34 +1337,87 @@ class TheoryFolderStorage:
             expr, do_incarnate=True)
         assert theory_folder_storage == self, \
             "How did the theory end up different from expected??"
+        build_start_time = defaults._auto_build_start_time
         # generate the latex and png file paths, from pv_it_filename and
         # the distinction
-        latex_path = os.path.join(self.path, hash_directory, 'expr.latex')
-        png_path = os.path.join(self.path, hash_directory, 'expr.png')
+        hash_path = os.path.join(self.path, hash_directory)
+        latex_path = os.path.join(hash_path, 'expr.latex')
+        png_path = os.path.join(hash_path, 'expr.png')
         # check if the latex file exists, is consistent with the given
         # latex string, and if the png file exists.
+        latex_was_rewritten = False
         if os.path.isfile(latex_path):
-            # latex file exists.  read it ans see if it the same as the
+            file_timestamp = os.path.getmtime(latex_path)
+            if file_timestamp > build_start_time:
+                # The file has already been processed (or started to be processed)
+                # since starting the build.
+                if just_need_link:
+                    # Only the path is needed.
+                    return None, relurl(png_path)
+                else:
+                    # See if the png file has already been processed.
+                    if os.path.isfile(png_path):
+                        file_timestamp = os.path.getmtime(png_path)
+                        if file_timestamp > build_start_time:
+                            # png file exists.  read and return the data.
+                            with open(png_path, 'rb') as png_file:
+                                return png_file.read(), relurl(png_path)
+
+            # latex file exists.  read it and see if it the same as the
             # given latex string
             with open(latex_path) as latex_file:
                 if latex_file.read() == latex:
-                    # the latex files are the same, try to read the png
-                    # file
+                    # The latex files are the same.
+                    os.utime(latex_path, None) # update the timestamp
+                    if just_need_link:
+                        # just return the link
+                        return None, relurl(png_path)
+                    # try to read the png file
                     if os.path.isfile(png_path):
                         # png file exists.  read and return the data.
                         with open(png_path, 'rb') as png_file:
                             return png_file.read(), relurl(png_path)
-        # store the latex string in the latex file
-        with open(latex_path, 'wb') as latex_file:
-            latex_file.write(latex.encode('ascii'))
+
+            # The latex has changed.  We'll have to write the new
+            # latex to a temporary file.
+            try:
+                # First remove the png which is no longer valid.
+                # We could create a temp file and do a replace as done
+                # below for the .latex file, ensuring the file isn't
+                # removed and re-written multiple times by different
+                # processes.  But that's less likely to occur for the
+                # png file (the latex file must be replaced and than
+                # png must be generated before writing the png file)
+                # and it wouln't be terrible either way.  What is
+                # important is that the 'x' mode is used when writing
+                # to ensure data isn't garbled.
+                os.remove(png_path)
+            except FileNotFoundError:
+                pass
+            with tempfile.NamedTemporaryFile("wb", dir=hash_path, delete=False) as tmp:
+                tmp.write(latex.encode('ascii'))
+                tmp_path = tmp.name
+            os.replace(tmp_path, latex_path)  # atomic on POSIX and Windows
+            latex_was_rewritten = True
+
+        if not latex_was_rewritten:
+            try:
+                # store the latex string in the latex file
+                with open(latex_path, 'xb') as latex_file:
+                    latex_file.write(latex.encode('ascii'))
+            except FileExistsError:
+                pass # presume another process beat us to it
+
         # generate, store and return the png file
-        if not defaults.display_latex:
-            # Just show the raw latex
-            png = None
+        if just_need_link:
+            png = None # just return the link
         else:
             png = self._generate_png(latex, config_latex_tool_fn)
-            with open(png_path, 'wb') as png_file:
-                png_file.write(png)
+            try:
+                with open(png_path, 'xb') as png_file:
+                    png_file.write(png)
+            except FileExistsError:
+                pass # presume another process beat us to it
         return png, relurl(png_path)
 
     def _generate_png(self, latex, config_latex_tool_fn):
@@ -1924,6 +1977,7 @@ class TheoryFolderStorage:
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
+        from proveit import defaults
         from proveit import Expression
         from proveit._core_.proof import Axiom, Theorem
         from json import JSONDecodeError
@@ -1988,17 +2042,6 @@ class TheoryFolderStorage:
         full_hash_dir = os.path.join(theory_folder_storage.path,
                                      content_hash)
 
-        if (complete_special_expr_notebook or (
-                TheoryFolderStorage.owns_active_storage and
-                theory_folder_storage ==
-                TheoryFolderStorage.active_theory_folder_storage)):
-            # Only build the notebook in the active folder storage
-            nb = theory_folder_storage._buildExpressionNotebook(
-                obj, expr, kind, name, full_hash_dir, template_name,
-                name_kind_theory, complete_special_expr_notebook)
-        else:
-            nb = None
-
         # Write the expression notebook unless it is unchanged.
         # expr.ipynb is the default but may change to
         # axiom_expr.ipynb or theorem_expr.ipynb in certain
@@ -2010,23 +2053,41 @@ class TheoryFolderStorage:
             filename = 'theorem_expr.ipynb'
         elif kind == 'common':
             filename = 'common_expr.ipynb'
+        filepath = os.path.join(full_hash_dir, filename)
+
+        is_owned =  (complete_special_expr_notebook or (
+            TheoryFolderStorage.owns_active_storage and
+            theory_folder_storage ==
+            TheoryFolderStorage.active_theory_folder_storage))
+        build_start_time = defaults._auto_build_start_time
+
+        if os.path.isfile(filepath):
+            if not is_owned:
+                # just return the link
+                return relurl(filepath)
+            # make sure the file as been processed
+            # since starting the build.
+            file_timestamp = os.path.getmtime(filepath)
+            if file_timestamp > build_start_time:
+                # assume it was, will be, generated by
+                # another process.
+                return relurl(filepath)
+        elif not is_owned:
+            # The notebook isn't found and it isn't owned, so
+            # raise an exception.
+            theory_folder_storage._raiseNotebookNotFound(filepath)
+
+        # Generate the notebook to either compare to an existing one
+        # with a timestamp that predates this build (replacing it if
+        # they differ) or to write it as new.
+        nb = theory_folder_storage._buildExpressionNotebook(
+            obj, expr, kind, name, full_hash_dir, template_name,
+            name_kind_theory, complete_special_expr_notebook)
+
         alt_filename = 'alt_' + filename
         tmp_filename = 'tmp_' + filename
-        filepath = os.path.join(full_hash_dir, filename)
         alt_filepath = os.path.join(full_hash_dir, alt_filename)
         tmp_filepath = os.path.join(full_hash_dir, tmp_filename)
-
-        if nb is None:
-            # If this isn't the active folder storage,
-            # just make sure the file is there and
-            # return the link.
-            if not os.path.isfile(filepath):
-                # disable for now
-                # theory_folder_storage._raiseNotebookNotFound(filepath)
-                pass
-            return relurl(filepath)
-
-        #assert False,  '%s'%TheoryFolderStorage.active_theory_folder_storage
 
         # Possibly toggle expr.ipynb and alt_expr.ipynb.
         clean_nb = TheoryFolderStorage._get_clean_nb_method()
@@ -2037,7 +2098,11 @@ class TheoryFolderStorage:
                     orig_nb = clean_nb(f)
                 except JSONDecodeError:
                     orig_nb = ""
-            if orig_nb != nb:
+            if orig_nb == nb:
+                # Just update the timestamp to indicate that
+                # it has been processed.
+                os.utime(filepath, None)
+            else:
                 if os.path.isfile(alt_filepath):
                     with open(alt_filepath, 'r') as f:
                         try:
@@ -2062,8 +2127,12 @@ class TheoryFolderStorage:
                     else:
                         print("Expression notebook is being updated for %s"
                               % str(expr))
-                    with open(filepath, 'w') as expr_file:
-                        expr_file.write(nb)
+                    # For conconcurrence safety, make a temp file and move it.
+                    with tempfile.NamedTemporaryFile("w", dir=full_hash_dir,
+                                                     delete=False) as tmp:
+                        tmp.write(nb)
+                        tmp_path = tmp.name
+                    os.replace(tmp_path, filepath)  # atomic on POSIX and Windows
         else:
             try:
                 with open(filepath, 'x') as expr_file:
@@ -2560,7 +2629,7 @@ class TheoryFolderStorage:
         (theory_folder_storage, hash_directory, _) = self._retrieve(
             proof, do_incarnate=True)
         # Store Judgment for future use from any theory package:
-        self._retrieve(proof.proven_truth, do_incarnate=True)
+        self._retrieve(proof.proven_truth, do_incarnate=False)
         filename = os.path.join(theory_folder_storage.path, hash_directory,
                                 'proof.ipynb')
         is_owned_storage = (

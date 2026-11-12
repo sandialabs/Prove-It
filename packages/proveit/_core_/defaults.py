@@ -117,6 +117,7 @@ class Defaults:
         
         # Set to true when processing notebooks using build.py.
         self._executing_auto_build = False
+        self._auto_build_start_time = float('inf')
 
     @property
     def running_theory_notebook(self):

@@ -1925,9 +1925,12 @@ class Expression(metaclass=ExprType):
         expressions notebook).
         '''
         # Let's create an expression notebook, with or without display_latex
+        do_inline_pngs = defaults.inline_pngs
         if not hasattr(self._style_data, 'png'):
+            just_need_link = defaults.display_latex or not do_inline_pngs
             self._style_data.png, png_url = Theory._stored_png(
-                self, self.latex(), self._config_latex_tool)
+                self, self.latex(), self._config_latex_tool,
+                just_need_link = just_need_link)
             self._style_data.png_url = png_url
         expr_notebook_rel_url = Theory.expression_notebook(
             self, unofficial_name_kind_theory)
@@ -1939,7 +1942,7 @@ class Expression(metaclass=ExprType):
         png = self._style_data.png
         if png is None:
             html += self.string() # show the string version
-        elif defaults.inline_pngs:
+        elif do_inline_pngs:
             encoded_png = encodebytes(png).decode("utf-8")
             html += '<img src="data:image/png;base64,' + encoded_png + \
                 r'" style="display:inline;vertical-align:middle;" />'
