@@ -59,7 +59,8 @@ def _make_decorated_prover(func):
                                             'evaluation', 'conclude'))
 
     def decorated_prover(*args, **kwargs):
-        from proveit import Expression, Judgment, InnerExpr
+        from proveit import (Expression, Judgment, InnerExpr,
+                             display_expression_differences)
         from proveit._core_.proof import Assumption
         from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
@@ -357,9 +358,11 @@ def _make_decorated_prover(func):
                 return proven_truth.with_matching_style(not_expr)
             else:
                 if proven_expr != self_expr:
+                    display_expression_differences(proven_truth.expr, expr)
                     raise ValueError("@prover method %s whose name starts with "
                                      "'conclude' must prove %s but got "
-                                     "%s."%(func, self_expr, proven_truth))
+                                     "%s. See output for difference "
+                                     "details."%(func, expr, proven_truth))
                 # Match the style of self.
                 return proven_truth.with_matching_style(self_expr)
         return proven_truth
@@ -382,7 +385,8 @@ def _make_decorated_class_membership_prover(func, *,
     decorated_prover = _make_decorated_prover(func)
     
     def decorated_class_membership_prover(*args, **kwargs):
-        from proveit._core_.expression.expr import Expression
+        from proveit._core_.expression.expr import (
+            Expression, display_expression_differences)
         from proveit._core_.expression.composite import ExprRange, ExprTuple
         from proveit.classes import ClassMembership
         
@@ -422,14 +426,15 @@ def _make_decorated_class_membership_prover(func, *,
                     class_membership_class = 'Relation'
                 elif prover_type=='equality':
                     class_membership_class = 'Equals'
+                display_expression_differences(proven_expr.operands[0], 
+                                               expected_first_operand)
                 raise TypeError(
                         "@%s_prover, %s, expected to prove "
                         "a %s with %s as its first operand. "
                         "%s does not satisfy this "
-                        "requirement."%(prover_type, func,
-                                        class_membership_class,
-                                        expected_first_operand,
-                                        proven_expr))
+                        "requirement. See output for difference details."
+                        %(prover_type, func, class_membership_class,
+                          expected_first_operand, proven_expr))
             # Make the style consistent with the original expression.
             if not proven_expr.operands[0].has_same_style(
                     expected_first_operand):
@@ -459,7 +464,8 @@ def _make_decorated_relation_prover(func, prover_type='relation'):
             func, prover_type=prover_type))
     
     def decorated_relation_prover(*args, **kwargs):
-        from proveit._core_.expression.expr import Expression
+        from proveit._core_.expression.expr import (
+            Expression, display_expression_differences)
         from proveit._core_.expression.composite import ExprRange, ExprTuple
         from proveit.relations import Relation
         
@@ -489,14 +495,14 @@ def _make_decorated_relation_prover(func, prover_type='relation'):
                 relation_class = 'Relation'
                 if prover_type=='equality':
                     relation_class = 'Equals'
+                display_expression_differences(proven_expr.lhs, expected_lhs)
                 raise TypeError(
                         "@%s_prover, %s, expected to prove "
                         "a %s with %s as its lhs. "
                         "%s does not satisfy this "
-                        "requirement."%(prover_type, func,
-                                        relation_class,
-                                        expected_lhs,
-                                        proven_expr))
+                        "requirement. See output for difference details."
+                        %(prover_type, func, relation_class,
+                          expected_lhs, proven_expr))
             # Make the style consistent with the original expression.
             if not proven_expr.lhs.has_same_style(expected_lhs):
                 # Make the first operand of the proven truth have a

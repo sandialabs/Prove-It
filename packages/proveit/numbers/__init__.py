@@ -11,7 +11,8 @@ from .number_sets import (
     unit_length_complex_polar_angle)
 
 from .number_sets import (
-        Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC)
+        Interval, int_interval_bounds,
+        RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC)
 from .number_sets import e, pi, i, infinity
 from .number_operation import (NumberOperation, readily_factorable,
                                deduce_in_number_set,

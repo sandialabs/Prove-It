@@ -35,7 +35,7 @@ theory packages.
 
 Visit [http://pyproveit.org](http://pyproveit.org) to view the
 Prove-It-generated web pages.  
-You can also read our [introductory paper](https://github.com/PyProveIt/Prove-It/blob/master/ProveIt_Introduction.pdf).
+You can also read our [introductory paper](ProveIt_Introduction.pdf).
 
 <br/>
 
@@ -72,7 +72,7 @@ Installation instructions
    to install a link to the source tree in your python path.  We only
    support this "develop" installation at this time because of the way 
    that the Prove-It database works in the filesystem.  In any case, if 
-   you might want to make any [contributions](https://github.com/PyProveIt/Prove-It/blob/master/CONTRIBUTING.md)
+   you might want to make any [contributions](CONTRIBUTING.md)
    to the ever-expanding proveit packages, this "develop" installation will
    allow you to do that development (altering source code of the
    installed package).

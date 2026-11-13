@@ -3,8 +3,8 @@
 from .expression import (
     Expression, traverse_inner_expressions, used_vars, used_literals,
     free_var_ranges, free_vars,
-    expression_depth, MakeNotImplemented,
-    ImproperReplacement,
+    expression_depth, expression_differences, display_expression_differences,
+    MakeNotImplemented, ImproperReplacement,
     InnerExpr, InnerExprGenerator, generate_inner_expressions,
     Label, Literal, Variable, DuplicateLiteralError,
     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,

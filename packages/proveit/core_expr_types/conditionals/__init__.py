@@ -1,6 +1,5 @@
 from .conditional_set import ConditionalSet
 
-
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
 # This allows us to import common expression, axioms, and theorems of

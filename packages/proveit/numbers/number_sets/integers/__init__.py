@@ -1,4 +1,4 @@
-from .interval import Interval
+from .interval import Interval, int_interval_bounds
 from .int_add import IntAdd
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

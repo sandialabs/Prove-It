@@ -210,6 +210,10 @@ class SetOfAll(OperationOverInstances):
         param_justification = self.get_style('param_justification', 'left')
         condition_justification = self.get_style('condition_justification', 'left')
         instance_element = self.instance_element
+        if isinstance(instance_element, ExprTuple):
+            inner_fence = True
+        else:
+            inner_fence = (explicit_conditions.num_entries() > 0)
 
         (param_membership_conditions, explicit_conditions, 
          formatted_membership_op, formatted_class) = (
@@ -225,7 +229,7 @@ class SetOfAll(OperationOverInstances):
             temp_defaults.assumptions = defaults.assumptions + (
                     self.conditions)
             formatted_instance_elem =  instance_element.formatted(
-                format_type, fence=True)
+                format_type, fence=inner_fence)
 
         if format_type == 'latex':
             out_str = r"\left\{"

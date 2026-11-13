@@ -584,17 +584,22 @@ class Expression(metaclass=ExprType):
     #self._class_path() + '[' + ','.join(core_info) + ']' + style_str + ';[' +  + ']'
 
     def _class_path(self):
+        import proveit._core_
         ExprClass = self.__class__
         if ExprClass in Expression.class_paths:
             return Expression.class_paths[ExprClass]
         class_module = sys.modules[ExprClass.__module__]
-        if hasattr(class_module, '__file__'):
-            theory = Theory(class_module.__file__)
+        if hasattr(class_module, '__name__') and (
+                class_module.__name__.startswith(proveit._core_.__name__)):
+            theory_name = class_module.__package__
+        elif hasattr(class_module, '__file__'):
+            theory_name = Theory(class_module.__file__).name
         else:
-            theory = Theory()  # use the current directory if using the main module
+            # use the current directory if using the main module
+            theory_name = Theory().name
         # get the full class path relative to the root theory where the class
         # is defined
-        class_path = theory.name + '.' + \
+        class_path = theory_name + '.' + \
             ExprClass.__module__.split('.')[-1] + '.' + ExprClass.__name__
         # Store for future reference:
         Expression.class_paths[ExprClass] = class_path
@@ -2056,25 +2061,33 @@ class Expression(metaclass=ExprType):
         (%end_[common/axioms/theorems] has not been called yet in the special
         expressions notebook).
         '''
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
+        # Let's create an expression notebook, with or without display_latex
+        do_inline_pngs = defaults.inline_pngs
         if not hasattr(self._style_data, 'png'):
+            just_need_link = defaults.display_latex or not do_inline_pngs
             self._style_data.png, png_url = Theory._stored_png(
-                self, self.latex(), self._config_latex_tool)
+                self, self.latex(), self._config_latex_tool,
+                just_need_link = just_need_link)
             self._style_data.png_url = png_url
-        if self._style_data.png_url is not None:
-            expr_notebook_rel_url = Theory.expression_notebook(
-                self, name_kind_theory=unofficial_name_kind_theory,
-                special_object=special_object)
-            html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
-            if defaults.inline_pngs:
-                encoded_png = encodebytes(self._style_data.png).decode("utf-8")
-                html += '<img src="data:image/png;base64,' + encoded_png + \
-                    r'" style="display:inline;vertical-align:middle;" />'
-            else:
-                html += '<img src="' + self._style_data.png_url + \
-                    r'" style="display:inline;vertical-align:middle;" />'
-            html += '</a>'
+        expr_notebook_rel_url = Theory.expression_notebook(
+            self, unofficial_name_kind_theory,
+            special_object=special_object)
+        if unofficial_name_kind_theory is not None:
+            # Also generate the notebook for the expression itself,
+            # not just, for example, the special Axiom/Theorem Proof object.
+            Theory.expression_notebook(self)
+        html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
+        png = self._style_data.png
+        if png is None:
+            html += self.string() # show the string version
+        elif do_inline_pngs:
+            encoded_png = encodebytes(png).decode("utf-8")
+            html += '<img src="data:image/png;base64,' + encoded_png + \
+                r'" style="display:inline;vertical-align:middle;" />'
+        else:
+            html += '<img src="' + self._style_data.png_url + \
+                r'" style="display:inline;vertical-align:middle;" />'
+        html += '</a>'
         return html
 
     def _config_latex_tool(self, lt):
@@ -2205,6 +2218,55 @@ def traverse_inner_expressions(expr):
     for sub_expr in expr.sub_expr_iter():
         for inner_expr in traverse_inner_expressions(sub_expr):
             yield inner_expr
+
+
+def expression_differences(expr1, expr2):
+    '''
+    Yield sub-expressions of expr1 and expr2 respective that differ at that
+    level (and skip any deeper level).
+    If the expressions are equal, nothing is yielded.
+    '''
+    from proveit import Judgment
+    if isinstance(expr1, Judgment):
+        expr1 = expr1.expr
+    if isinstance(expr2, Judgment):
+        expr2 = expr1.expr
+    if expr1._core_info != expr2._core_info or (
+            len(expr1._sub_expressions) != len(expr2._sub_expressions)):
+        yield expr1, expr2
+        return # no need to dig deeper
+    for sub_expr1, sub_expr2 in zip(expr1.sub_expr_iter(),
+                                    expr2.sub_expr_iter()):
+        for diff1, diff2 in expression_differences(sub_expr1, sub_expr2):
+            yield diff1, diff2
+
+def display_expression_differences(expr1, expr2):
+    '''
+    Either display that expr1 and expr2 have the same meaning
+    or display that they differ and display the sub-expressions that differ.
+    '''
+    from IPython.display import display
+
+    if expr1 == expr2:
+        display(expr1)
+        print('has the same intinsic meaning as')
+        display(expr2)
+        return
+
+    display(expr1)
+    print('differs from')
+    display(expr2)
+    _first_diff = True
+    for sub_expr1, sub_expr2 in expression_differences(expr1, expr2):
+        if sub_expr1 == expr1: continue
+        if not _first_diff:
+            print('and')
+        else:
+            print('because')
+            _first_diff = False
+        display(sub_expr1)
+        print('differs from')
+        display(sub_expr2)    
 
 
 class MakeNotImplemented(NotImplementedError):

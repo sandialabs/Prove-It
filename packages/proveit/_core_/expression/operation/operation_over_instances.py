@@ -120,9 +120,14 @@ class OperationOverInstances(Operation):
                     lambda_map.body))
             if condition is not None:
                 # Has conditions.
-                if (isinstance(condition, And) and
+                if isinstance(condition, And) and (
+                        not condition.get_style(
+                            'as_total_ordering', False) and
                         not is_single(condition.operands)):
-                    conditions = composite_expression(condition.operands)
+                    # treat conjunction condition as multiple
+                    # conditions (unless there is total ordering)
+                    conditions = composite_expression(
+                        condition.operands)
                 else:
                     conditions = composite_expression(condition)
             else:

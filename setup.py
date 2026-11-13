@@ -1,11 +1,10 @@
 """Prove-It: general theorem prover in python"""
 
 from setuptools import setup, find_packages
-from nbstripout.install import install_nbstripout
 import sys
 
 with open("packages/proveit/_version.py") as f:
-    code = compile(f.read(), "packages/proveit/_version.py", 'exec')
+    code = compile(f.read(), "packages/proveit/_version.py", "exec")
     exec(code)
 
 classifiers = """\
@@ -41,22 +40,36 @@ theorem dependencies are stored a kind of database (filesystem based).  This
 database is used to prevent circular logic.
 """
 
-dist = setup(name='Prove-It',
-             version=__version__,
-             description='General theorem prover in python.',
-             long_description=description_txt,
-             author='Wayne Witzel, Kenneth Ruddinger, Mohan Sarover, Robert Carr',
-             author_email='wwitzel@sandia.gov',
-             packages=['proveit'],
-             package_data={},
-             # when 'export' is implemented for the certification database, put
-             # the exported data here
-             package_dir={'': 'packages'},
-             requires=[],
-             platforms=["any"],
-             classifiers=[_f for _f in classifiers.split("\n") if _f],
-             )
+install_requires = [
+    "lxml",
+    "nbformat",
+    "nbconvert",
+    "ipython",
+    "more_itertools",
+    "ipywidgets",
+]
+
+dist = setup(
+    name="Prove-It",
+    version=__version__,
+    description="General theorem prover in python.",
+    long_description=description_txt,
+    author="Wayne Witzel, Kenneth Ruddinger, Mohan Sarover, Robert Carr",
+    author_email="wwitzel@sandia.gov",
+    packages=find_packages("packages"),
+    include_package_data=True,
+    # when 'export' is implemented for the certification database, put
+    # the exported data here
+    package_dir={"": "packages"},
+    install_requires=install_requires,
+    platforms=["any"],
+    classifiers=[_f for _f in classifiers.split("\n") if _f],
+)
 
 if "develop" in sys.argv:
-    print("\n_configuring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked.")
-    install_nbstripout(['git', 'config'])
+    print(
+        "\n_configuring git locally to filter jupyter notebook 'output' so only 'input' changes will be tracked."
+    )
+    from nbstripout.install import install_nbstripout
+
+    install_nbstripout(["git", "config"])

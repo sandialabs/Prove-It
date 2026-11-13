@@ -6,21 +6,87 @@ import glob
 import importlib
 import itertools
 import json
+import sqlite3
 from io import StringIO
 import re
 import urllib.request
 import urllib.parse
 import urllib.error
 import importlib
+import tempfile
 import bisect
 from collections import deque
+from pathlib import Path
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
+def acquire_lock(lock_path):
+    lock_f = open(lock_path, "a+")
+    if os.name == "nt":
+        msvcrt.locking(lock_f.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        fcntl.flock(lock_f, fcntl.LOCK_EX)
+    return lock_f
+
+def release_lock(lock_f):
+    try:
+        if os.name == "nt":
+            lock_f.seek(0)
+            msvcrt.locking(lock_f.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl.flock(lock_f, fcntl.LOCK_UN)
+    finally:
+        lock_f.close()
+
+def copy_if_missing(src, dst):
+    # Safely copy a file only if it is missing
+    # (generated using ai.sandia.gov)
+    src = Path(src)
+    dst = Path(dst)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+
+    lock_path = str(dst) + ".lock"
+    lock_f = acquire_lock(lock_path)
+    try:
+        if dst.exists():
+            return False  # already present, leave it alone
+
+        # Copy to a temp file in the same directory
+        fd, tmp_path = tempfile.mkstemp(dir=str(dst.parent))
+        os.close(fd)
+        try:
+            shutil.copyfile(src, tmp_path)
+            with open(tmp_path, "rb+") as f:
+                f.flush()
+                os.fsync(f.fileno())
+
+            # Now that we hold the lock and know dst doesn't exist,
+            # move temp into place.
+            os.rename(tmp_path, dst)
+            return True
+        finally:
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except FileNotFoundError:
+                pass
+    finally:
+        release_lock(lock_f)
+
+class TheoryDatabaseError(RuntimeError):
+    """General SQLite failure in a TheoryFolderStorage database."""
+    pass
 
 
 def relurl(path, start='.'):
     '''
     Return the relative path as a url
     '''
-    return urllib.request.pathname2url(os.path.relpath(path, start))
+    return urllib.request.pathname2url(
+        os.path.relpath(str(path), str(start)))
 
 
 class TheoryStorage:
@@ -39,19 +105,17 @@ class TheoryStorage:
             raise TheoryException("'theory' should be a Theory object")
         self.theory = theory
         self.name = name
+
+        # Normalize incoming paths once, but keep the rest of this module
+        # mostly string-based for now.
+        self.directory = str(Path(directory).expanduser().resolve())
+        self.pv_it_dir = os.path.join(self.directory, "__pv_it")
+
         if root_directory is None:
             self.root_theory_storage = self
         else:
-            self.root_theory_storage = Theory(root_directory)._storage
-        self.directory = directory
-        self.pv_it_dir = os.path.join(self.directory, '__pv_it')
-        if not os.path.isdir(self.pv_it_dir):
-            # make the __pv_it directory
-            try:
-                os.makedirs(self.pv_it_dir)
-            except (OSError, FileExistsError):
-                # maybe another processor beat us to it.
-                pass
+            self.root_theory_storage = Theory(str(root_directory))._storage
+        os.makedirs(self.pv_it_dir, exist_ok=True)
 
         if self.is_root():
             # If this is a root theory, let's add the directory above
@@ -78,7 +142,7 @@ class TheoryStorage:
             # set of theory root names that are referenced
             self.referenced_theory_roots = set()
             # associate the theory name with the directory
-            Theory._setRootTheoryPath(name, directory)
+            Theory._setRootTheoryPath(name, self.directory)
             # map theory names to paths for other known root theories
             # in paths.txt
             self.paths_filename = os.path.join(self.pv_it_dir, 'paths.txt')
@@ -87,7 +151,7 @@ class TheoryStorage:
                     for path_line in paths_file.readlines():
                         theory_name, path = path_line.split()
                         if theory_name == '.':
-                            if path != directory:
+                            if path != self.directory:
                                 # the directory of the theory associated with
                                 # this storage object has changed.
                                 self._updatePath()
@@ -97,7 +161,7 @@ class TheoryStorage:
             else:
                 with open(self.paths_filename, 'w') as paths_file:
                     # the first entry indicates the directory of this path
-                    paths_file.write('. ' + directory + '\n')
+                    paths_file.write('. ' + self.directory + '\n')
 
         self.sub_theory_names = []
         sub_theories_path = os.path.join(self.directory, '_sub_theories_.txt')
@@ -148,12 +212,12 @@ class TheoryStorage:
 
         # store special expressions that have been loaded so they are
         # readily available on the next request.
-        self._loadedCommonExprs = dict()
-        self._loadedAxioms = dict()
-        self._loadedDefiningProperties = dict()
-        self._loadedDefinitionExistences = dict()
-        self._loadedDefinitionExtensions = dict()
-        self._loadedTheorems = dict()
+        self._loaded_common_exprs = dict()
+        self._loaded_axioms = dict()
+        self._loaded_defining_properties = dict()
+        self._loaded_definition_existences = dict()
+        self._loaded_definition_extensions = dict()
+        self._loaded_theorems = dict()
 
         # Reflects the contents of the 'theorem_dependency_order.txt' file
         # which lists the theorems of the theory in order with other
@@ -164,6 +228,7 @@ class TheoryStorage:
         # Map folder names to corresponding TheoryFolderStorage
         # objects.
         self._folder_storage_dict = dict()
+
 
     def is_root(self):
         '''
@@ -204,6 +269,29 @@ class TheoryStorage:
             self._folder_storage_dict[folder] = \
                 TheoryFolderStorage(self, folder)
         return self._folder_storage_dict[folder]
+
+    def _db_path(self, folder) -> Path:
+        '''
+        Return the SQLite database path for the given storage folder.
+        For theorem proof folders, the folder name is used directly.
+        '''
+        if folder is None:
+            return None
+        return Path(self.pv_it_dir) / f"{folder}.db"
+
+    def close_all_connections(self):
+        '''
+        Close all database connections.
+        '''
+        incomplete_write_dbs = set()
+        for folder_storage in self._folder_storage_dict.values():
+            if folder_storage._write_conn is not None:
+                incomplete_write_dbs.add(folder_storage.db_path)
+            folder_storage._close_ro_conn()
+        if len(incomplete_write_dbs) > 0:
+            raise Exception("A write into these databases started without "
+                            "finishing, indicating something went wrong: "
+                            +str(incomplete_write_dbs))
 
     def _updatePath(self):
         '''
@@ -370,7 +458,9 @@ class TheoryStorage:
         elif kind == 'defining_property':
             self._defining_property_names = None  # force a reload
         elif kind == 'theorem':
-            self._theorem_names = None  # force a reload        
+            self._theorem_names = None  # force a reload
+
+        self._set_special_objects(definitions, kind)
 
     def _set_special_objects(self, definitions, kind):
         '''
@@ -721,29 +811,29 @@ class TheoryStorage:
         Return the Expression of the common expression in this theory
         with the given name.
         '''
-        expr = self._getSpecialObject('common', name)
-        self._loadedCommonExprs[name] = expr
+        expr = self._get_special_object('common', name)
+        self._loaded_common_exprs[name] = expr
         return expr
 
     def get_axiom(self, name):
         '''
         Return the Axiom of the given name in this theory.
         '''
-        if name in self._loadedAxioms:
-            return self._loadedAxioms[name]
-        axiom = self._getSpecialObject('axiom', name)
-        self._loadedAxioms[name] = axiom
+        if name in self._loaded_axioms:
+            return self._loaded_axioms[name]
+        axiom = self._get_special_object('axiom', name)
+        self._loaded_axioms[name] = axiom
         return axiom
 
     def get_defining_property(self, name):
         '''
         Return the DefiningProperty of the given name in this theory.
         '''
-        if name in self._loadedDefiningProperties:
-            return self._loadedDefiningProperties[name]
+        if name in self._loaded_defining_properties:
+            return self._loaded_defining_properties[name]
         defining_property = self._getSpecialObject('defining_property', 
                                                    name)
-        self._loadedDefiningProperties[name] = defining_property
+        self._loaded_defining_properties[name] = defining_property
         return defining_property
 
     def get_definition_existence(self, name):
@@ -751,10 +841,10 @@ class TheoryStorage:
         Return the DefinitionExistence associated with the defining
         property of the given name in this theory.
         '''
-        if name in self._loadedDefinitionExistences:
-            return self._loadedDefinitionExistences[name]
+        if name in self._loaded_definition_existences:
+            return self._loaded_definition_existences[name]
         definition_existence = self._getSpecialObject('def_existence', name)
-        self._loadedDefinitionExistences[name] = definition_existence
+        self._loaded_definition_existences[name] = definition_existence
         return definition_existence
 
     def get_definition_extension(self, name):
@@ -762,28 +852,29 @@ class TheoryStorage:
         Return the DefinitionExtension associated with the defining
         property of the given name in this theory.
         '''
-        if name in self._loadedDefinitionExtensions:
-            return self._loadedDefinitionExtensions[name]
+        if name in self._loaded_definition_extensions:
+            return self._loaded_definition_extensions[name]
         definition_extension = self._getSpecialObject('def_extension', name)
-        self._loadedDefinitionExtensions[name] = definition_extension
+        self._loaded_definition_extensions[name] = definition_extension
         return definition_extension
 
     def get_theorem(self, name):
         '''
         Return the Theorem of the given name in this theory.
         '''
-        if name in self._loadedTheorems:
-            return self._loadedTheorems[name]
-        thm = self._getSpecialObject('theorem', name)
-        self._loadedTheorems[name] = thm
+        if name in self._loaded_theorems:
+            return self._loaded_theorems[name]
+        thm = self._get_special_object('theorem', name)
+        self._loaded_theorems[name] = thm
         return thm
 
-    def _getSpecialObject(self, kind, name):
+    def _get_special_object(self, kind, name):
         '''
         Given a kind ('common', 'axiom', 'defining_property', or 'theorem'), 
         and the name of a common expression, axiom, or theorem, generate and 
         return the corresponding object.
         '''
+        import proveit
         from proveit._core_.proof import (Axiom, Theorem, 
                                           BasicDefinition, DefiningProperty,
                                           DefinitionExistence,
@@ -806,15 +897,24 @@ class TheoryStorage:
         Theory.default = self.theory
         try:
             theory_folder_storage = self.theory_folder_storage(folder)
-            if (TheoryFolderStorage.owns_active_storage
+            if (proveit.defaults._running_theory_notebook
+                and TheoryFolderStorage.owns_active_storage
                 and theory_folder_storage ==
                     TheoryFolderStorage.active_theory_folder_storage):
                 # Don't allow anything to be imported from the folder
                 # that is currently being generated.
                 raise KeyError("Self importing is not allowed")
 
+<<<<<<< HEAD
             # make and return common expression, axiom, defining property,
             # or theorem
+=======
+            expr_id = self._kindname_to_exprhash[(kind, name)]
+            expr, force_storage_fn = theory_folder_storage.make_expression(
+                expr_id, _return_force_storage_fn=True)
+
+            # make and return common expression, axiom, or theorem
+>>>>>>> 020ab0c7d1c8cf1ba3c7a7a059cf87e9537bd50c
             if kind == 'common':
                 expr_id = self._kindname_to_exprhash[(kind, name)]
                 expr = theory_folder_storage.make_expression(expr_id)
@@ -849,6 +949,16 @@ class TheoryStorage:
                         obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
+            if obj.proven_truth.proof() == obj:
+                # As long as obj is its own actual proof, let's force
+                # recording the storage of the expression.  That way,
+                # we will be sure to locally store an axiom/theorem
+                # expression that happens to also be part of a common
+                # or axiom expression, but we won't overwrite something
+                # that has already been proven (e.g., if the same
+                # theorem expression appears in multiple theories).
+                if force_storage_fn is not None:
+                    force_storage_fn()
         finally:
             # reset the default Theory
             Theory.default = prev_theory_default
@@ -881,6 +991,7 @@ class TheoryStorage:
             folder = 'definitions'
         theory_folder_storage = \
             self.theory._theory_folder_storage(folder)
+        theory_folder_storage._retrieve(expr, do_incarnate=True)
         expr_id = theory_folder_storage._prove_it_storage_id(expr)
         expr_id = theory_folder_storage._relative_to_explicit_prefix(expr_id)
         if expr_id in theory_folder_storage._prev_objhash_to_names:
@@ -1063,11 +1174,10 @@ class TheoryFolderStorage:
     # If owns_active_storage is True, this will record
     # all of the hash folders that are legitimately
     # owned.
-    owned_hash_folders = set()
+    owned_content_hashes = set()
 
     # Map style ids of Prove-It object (Expressions, Judgments, and
-    # Proofs) to a (TheoryFolderStorage, hash_id) tuple where it is
-    # being stored.
+    # Proofs) to (TheoryFolderStorage, content_hash, object_id).
     proveit_object_to_storage = dict()
 
     clean_nb_method = None
@@ -1078,6 +1188,16 @@ class TheoryFolderStorage:
         self.pv_it_dir = self.theory_storage.pv_it_dir
         self.folder = folder
         self.path = os.path.join(self.pv_it_dir, folder)
+        self.db_path = self.theory_storage._db_path(self.folder)
+        
+        # Map hash-ids to Expression objects as they are build for future
+        # reference so they don't need to be re-built.
+        self.exprid_to_expression = dict()
+        
+        # For references to external folders stored by an internal id
+        self._theory_folder_ids = dict()  # (theory_name, folder_name) -> id
+        self._theory_folder_storage_by_id_cache = dict()
+
         if not os.path.isdir(self.path):
             # make the folder
             try:
@@ -1094,6 +1214,116 @@ class TheoryFolderStorage:
         # theorems, we'll keep track of the previous
         # version.
         self._prev_objhash_to_names = dict()
+
+        # Read-only database connection.
+        self._ro_conn = None
+
+        # For batching writes in one transaction per top-level incarnate call
+        self._write_conn = None
+
+        # Used in _retrieve to indicate a do_incarnate=True at a top level
+        self._incarnating = False
+
+    def _ensure_sqlite_db_initialized(self):
+        """
+        Lazily create the SQLite DB for this folder, along with the required
+        tables and indexes, if it does not already exist.
+        """
+        db_path = self.db_path
+        if db_path is None:
+            return
+    
+        if db_path.is_file():
+            return
+    
+        conn = sqlite3.connect(str(db_path))
+        try:
+            conn.execute('PRAGMA foreign_keys=ON')
+            conn.execute('PRAGMA journal_mode=WAL')
+            conn.execute('PRAGMA synchronous=NORMAL')
+            self._create_sqlite_schema(conn)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _create_sqlite_schema(self, conn):
+        """
+        Create the minimal SQLite schema for this folder.
+        """
+        cur = conn.cursor()
+        # Note that the child_hash may link to a database in a different
+        # theory package so we can't use 'FOREIGN KEY' for that column.
+        conn.executescript('''
+            CREATE TABLE IF NOT EXISTS theory_folder (
+                id INTEGER PRIMARY KEY,
+                theory_name TEXT NOT NULL,
+                folder_name TEXT NOT NULL,
+                UNIQUE(theory_name, folder_name)
+            );
+
+            CREATE TABLE IF NOT EXISTS objects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content_hash TEXT NOT NULL UNIQUE,
+                unique_rep TEXT NOT NULL
+            );
+    
+            CREATE TABLE IF NOT EXISTS expression_subexpression (
+                parent_id INTEGER NOT NULL,
+                seq INTEGER NOT NULL,
+                child_theory_folder_id INTEGER NOT NULL,
+                child_id INTEGER NOT NULL,
+    
+                PRIMARY KEY (parent_id, seq),
+    
+                FOREIGN KEY (parent_id)
+                    REFERENCES objects(id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (child_theory_folder_id)
+                    REFERENCES theory_folder(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_objects_content_hash
+                ON objects(content_hash);
+
+            CREATE INDEX IF NOT EXISTS idx_expression_subexpression_parent
+                ON expression_subexpression(parent_id, seq);
+    
+            CREATE INDEX IF NOT EXISTS idx_expression_subexpression_child
+                ON expression_subexpression(child_theory_folder_id, child_id);
+        ''')
+        cur.close()
+    
+    def _get_ro_conn(self):
+        """
+        Return a persistent read-only SQLite connection for this storage.
+        Open it lazily if needed.
+        """
+        if self._ro_conn:
+            return self._ro_conn
+    
+        # make sure the DB file & schema exist
+        self._ensure_sqlite_db_initialized()
+    
+        db_path = self.db_path
+        if db_path is None:
+            return None
+    
+        # path.as_uri() is cross-platform correct:
+        uri = db_path.resolve().as_uri() + "?mode=ro"
+    
+        conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA query_only = TRUE")
+        self._ro_conn = conn
+        return conn
+
+    def _close_ro_conn(self):
+        if self._ro_conn is not None:
+            try:
+                self._ro_conn.close()
+            finally:
+                self._ro_conn = None
 
     @staticmethod
     def get_folder_storage_of_obj(obj):
@@ -1115,7 +1345,7 @@ class TheoryFolderStorage:
             return TheoryFolderStorage.dummy_theory_folder_storage
         '''
         if obj._style_id in proveit_obj_to_storage:
-            (theory_folder_storage, _) =\
+            (theory_folder_storage, _, _) =\
                 proveit_obj_to_storage[obj._style_id]
             return theory_folder_storage
         else:
@@ -1138,6 +1368,74 @@ class TheoryFolderStorage:
             else:
                 return TheoryFolderStorage.active_theory_folder_storage
 
+    def _get_theory_folder_id(self, theory_name, folder_name):
+        key = (theory_name, folder_name)
+        cached = self._theory_folder_ids.get(key)
+        if cached is not None:
+            assert cached != 0
+            return cached
+    
+        conn = self._get_write_conn()
+        if conn is None:
+            raise TheoryDatabaseError(
+                "_get_theory_folder_id assumes write access")
+    
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                'SELECT id FROM theory_folder WHERE theory_name = ? AND folder_name = ?',
+                (theory_name, folder_name)
+            )
+            row = cur.fetchone()
+            if row is not None:
+                folder_id = row[0]
+            else:
+                cur.execute(
+                    'INSERT INTO theory_folder (theory_name, folder_name) VALUES (?, ?)',
+                    (theory_name, folder_name)
+                )
+                folder_id = cur.lastrowid
+    
+            self._theory_folder_ids[key] = folder_id
+            assert folder_id != 0
+            return folder_id
+    
+        except sqlite3.Error as err:
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Resolving theory_folder id")
+            ) from err
+
+    def _local_theory_folder_id(self):
+        return self._get_theory_folder_id(self.theory.name, self.folder)
+
+    def _get_theory_folder_by_id(self, folder_id):
+        conn = self._get_ro_conn()
+        if conn is None:
+            return None
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT theory_name, folder_name FROM theory_folder WHERE id = ?',
+            (folder_id,)
+        )
+        row = cur.fetchone()
+        return None if row is None else tuple(row)
+
+    def _get_theory_folder_storage_by_id(self, folder_id):
+        from proveit._core_.theory import Theory
+        cached = self._theory_folder_storage_by_id_cache.get(
+            folder_id)
+        if cached is not None:
+            return cached
+        row = self._get_theory_folder_by_id(folder_id)
+        if row is None:
+            return None
+        theory_name, folder_name = row
+        theory = Theory.get_theory(theory_name)
+        storage = theory._theory_folder_storage(folder_name)
+        self._theory_folder_storage_by_id_cache[
+            folder_id] = storage
+        return storage
+
     def special_expr_address(self, obj_hash_id):
         '''
         A special expression "address" consists of a kind ('common',
@@ -1153,7 +1451,7 @@ class TheoryFolderStorage:
             name = name + '.expr'
         return kind, self.theory_storage.name, name
 
-    def unload(self):
+    def unload_and_prep(self):
         '''
         "Forget" the special objects stored in this folder and
         their sub-expressions to force them to be re-retrieved.
@@ -1161,15 +1459,17 @@ class TheoryFolderStorage:
         that generates these objects to be sure the expression
         notebooks all get regenerated (at least checked to see
         if they should change).
+        Also retrieve all _operator_ literals of the package
+        to store them in the db.
         '''
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         to_remove = set()
-        for obj_id, (theory_folder_storage, hash_id) \
+        for style_id, (theory_folder_storage, content_hash, obj_id) \
                 in proveit_obj_to_storage.items():
             if theory_folder_storage == self:
-                to_remove.add(obj_id)
-        for obj_id in to_remove:
-            proveit_obj_to_storage.pop(obj_id)
+                to_remove.add(style_id)
+        for style_id in to_remove:
+            proveit_obj_to_storage.pop(style_id)
         folder = self.folder
         kind = TheoryStorage._folder_to_kind(folder)
         # Load it before we unload it so we can then
@@ -1185,23 +1485,36 @@ class TheoryFolderStorage:
         self._objhash_to_names.clear()
         if folder == 'axioms':
             self.theory_storage._axiom_names = None
-            self.theory_storage._loadedAxioms = dict()
+            self.theory_storage._loaded_axioms = dict()
         if folder == 'definitions':
             self.theory_storage._defining_property_names = None
-            self.theory_storage._loadedDefiningProperties = dict()
-            self.theory_storage._loadedDefinitionExistences = dict()
-            self.theory_storage._loadedDefinitionExtensions = dict()
+            self.theory_storage._loaded_defining_properties = dict()
+            self.theory_storage._loaded_definition_existences = dict()
+            self.theory_storage._loaded_definition_extensions = dict()
+
         if folder == 'theorems':
             self.theory_storage._theorem_names = None
-            self.theory_storage._loadedTheorems = dict()
+            self.theory_storage._loaded_theorems = dict()
         if folder == 'common':
-            self.theory_storage._common_exp_names = None
-            self.theory_storage._loadedCommonExprs = dict()
+            self.theory_storage._common_expr_names = None
+            self.theory_storage._loaded_common_exprs = dict()
         self.theory_storage._special_expr_hash_ids[kind] = None
         self.theory_storage._special_obj_hash_ids[kind] = None
+        if folder == 'common':
+            from proveit import Literal
+            # Make sure we reference any literals that are in this
+            # theory.  First, import the module of the theory
+            # which should import any modules containing operation
+            # classes with _operator_ Literals, then "retreive"
+            # Literals of the theory as currently referenced objects.
+            importlib.import_module(self.theory.name)
+            for literal in Literal.instances.values():
+                if literal.theory == self.theory:
+                    self.expression_notebook(literal)
+
 
     @staticmethod
-    def retrieve_png(expr, latex, config_latex_tool_fn):
+    def retrieve_png(expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Find the expr.png file for the stored Expression.
         Create it if it did not previously exist using _generate_png.
@@ -1215,41 +1528,98 @@ class TheoryFolderStorage:
                             "command before displaying LaTeX Prove-It "
                             "expressions")
         return theory_folder_storage._retrieve_png(
-            expr, latex, config_latex_tool_fn)
+            expr, latex, config_latex_tool_fn, just_need_link=just_need_link)
 
-    def _retrieve_png(self, expr, latex, config_latex_tool_fn):
+    def _retrieve_png(self, expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Helper method of retrieve_png.
         '''
-        (theory_folder_storage, hash_directory) = self._retrieve(expr)
-        if theory_folder_storage != self:
-            return self._retrieve_png(expr)
+        from proveit import defaults
+        (theory_folder_storage, hash_directory, _) = self._retrieve(
+            expr, do_incarnate=True)
         assert theory_folder_storage == self, \
             "How did the theory end up different from expected??"
+        build_start_time = defaults._auto_build_start_time
         # generate the latex and png file paths, from pv_it_filename and
         # the distinction
-        latex_path = os.path.join(self.path, hash_directory, 'expr.latex')
-        png_path = os.path.join(self.path, hash_directory, 'expr.png')
+        hash_path = os.path.join(self.path, hash_directory)
+        latex_path = os.path.join(hash_path, 'expr.latex')
+        png_path = os.path.join(hash_path, 'expr.png')
         # check if the latex file exists, is consistent with the given
         # latex string, and if the png file exists.
+        latex_was_rewritten = False
         if os.path.isfile(latex_path):
-            # latex file exists.  read it ans see if it the same as the
+            file_timestamp = os.path.getmtime(latex_path)
+            if file_timestamp > build_start_time:
+                # The file has already been processed (or started to be processed)
+                # since starting the build.
+                if just_need_link:
+                    # Only the path is needed.
+                    return None, relurl(png_path)
+                else:
+                    # See if the png file has already been processed.
+                    if os.path.isfile(png_path):
+                        file_timestamp = os.path.getmtime(png_path)
+                        if file_timestamp > build_start_time:
+                            # png file exists.  read and return the data.
+                            with open(png_path, 'rb') as png_file:
+                                return png_file.read(), relurl(png_path)
+
+            # latex file exists.  read it and see if it the same as the
             # given latex string
             with open(latex_path) as latex_file:
                 if latex_file.read() == latex:
-                    # the latex files are the same, try to read the png
-                    # file
+                    # The latex files are the same.
+                    os.utime(latex_path, None) # update the timestamp
+                    if just_need_link:
+                        # just return the link
+                        return None, relurl(png_path)
+                    # try to read the png file
                     if os.path.isfile(png_path):
                         # png file exists.  read and return the data.
                         with open(png_path, 'rb') as png_file:
                             return png_file.read(), relurl(png_path)
-        # store the latex string in the latex file
-        with open(latex_path, 'wb') as latex_file:
-            latex_file.write(latex.encode('ascii'))
+
+            # The latex has changed.  We'll have to write the new
+            # latex to a temporary file.
+            try:
+                # First remove the png which is no longer valid.
+                # We could create a temp file and do a replace as done
+                # below for the .latex file, ensuring the file isn't
+                # removed and re-written multiple times by different
+                # processes.  But that's less likely to occur for the
+                # png file (the latex file must be replaced and than
+                # png must be generated before writing the png file)
+                # and it wouln't be terrible either way.  What is
+                # important is that the 'x' mode is used when writing
+                # to ensure data isn't garbled.
+                os.remove(png_path)
+            except FileNotFoundError:
+                pass
+            with tempfile.NamedTemporaryFile("wb", dir=hash_path, delete=False) as tmp:
+                tmp.write(latex.encode('ascii'))
+                tmp_path = tmp.name
+            os.replace(tmp_path, latex_path)  # atomic on POSIX and Windows
+            latex_was_rewritten = True
+
+        if not latex_was_rewritten:
+            try:
+                # store the latex string in the latex file
+                with open(latex_path, 'xb') as latex_file:
+                    latex_file.write(latex.encode('ascii'))
+            except FileExistsError:
+                pass # presume another process beat us to it
+
         # generate, store and return the png file
-        png = self._generate_png(latex, config_latex_tool_fn)
-        with open(png_path, 'wb') as png_file:
-            png_file.write(png)
+        if just_need_link:
+            png = None # just return the link
+        else:
+            png = self._generate_png(latex, config_latex_tool_fn)
+            try:
+                with open(png_path, 'xb') as png_file:
+                    png_file.write(png)
+            except FileExistsError:
+                pass # presume another process beat us to it
         return png, relurl(png_path)
 
     def _generate_png(self, latex, config_latex_tool_fn):
@@ -1284,7 +1654,7 @@ class TheoryFolderStorage:
     def _prove_it_storage_id(self, prove_it_object_or_id):
         '''
         Retrieve a unique id for the Prove-It object based upon its
-        pv_it filename from calling _retrieve.
+        hashed unique representation.
         '''
         if isinstance(prove_it_object_or_id, str):
             return prove_it_object_or_id
@@ -1292,21 +1662,21 @@ class TheoryFolderStorage:
             if isinstance(prove_it_object_or_id, int):
                 # assumed to be a style id if it's an int
                 style_id = prove_it_object_or_id
-                (theory_folder_storage, hash_directory) = \
+                (theory_folder_storage, content_hash, _) = \
                     TheoryFolderStorage.proveit_object_to_storage[style_id]
             else:
-                (theory_folder_storage, hash_directory) = \
+                (theory_folder_storage, content_hash, _) = \
                     self._retrieve(prove_it_object_or_id)
             if theory_folder_storage.theory != self.theory:
                 theory = theory_folder_storage.theory
                 folder = theory_folder_storage.folder
                 self.theory_storage._includeReference(theory)
-                return theory.name + '.' + folder + '.' + hash_directory
+                return theory.name + '.' + folder + '.' + content_hash
             elif theory_folder_storage.folder != self.folder:
-                return theory_folder_storage.folder + '.' + hash_directory
+                return theory_folder_storage.folder + '.' + content_hash
             else:
-                #assert os.path.isdir(os.path.join(self.path, hash_directory))
-                return hash_directory
+                #assert os.path.isdir(os.path.join(self.path, content_hash))
+                return content_hash
 
     def _split(self, prove_it_storage_id):
         '''
@@ -1327,15 +1697,6 @@ class TheoryFolderStorage:
                 theory = Theory.get_theory(theory_name)
                 return theory._theory_folder_storage(folder), hash_folder
         return self, prove_it_storage_id
-
-    def _storagePath(self, prove_it_storage_id):
-        '''
-        Return the storage directory path for the Prove-It object with
-        the given storage id.
-        '''
-        theory_folder_storage, hash_directory = self._split(
-            prove_it_storage_id)
-        return os.path.join(theory_folder_storage.path, hash_directory)
 
     def _proveItObjUniqueRep(self, prove_it_object):
         '''
@@ -1395,83 +1756,382 @@ class TheoryFolderStorage:
         return [self._relative_to_explicit_prefix(storage_id)
                 for storage_id in storage_ids]
 
-    def _record_storage(self, obj_style_id, hash_id):
+    def _record_storage(self, obj_style_id, content_hash, obj_id):
         '''
-        Record the object's style id to (theory_folder_storage, hash_id)
+        Record object's style id to (theory_folder_storage, hash_id, obj_id)
         mapping in prove_it_object_to_storage for quick retrieval
-        and add the hash_id to the owned_hash_folders as appropriate
+        and add the hash_id to the owned_content_hashes as appropriate
         (if it is "owned").
         '''
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
-        proveit_obj_to_storage[obj_style_id] = (self, hash_id)
+        proveit_obj_to_storage[obj_style_id] = (self, content_hash, obj_id)
         if (TheoryFolderStorage.owns_active_storage and
                 self == TheoryFolderStorage.active_theory_folder_storage):
-            TheoryFolderStorage.owned_hash_folders.add(hash_id)
+            TheoryFolderStorage.owned_content_hashes.add(content_hash)
 
-    def _retrieve(self, prove_it_object):
+    def _retrieve(self, prove_it_object, *, do_incarnate=False):
         '''
-        Find the directory for the stored Expression, Judgment, or
+        Find the database entry for the stored Expression, Judgment, or
         Proof.  Create it if it did not previously exist.  Return the
-        (theory_folder_storage, hash_directory) pair where the
-        hash_directory is the directory name (within the theory's
-        __pv_it directory) based upon a hash of the unique
-        representation.
+        (theory_folder_storage, storage_hash) pair where the
+        storage_hash is the 'content_hash' (based upon a hash of the unique
+        representation with an index for collision avoidance).
         '''
+        import proveit
+        from proveit import Literal, Operation
+        from proveit._core_.proof import Axiom, Theorem, Proof
+        from proveit._core_.theory import TheoryPackage
+
+        if isinstance(prove_it_object, Proof):
+            # In case the proof has been replaced with something else.
+            # For example, two Theorems proving the same judgment
+            # (e.g., in different packages) can cause this to occur.
+            # An exception is when running a theory notebook where,
+            # for example, there may be two alternative theorems
+            # of the same statement with different proofs.
+            if not proveit.defaults._running_theory_notebook:
+                prove_it_object = prove_it_object.proven_truth.proof()
+
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
-            return proveit_obj_to_storage[prove_it_object._style_id]
+            theory_folder_storage, storage_hash, obj_id = (
+                proveit_obj_to_storage[prove_it_object._style_id])
+            if do_incarnate:
+                theory_folder_storage._incarnate(prove_it_object, storage_hash)
+            return (theory_folder_storage, storage_hash, obj_id)
 
-        theory_folder_storage = TheoryFolderStorage.get_folder_storage_of_obj(
-            prove_it_object)
-        
+        literal_operator_operation = None
+        if isinstance(prove_it_object, Axiom):
+            theory_folder_storage = \
+                prove_it_object.theory._theory_folder_storage('axioms')
+        elif isinstance(prove_it_object, Theorem):
+            theory_folder_storage = \
+                prove_it_object.theory._theory_folder_storage('theorems')
+        elif (isinstance(prove_it_object, Literal) and
+                prove_it_object in Operation.operation_class_of_operator):
+            literal_operator_operation = Operation.operation_class_of_operator[
+                prove_it_object]
+            # _operator_'s of Operations are to be stored in 'common'.
+            theory_folder_storage = \
+                prove_it_object.theory._theory_folder_storage('common')
+        else:
+            theory_folder_storage = self
         if theory_folder_storage is not self:
             # Stored in a different folder.
-            return theory_folder_storage._retrieve(prove_it_object)
-        unique_rep = self._proveItObjUniqueRep(prove_it_object)
-        # hash the unique representation and make a sub-directory of
-        # this hash value
-        rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
-        hash_path = os.path.join(self.path, rep_hash)
-        # append the hash value with an index, avoiding collisions
-        # (that should be astronomically rare, but let's not risk it).
-        index = 0
-        while os.path.exists(hash_path + str(index)):
-            indexed_hash_path = hash_path + str(index)
-            unique_rep_filename = os.path.join(indexed_hash_path,
-                                               'unique_rep.pv_it')
-            if not os.path.isfile(unique_rep_filename):
-                # folder does not contain a unique_rep.pv_it file;
-                # it may not have been completely erased before, but
-                # let's just use it.
-                break
-            with open(unique_rep_filename, 'r') as f:
-                rep = f.read()
-                if rep != unique_rep:
-                    # there is a hashing collision (this should be
-                    # astronomically rare, but we'll make sure just
-                    # in case)
-                    index += 1  # increment the index and try again
-                    continue
-            # found a match; it is already in storage
+            if do_incarnate:
+                raise Exception("Expecting 'do_incarnate' to act only locally")
+            try:
+                return theory_folder_storage._retrieve(prove_it_object)
+            except TheoryDatabaseError as e:
+                if literal_operator_operation is not None:
+                    # Another common expression notebook should be executed
+                    # to store operator literals; force a
+                    # CommonExpressionDependencyError
+                    theory = theory_folder_storage.theory
+                    _pkg = TheoryPackage(theory.name, theory.get_path(), dict())
+                    # This name isn't as important as the fact that it
+                    # should not be a name of an existing common expression
+                    # (the '.' would not be allowed) and it's informative.
+                    operator_lit_name = (literal_operator_operation.__name__
+                                         + '._operator_')
+                    getattr(_pkg, operator_lit_name).raise_attempted_use_error()
+                else:
+                    raise TheoryDatabaseError(
+                        "Error loading", str(prove_it_object)) from e
+
+
+        # If incarnating, prepare to start a deferred write transaction on 'self'
+        if do_incarnate:
+            self._incarnating = True
+
+        try:
+            unique_rep = self._proveItObjUniqueRep(prove_it_object)
+            # hash the unique representation and make a sub-directory of
+            # this hash value
+            rep_hash = hashlib.sha1(unique_rep.encode('utf-8')).hexdigest()
+        
+            storage_hash, obj_id = self._resolve_storage_hash(
+                rep_hash, unique_rep)
+
             # remember this for next time
-            result = (self, rep_hash + str(index))
+            if obj_id is None:
+                if self._write_conn is None:
+                    # start or continue a batched write session
+                    is_owned_storage = (
+                        TheoryFolderStorage.owns_active_storage and
+                        self == TheoryFolderStorage.active_theory_folder_storage)
+                    if not is_owned_storage:
+                        raise TheoryDatabaseError(
+                            "Attempting to write to a database that "
+                            "is not properly owned: %s"%self.db_path)
+                    if not self._incarnating:
+                        raise TheoryDatabaseError(
+                            "Attempting to write to a database "
+                            "without a top-level incarnation")
+                    self._begin_write()
+                obj_id = self._store_object_in_db(
+                    prove_it_object, storage_hash, unique_rep)
             self._record_storage(prove_it_object._style_id,
-                                 rep_hash + str(index))
-            self._generateObjectNotebook(prove_it_object)
-            return result
-        indexed_hash_path = hash_path + str(index)
-        # store the unique representation in the appropriate file
+                                 storage_hash, obj_id)
+            if do_incarnate:
+                self._incarnate(prove_it_object, storage_hash)
+        finally:
+            if do_incarnate:
+                if self._write_conn is not None:
+                    self._end_write()
+                self._incarnating = False
+
+        return (self, storage_hash, obj_id)
+
+    def _incarnate(self, prove_it_object, storage_hash):
+        # Make a filesystem incarnation of the object when it is needed
+        # (e.g., for storing expression or proof notebooks or theorem
+        # dependency information).
+        indexed_hash_path = os.path.join(self.path, storage_hash)
         if not os.path.exists(indexed_hash_path):
             os.mkdir(indexed_hash_path)
-        with open(os.path.join(indexed_hash_path, 'unique_rep.pv_it'),
-                  'w') as f:
-            f.write(unique_rep)
-        # remember this for next time
-        result = (self, rep_hash + str(index))
-        self._record_storage(prove_it_object._style_id,
-                             rep_hash + str(index))
-        self._generateObjectNotebook(prove_it_object)
-        return result
+
+        #self._generateObjectNotebook(prove_it_object)
+
+    def _resolve_storage_hash(self, rep_hash, unique_rep):
+        '''
+        Resolve the final storage hash using the SQLite objects table as
+        the source of truth, while still allowing for rare hash collisions.
+    
+        Returns:
+            (storage_hash, obj_id)
+        
+        where obj_id is None if unique_rep is not yet in the db.
+        '''
+        index = 0
+        while True:
+            storage_hash = rep_hash + str(index)
+    
+            row = self._get_object_row(storage_hash)
+            if row is None:
+                # No row exists yet; we need to write it.
+                return storage_hash, None
+
+            obj_id, db_unique_rep = row[0], row[1]
+            if db_unique_rep == unique_rep:
+                # Already stored exactly as-is; no write needed.
+                return storage_hash, obj_id
+    
+            # Hash collision with different content.
+            index += 1
+
+    def _get_object_row(self, content_hash, *, must_exist=False):
+        """
+        Return (id, unique_rep) for a stored object hash, or None.
+        """
+        conn = self._get_ro_conn()
+        if conn is None:
+            raise Exception('Unable to connect to %s'%self.db_path)
+            return None
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                'SELECT id, unique_rep FROM objects WHERE content_hash = ?',
+                (content_hash,)
+            )
+            row = cur.fetchone()
+            if row is None and must_exist:
+                raise Exception('%s not found objects table of %s'
+                                %(content_hash, self.db_path))
+            return row
+        except sqlite3.Error as err:
+            self._close_ro_conn()
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Reading object row")
+            ) from err
+
+    def _get_object_id(self, content_hash):
+        return self._get_object_row(content_hash, must_exist=True)[0]
+
+    def _get_object_unique_rep(self, content_hash):
+        return self._get_object_row(content_hash, must_exist=True)[1]
+
+    def _get_object_row_by_id(self, obj_id):
+        """
+        Return (content_hash, unique_rep) for a stored object id, or None.
+        """
+        conn = self._get_ro_conn()
+        if conn is None:
+            return None
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                'SELECT content_hash, unique_rep FROM objects WHERE id = ?',
+                (obj_id,)
+            )
+            return cur.fetchone()
+        except sqlite3.Error as err:
+            self._close_ro_conn()
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Reading object row by id")
+            ) from err
+
+    def _get_child_refs_by_parent_id(self, parent_id):
+        """
+        Return a list of (child_theory_folder_id, child_id) tuples
+        in the correct constructor order.
+        """
+        conn = self._get_ro_conn()
+        if conn is None:
+            return []
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                'SELECT child_theory_folder_id, child_id '
+                'FROM expression_subexpression '
+                'WHERE parent_id = ? ORDER BY seq',
+                (parent_id,)
+            )
+            return cur.fetchall()
+        except sqlite3.Error as err:
+            self._close_ro_conn()
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Reading child refs")
+            ) from err
+
+    def _get_object_unique_rep_by_id(self, obj_id):
+        row = self._get_object_row_by_id(obj_id)
+        return None if row is None else row[1]
+
+    def _get_object_content_hash_by_id(self, obj_id):
+        row = self._get_object_row_by_id(obj_id)
+        return None if row is None else row[0]
+
+    def _begin_write(self):
+        """
+        Begin a deferred write transaction for this folder's DB.
+        Subsequent _store_object_row calls will use this connection
+        and defer commits until _end_write is called.
+        """
+        assert self._write_conn is None
+        self._ensure_sqlite_db_initialized()
+        db_path = self.db_path
+        assert db_path is not None
+        conn = sqlite3.connect(str(db_path))
+        conn.execute('PRAGMA foreign_keys=ON')
+        # Start a transaction.  You can use 'BEGIN IMMEDIATE' if you want
+        # to lock sooner.
+        conn.execute('BEGIN')
+        self._write_conn = conn
+        return conn
+
+    def _get_write_conn(self):
+        """
+        Return the write connection:
+        - if inside a deferred session, return that connection,
+        - otherwise open a new ephemeral connection (which will auto-commit).
+        """
+        if self._write_conn is not None:
+            return self._write_conn
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is None:
+            return None
+        conn = sqlite3.connect(str(db_path))
+        conn.execute('PRAGMA foreign_keys=ON')
+        return conn
+
+    def _end_write(self):
+        """
+        Commit and close the deferred write transaction.
+        """
+        assert self._write_conn is not None
+        try:
+            if self._ro_conn is not None:
+                self._ro_conn.close()
+                self._ro_conn = None
+
+            self._write_conn.commit()
+            self._write_conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+        finally:
+            self._write_conn.close()
+            self._write_conn = None
+
+    def _store_object_in_db(self, prove_it_object, content_hash, unique_rep):
+        """
+        Store or refresh the Prove-It object in the local SQLite database
+        (the objects table and, if it's an Expression object, in the
+        expression_subexpression table as appropriate).
+        Batches commits if inside a write session, otherwise commits
+        immediately and closes the connection.
+        """
+        from proveit import Expression
+        conn = self._write_conn
+        if conn is None:
+            raise TheoryDatabaseError(
+                "Not expecting a call to '_store_object_in_db' outside of "
+                "a _retrieve with do_incarnate=True at the top level within "
+                "the same theory storage folder "
+                "(for %s with unique_rep %s in database %s)"%(
+                    prove_it_object, unique_rep, self.db_path))
+    
+        try:
+            cur = conn.cursor()
+            
+            # add hash and unique_rep to 'objects' table.
+            cur.execute(
+                'INSERT INTO objects (content_hash, unique_rep) '
+                'VALUES (?, ?)',
+                (content_hash, unique_rep)
+            )
+
+            # Get object id.
+            cur.execute(
+                'SELECT id FROM objects WHERE content_hash = ?',
+                (content_hash,)
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise TheoryDatabaseError(
+                    self._sqlite_error_message(
+                        None, f"Unable to retrieve object id for {content_hash}"
+                    )
+                )
+            obj_id = row[0]
+            
+            # Cache the local folder id when needed.
+            local_folder_id = None
+
+            if isinstance(prove_it_object, Expression):
+                # add to expression_subexpression table as appropriate
+                for seq, sub_expr in enumerate(prove_it_object.sub_expr_iter()):
+                    sub_storage = self._retrieve(sub_expr)
+                    child_tfs, child_hash, child_id = sub_storage
+
+                    if child_tfs is self:
+                        if local_folder_id is None:
+                            local_folder_id = self._local_theory_folder_id()
+                        child_folder_id = local_folder_id
+                    else:
+                        child_folder_id = self._get_theory_folder_id(
+                            child_tfs.theory.name, child_tfs.folder
+                        )
+                    cur.execute(
+                        'INSERT INTO expression_subexpression '
+                        '(parent_id, seq, child_theory_folder_id, child_id) '
+                        'VALUES (?, ?, ?, ?)',
+                        (obj_id, seq, child_folder_id, child_id)
+                    )
+
+        except sqlite3.Error as err:
+            # Wrap low-level SQLite error in domain‐specific exception
+            raise TheoryDatabaseError(
+                self._sqlite_error_message(err, "Writing object row")
+            ) from err
+
+        return obj_id
+    
+    def _sqlite_error_message(self, err, action):
+        db_path = self.theory_storage._db_path(self.folder)
+        return (
+            "%s failed for theory '%s', folder '%s', database '%s'. "
+            "SQLite error: %s"
+            % (action, self.theory.name, self.folder, str(db_path), err)
+        )
 
     def _owningNotebook(self):
         '''
@@ -1503,6 +2163,7 @@ class TheoryFolderStorage:
             "%s not found.  Rerun %s" %
             (filepath, self._owningNotebook()))
 
+    """
     def _generateObjectNotebook(self, prove_it_object):
         '''
         If this is the active folder storage and the prove_it_object
@@ -1516,6 +2177,7 @@ class TheoryFolderStorage:
                 TheoryFolderStorage.expression_notebook(prove_it_object)
             elif isinstance(prove_it_object, Proof):
                 self.proof_notebook(prove_it_object)
+    """
 
     @staticmethod
     def expression_notebook(expr, name_kind_theory=None, special_object=None,
@@ -1528,6 +2190,7 @@ class TheoryFolderStorage:
         (%end_[common/axioms/theorems] has not been
         called yet in the special expressions notebook).
         '''
+        from proveit import defaults
         from proveit import Expression
         from json import JSONDecodeError
 
@@ -1578,22 +2241,11 @@ class TheoryFolderStorage:
             assert 'common' in template_name or 'special' in template_name
         # Determine the appropriate hash folder to store the
         # expression notebook in.
-        obj_theory_folder_storage, hash_directory = \
-            theory_folder_storage._retrieve(obj)
+        obj_theory_folder_storage, content_hash, _ = \
+            theory_folder_storage._retrieve(obj, do_incarnate=True)
         assert obj_theory_folder_storage == theory_folder_storage
         full_hash_dir = os.path.join(theory_folder_storage.path,
-                                     hash_directory)
-
-        if (complete_special_expr_notebook or (
-                TheoryFolderStorage.owns_active_storage and
-                theory_folder_storage ==
-                TheoryFolderStorage.active_theory_folder_storage)):
-            # Only build the notebook in the active folder storage
-            nb = theory_folder_storage._buildExpressionNotebook(
-                obj, expr, kind, name, full_hash_dir, template_name,
-                name_kind_theory, complete_special_expr_notebook)
-        else:
-            nb = None
+                                     content_hash)
 
         # Write the expression notebook unless it is unchanged.
         # expr.ipynb is the default but may change to
@@ -1608,23 +2260,41 @@ class TheoryFolderStorage:
             filename = 'theorem_expr.ipynb'
         elif kind == 'common':
             filename = 'common_expr.ipynb'
+        filepath = os.path.join(full_hash_dir, filename)
+
+        is_owned =  (complete_special_expr_notebook or (
+            TheoryFolderStorage.owns_active_storage and
+            theory_folder_storage ==
+            TheoryFolderStorage.active_theory_folder_storage))
+        build_start_time = defaults._auto_build_start_time
+
+        if os.path.isfile(filepath):
+            if not is_owned:
+                # just return the link
+                return relurl(filepath)
+            # make sure the file as been processed
+            # since starting the build.
+            file_timestamp = os.path.getmtime(filepath)
+            if file_timestamp > build_start_time:
+                # assume it was, will be, generated by
+                # another process.
+                return relurl(filepath)
+        elif not is_owned:
+            # The notebook isn't found and it isn't owned, so
+            # raise an exception.
+            theory_folder_storage._raiseNotebookNotFound(filepath)
+
+        # Generate the notebook to either compare to an existing one
+        # with a timestamp that predates this build (replacing it if
+        # they differ) or to write it as new.
+        nb = theory_folder_storage._buildExpressionNotebook(
+            obj, expr, kind, name, full_hash_dir, template_name,
+            name_kind_theory, complete_special_expr_notebook)
+
         alt_filename = 'alt_' + filename
         tmp_filename = 'tmp_' + filename
-        filepath = os.path.join(full_hash_dir, filename)
         alt_filepath = os.path.join(full_hash_dir, alt_filename)
         tmp_filepath = os.path.join(full_hash_dir, tmp_filename)
-
-        if nb is None:
-            # If this isn't the active folder storage,
-            # just make sure the file is there and
-            # return the link.
-            if not os.path.isfile(filepath):
-                # disable for now
-                # theory_folder_storage._raiseNotebookNotFound(filepath)
-                pass
-            return relurl(filepath)
-
-        #assert False,  '%s'%TheoryFolderStorage.active_theory_folder_storage
 
         # Possibly toggle expr.ipynb and alt_expr.ipynb.
         clean_nb = TheoryFolderStorage._get_clean_nb_method()
@@ -1635,7 +2305,11 @@ class TheoryFolderStorage:
                     orig_nb = clean_nb(f)
                 except JSONDecodeError:
                     orig_nb = ""
-            if orig_nb != nb:
+            if orig_nb == nb:
+                # Just update the timestamp to indicate that
+                # it has been processed.
+                os.utime(filepath, None)
+            else:
                 if os.path.isfile(alt_filepath):
                     with open(alt_filepath, 'r') as f:
                         try:
@@ -1660,11 +2334,20 @@ class TheoryFolderStorage:
                     else:
                         print("Expression notebook is being updated for %s"
                               % str(expr))
-                    with open(filepath, 'w') as expr_file:
-                        expr_file.write(nb)
+                    # For conconcurrence safety, make a temp file and move it.
+                    with tempfile.NamedTemporaryFile("w", dir=full_hash_dir,
+                                                     delete=False) as tmp:
+                        tmp.write(nb)
+                        tmp_path = tmp.name
+                    os.replace(tmp_path, filepath)  # atomic on POSIX and Windows
         else:
-            with open(filepath, 'w') as expr_file:
-                expr_file.write(nb)
+            try:
+                with open(filepath, 'x') as expr_file:
+                    expr_file.write(nb)
+            except FileExistsError:
+                # another process may be attempting to write to the same file,
+                # presumably with the same data so it doesn't matter.
+                pass
         # return the relative url to the new proof file
         return relurl(filepath)
 
@@ -1923,7 +2606,7 @@ class TheoryFolderStorage:
                         name)
                 else:
                     see_proof_str = ''
-                dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str)
+                dep_nb = dep_nb.replace('#SEE_PROOF#', see_proof_str).strip()
 
             # Save the dependencies notebook unless it is unchanged.
             if os.path.isfile(dependencies_filename):
@@ -2185,7 +2868,10 @@ class TheoryFolderStorage:
         '''
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
-        (theory_folder_storage, hash_directory) = self._retrieve(proof)
+        (theory_folder_storage, hash_directory, _) = self._retrieve(
+            proof, do_incarnate=True)
+        # Store Judgment for future use from any theory package:
+        self._retrieve(proof.proven_truth, do_incarnate=False)
         filename = os.path.join(theory_folder_storage.path, hash_directory,
                                 'proof.ipynb')
         is_owned_storage = (
@@ -2199,15 +2885,30 @@ class TheoryFolderStorage:
             # Copy the template.  Nothing needs to be edited for these.
             template_filename = os.path.join(proveit_path, '..',
                                              '_proof_template_.ipynb')
-            shutil.copyfile(template_filename, filename)
+            copy_if_missing(template_filename, filename)
         return relurl(filename)
 
-    def make_expression(self, expr_id):
+    def make_expression(self, expr_storage_id, _return_force_storage_fn=False):
         '''
         Return the Expression object that is represented in storage by
-        the given expression id.
+        the given expression id.  Also return a function that may be
+        called to force the storage of this particular way to construct
+        this expression (i.e., the theory and folder).
         '''
         import importlib
+
+        # Resolve the public storage id to a local object id,
+        # switching to the proper theory_folder_storage object if needed.
+        theory_folder_storage, content_hash = self._split(expr_storage_id)
+        if theory_folder_storage != self:
+            return theory_folder_storage.make_expression(
+                expr_storage_id,
+                _return_force_storage_fn=_return_force_storage_fn)
+        expr_id = self._get_object_id(content_hash)
+        if expr_id is None:
+            raise TheoryDatabaseError("Expression not found in database by "
+                                      "content hash %s"%expr_storage_id)
+
         # map expression class strings to Expression class objects
         expr_class_map = dict()
 
@@ -2238,7 +2939,10 @@ class TheoryFolderStorage:
             # Don't worry if we can't load these right now -- we may
             # by in the process of rebuilding.
             pass
-        expr = self._make_expression(expr_id, import_fn, expr_builder_fn)
+
+        expr, force_storage_fn = self._make_expression(
+            expr_id, import_fn, expr_builder_fn)
+        if _return_force_storage_fn: return expr, force_storage_fn
         return expr
 
     def _make_expression(self, expr_id, import_fn, expr_builder_fn):
@@ -2248,102 +2952,153 @@ class TheoryFolderStorage:
         from proveit import Expression
         from ._dependency_graph import ordered_dependency_nodes
         from .theory import Theory
-        # map expr-ids to lists of Expression class string
-        # representations:
+
+        # Node-keyed maps use (TheoryFolderStorage, obj_id) tuples.
         expr_class_strs = dict()
-        # relative paths of Expression classes that are local:
         expr_class_rel_strs = dict()
-        core_info_map = dict()  # map expr-ids to core information
-        styles_map = dict()  # map expr-ids to style information
-        # map expr-ids to list of sub-expression ids:
-        sub_expr_ids_map = dict()
-        # Map the expression storage id to a (theory folder storage,
-        # hash) tuple.
-        exprid_to_storage = dict()
-        master_expr_id = expr_id
+        core_info_map = dict()
+        styles_map = dict()
+        sub_expr_nodes_map = dict()
+        exprnode_to_content_hash = dict()
+        master_expr_node = (self, expr_id)
+
         try:
             local_theory_name = Theory().name
         except BaseException:
             local_theory_name = None
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
+        built_expr_map = dict()
 
-        def get_dependent_expr_ids(expr_id):
+        # Cache folder storage lookups for speed
+        folder_storage_cache = dict()
+
+        def resolve_folder_storage(theory_folder_storage, folder_id):
+            if (theory_folder_storage, folder_id) not in folder_storage_cache:
+                folder_storage_cache[(theory_folder_storage, folder_id)] = \
+                    theory_folder_storage._get_theory_folder_storage_by_id(folder_id)
+            return folder_storage_cache[(theory_folder_storage, folder_id)]
+
+        def get_dependent_expr_nodes(expr_node):
             '''
-            Given an expression id, yield the ids of all of its
-            sub-expressions.
+            Given a node (theory_folder_storage, expr_id), yield the nodes
+            of all of its sub-expressions.
             '''
-            theory_folder_storage, hash_directory = self._split(expr_id)
+            theory_folder_storage, expr_id = expr_node
+
+            if expr_id in theory_folder_storage.exprid_to_expression:
+                # This expression has already been built. Mark this and
+                # don't bother with it's sub-expressions.
+                built_expr_map[expr_node] = (
+                    theory_folder_storage.exprid_to_expression[expr_id])
+                return []
+            row = theory_folder_storage._get_object_row_by_id(expr_id)
+            if row is None:
+                raise KeyError(
+                    "Expression id %s not found in %s database"
+                    % (expr_id, theory_folder_storage.db_path)
+                )
+
             if theory_folder_storage.theory != self.theory:
                 # Load the "special names" of the theory so we
                 # will know, for future reference, if this is a special
                 # expression that may be addressed as such.
                 theory_folder_storage.theory_storage.load_special_names()
-            exprid_to_storage[expr_id] = (theory_folder_storage,
-                                          hash_directory)
-            hash_path = self._storagePath(expr_id)
-            with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-                # Extract the unique representation from the pv_it file.
-                unique_rep = f.read()
-                # Parse the unique_rep to get the expression information.
-                (expr_class_str, core_info, style_dict, sub_expr_refs) = \
-                    Expression._parse_unique_rep(unique_rep)
-                if (local_theory_name is not None
-                        and expr_class_str.find(local_theory_name) == 0):
-                    # import locally if necessary
-                    expr_class_rel_strs[expr_id] = \
-                        expr_class_str[len(local_theory_name) + 1:]
-                expr_class_strs[expr_id] = expr_class_str
-                # extract the Expression "core information" from the
-                # unique representation
-                core_info_map[expr_id] = core_info
-                styles_map[expr_id] = style_dict
-                dependent_refs = sub_expr_refs
-                dependent_ids = \
-                    theory_folder_storage._extractReferencedStorageIds(
-                        unique_rep, storage_ids=dependent_refs)
-                sub_expr_ids_map[expr_id] = dependent_ids
-                #print('dependent_ids', dependent_ids)
-                return dependent_ids
 
-        expr_ids = ordered_dependency_nodes(expr_id, get_dependent_expr_ids)
-        for expr_id in reversed(expr_ids):
-            if expr_id in expr_class_rel_strs:
+            content_hash, unique_rep = row
+            exprnode_to_content_hash[expr_node] = content_hash
+            
+            # Parse the unique representation to get expression metadata.
+            (expr_class_str, core_info, style_dict, _sub_expr_refs) = \
+                Expression._parse_unique_rep(unique_rep)
+    
+            if (local_theory_name is not None
+                    and expr_class_str.find(local_theory_name) == 0):
+                # import locally if necessary
+                expr_class_rel_strs[expr_node] = (
+                    expr_class_str[len(local_theory_name) + 1:])
+            expr_class_strs[expr_node] = expr_class_str
+            core_info_map[expr_node] = core_info
+            styles_map[expr_node] = style_dict
+    
+            # Dependency edges come from the DB table.
+            dependent_nodes = []
+            child_refs = theory_folder_storage._get_child_refs_by_parent_id(expr_id)
+            for child_theory_folder_id, child_id in child_refs:
+                child_storage = resolve_folder_storage(
+                    theory_folder_storage, child_theory_folder_id)
+                if child_storage is None:
+                    raise KeyError(
+                        "Unable to resolve theory folder id %s for parent %s"
+                        % (child_theory_folder_id, expr_node)
+                    )
+                dependent_nodes.append((child_storage, child_id))
+    
+            sub_expr_nodes_map[expr_node] = dependent_nodes
+            return dependent_nodes
+
+        expr_nodes = ordered_dependency_nodes(master_expr_node,
+                                              get_dependent_expr_nodes)
+
+        # Import needed classes first.
+        for expr_node in reversed(expr_nodes):
+            if expr_node in built_expr_map:
+                continue
+            if expr_node in expr_class_rel_strs:
                 # there exists a relative path
                 try:
                     # First try the absolute path; that is preferred for
                     # consistency sake (we want different imports of
                     # something to be regarded as the same)
-                    import_fn(expr_class_strs[expr_id])
-                except BaseException:
+                    import_fn(expr_class_strs[expr_node])
+                except BaseException as e:
                     # If importing the absolute path fails, maybe the
                     # relative path will work.
-                    import_fn(expr_class_rel_strs[expr_id])
+                    try:
+                        import_fn(expr_class_rel_strs[expr_node])
+                    except:
+                        raise e
+
                     # use the relative path
-                    expr_class_strs[expr_id] = expr_class_rel_strs[expr_id]
+                    expr_class_strs[expr_node] = expr_class_rel_strs[expr_node]
             else:
-                # there does not exist a relative path;
-                # the absolute path is the only option.
-                import_fn(expr_class_strs[expr_id])
-        # map expr-ids to "built" expressions
-        # (whatever expr_builder_fn returns):
-        built_expr_map = dict()
-        for expr_id in reversed(expr_ids):
-            sub_expressions = [built_expr_map[sub_expr_id] for sub_expr_id
-                               in sub_expr_ids_map[expr_id]]
+                import_fn(expr_class_strs[expr_node])
+
+        # Build expressions bottom-up.
+        for expr_node in reversed(expr_nodes):
+            if expr_node in built_expr_map:
+                continue # already built
+            sub_expressions = [
+                built_expr_map[sub_expr_node]
+                for sub_expr_node in sub_expr_nodes_map[expr_node]]
             expr = expr_builder_fn(
-                expr_class_strs[expr_id], core_info_map[expr_id],
-                styles_map[expr_id], sub_expressions)
+                expr_class_strs[expr_node], core_info_map[expr_node],
+                styles_map[expr_node], sub_expressions)
+            theory_folder_storage, expr_id = expr_node
             expr_style_id = expr._style_id
             if expr_style_id not in proveit_obj_to_storage:
                 # Remember the storage corresponding to the style id
                 # for future reference.
-                theory_folder_storage, hash_id = \
-                    exprid_to_storage[expr_id]
+                content_hash = exprnode_to_content_hash[expr_node]
                 theory_folder_storage._record_storage(
-                    expr_style_id, hash_id)
-            built_expr_map[expr_id] = expr
+                    expr_style_id, content_hash, expr_id)
+            # Remember this going forward.
+            built_expr_map[expr_node] = expr
+            theory_folder_storage.exprid_to_expression[expr_id] = expr
 
-        return built_expr_map[master_expr_id]
+        assert expr_node == master_expr_node
+        if expr_node in exprnode_to_content_hash:
+            # Possibly force the top-level storage; this is done for
+            # axiom or theorem expressions, but only if they are their
+            # own proof (to avoid inconsistency if two theorems of
+            # different theories have the same expression).
+            expr_style_id = expr._style_id
+            content_hash = exprnode_to_content_hash[expr_node]
+            force_storage_fn = lambda : theory_folder_storage._record_storage(
+                expr_style_id, content_hash, expr_id)
+        else:
+            force_storage_fn = None
+
+        return built_expr_map[master_expr_node], force_storage_fn
 
     def make_judgment_or_proof(self, storage_id):
         '''
@@ -2354,15 +3109,15 @@ class TheoryFolderStorage:
                              DefiningProperty, DefinitionExistence,
                              DefinitionExtension)
         from proveit._core_.judgment import Judgment
-        theory_folder_storage, hash_folder = self._split(storage_id)
+        theory_folder_storage, content_hash = self._split(storage_id)
         if theory_folder_storage != self:
             # Make it from the proper TheoryFolderStorage.
             return theory_folder_storage.make_judgment_or_proof(storage_id)
         theory = self.theory
-        hash_path = self._storagePath(storage_id)
-        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-            # extract the unique representation from the pv_it file
-            unique_rep = f.read()
+        unique_rep = theory_folder_storage._get_object_unique_rep(content_hash)
+        if unique_rep is None:
+            raise KeyError("Judgment/Proof %s not found in database %s" %
+                           (storage_id, theory_folder_storage.db_path))
         subids = \
             theory_folder_storage._extractReferencedStorageIds(unique_rep)
 
@@ -2403,14 +3158,15 @@ class TheoryFolderStorage:
             elif kind == 'theorem':
                 obj = Theorem(judgment.expr, theory, name)
         elif unique_rep[:9] == 'Judgment:':
-            truth_expr_id = self.make_expression(subids[0])
+            truth_expr = self.make_expression(subids[0])
             assumptions = [self.make_expression(
                 exprid) for exprid in subids[1:]]
             num_lit_gen_str = unique_rep[unique_rep.rfind(']')+1:]
             num_lit_gen = 0 if num_lit_gen_str == '' else int(num_lit_gen_str)
-            obj = Judgment(truth_expr_id, assumptions, num_lit_gen=num_lit_gen)
-        theory_folder_storage._record_storage(obj._style_id,
-                                              hash_folder)
+            obj = Judgment(truth_expr, assumptions, num_lit_gen=num_lit_gen)
+        obj_id = theory_folder_storage._get_object_id(content_hash)
+        theory_folder_storage._record_storage(obj._style_id, content_hash,
+                                              obj_id)
         return obj
 
     def make_show_proof(self, proof_id):
@@ -2420,18 +3176,16 @@ class TheoryFolderStorage:
         the purposes of displaying the proof.
         '''
         from proveit._core_.proof import Proof
-        theory_folder_storage, hash_directory = self._split(proof_id)
+        theory_folder_storage, content_hash = self._split(proof_id)
         theory = theory_folder_storage.theory
         folder = theory_folder_storage.folder
-        hash_path = theory_folder_storage._storagePath(proof_id)
-        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 'r') as f:
-            # extract the unique representation from the pv_it file
-            unique_rep = f.read()
+        unique_rep = theory_folder_storage._get_object_unique_rep(content_hash)
         # full storage id:
-        proof_id = theory.name + '.' + folder + '.' + hash_directory
+        proof_id = theory.name + '.' + folder + '.' + content_hash
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
-        proveit_obj_to_storage[proof_id] = (
-            theory_folder_storage, hash_directory)
+        obj_id = theory_folder_storage._get_object_id(content_hash)
+        proveit_obj_to_storage[proof_id] = (theory_folder_storage,
+                                            content_hash, obj_id)
         return Proof._showProof(theory, folder, proof_id, unique_rep)
 
     def stored_common_expr_dependencies(self):
@@ -2455,26 +3209,67 @@ class TheoryFolderStorage:
         If 'clear' is True, the entire folder will be removed
         (if possible).
         '''
+        owned_content_hashes = TheoryFolderStorage.owned_content_hashes
+
+        # Remove database entries that are no longer owned.
+        db_path = self.theory_storage._db_path(self.folder)
+        if db_path is not None and db_path.is_file():
+            conn = self._begin_write()
+            try:
+                cur = conn.cursor()
+
+                # Preserve the local theory_folder row even if it is not referenced
+                # by any expression_subexpression entry.
+                local_folder_id = self._local_theory_folder_id()
+
+                cur.execute('SELECT content_hash FROM objects')
+                for (content_hash,) in cur.fetchall():
+                    if content_hash not in owned_content_hashes:
+                        cur.execute(
+                            'DELETE FROM objects WHERE content_hash = ?',
+                            (content_hash,)
+                        )
+
+                # Prune theory_folder rows that are no longer referenced.
+                # Since child_theory_folder_id references theory_folder.id,
+                # we keep only those folder ids still referenced by some edge.
+                cur.execute(
+                    'SELECT DISTINCT child_theory_folder_id '
+                    'FROM expression_subexpression'
+                )
+                referenced_folder_ids = {
+                    row[0] for row in cur.fetchall()
+                }
+                # Always keep the local folder id -- why not
+                referenced_folder_ids.add(local_folder_id)
+    
+                cur.execute('SELECT id FROM theory_folder')
+                for (folder_id,) in cur.fetchall():
+                    if folder_id not in referenced_folder_ids:
+                        cur.execute(
+                            'DELETE FROM theory_folder WHERE id = ?',
+                            (folder_id,)
+                        )
+
+                self._end_write()
+            except Exception:
+                # Make sure the write connection is cleaned up properly
+                # if anything goes wrong.
+                if self._write_conn is not None:
+                    try:
+                        self._write_conn.rollback()
+                    finally:
+                        self._write_conn.close()
+                        self._write_conn = None
+                raise
+
         if clear:
             try:
-                os.remove(self.path)
+                shutil.rmtree(self.path)
             except OSError:
                 print("Unable to clear '%s'" % self.path)
             return
 
-        if self.folder == 'common':
-            from proveit import Literal
-            # Make sure we reference any literals that are in this
-            # theory.  First, import the module of the theory
-            # which should import any modules containing operation
-            # classes with _operator_ Literals, then "retreive"
-            # Literals of the theory as currently referenced objects.
-            importlib.import_module(self.theory.name)
-            for literal in Literal.instances.values():
-                if literal.theory == self.theory:
-                    self._retrieve(literal)
-
-        owned_hash_folders = TheoryFolderStorage.owned_hash_folders
         paths_to_remove = list()
         for hash_subfolder in os.listdir(self.path):
             if hash_subfolder == 'name_to_hash.txt':
@@ -2486,7 +3281,7 @@ class TheoryFolderStorage:
             if hash_subfolder == 'name_to_expr_and_obj_hashes.txt':
                 continue
             hashpath = os.path.join(self.path, hash_subfolder)
-            if hash_subfolder not in owned_hash_folders:
+            if hash_subfolder not in owned_content_hashes:
                 paths_to_remove.append(hashpath)
 
         if self.folder in ('theorems', 'definitions'):
@@ -2511,7 +3306,8 @@ class TheoryFolderStorage:
             finally:
                 TheoryFolderStorage.owns_active_storage = owns_active_storage
             for _folder in os.listdir(self.pv_it_dir):
-                if _folder[:7] == '_proof_':
+                if _folder[:7] == '_proof_' and os.path.isdir(
+                        os.path.join(self.pv_it_dir, _folder)):
                     thm_name = _folder[7:]
                     if thm_name not in thm_names:
                         paths_to_remove.append(os.path.join(
@@ -2703,7 +3499,7 @@ class StoredSpecialStmt:
         to_remove = set(theorems) - set(verified_theorems)
         for obsolete_thm in to_remove:
             try:
-                os.remove(os.path.join(used_by_dir, filename))
+                os.remove(os.path.join(used_by_dir, obsolete_thm))
             except OSError:
                 pass  # no worries
         return verified_theorems
@@ -2853,11 +3649,14 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         return theorem_proof_link(self.theory, self.name)
 
+    """
+    # Obsolete -- not used
     def remove(self, keep_path=False):
         if self.has_proof():
             # must remove the proof first
             self.remove_proof()
         StoredSpecialStmt.remove(self, keep_path)
+    """
 
     def read_used_axioms(self):
         '''
@@ -3048,7 +3847,7 @@ class StoredTheorem(StoredSpecialStmt):
         active_folder_storage = \
             TheoryFolderStorage.active_theory_folder_storage
         assert active_folder_storage.folder == '_proof_' + self.name
-        active_folder_storage._retrieve(proof)
+        active_folder_storage._retrieve(proof, do_incarnate=True)
         proof_id = self.theory_folder_storage._prove_it_storage_id(proof)
         if self.has_proof():
             # remove the old proof if one already exists
@@ -3251,7 +4050,8 @@ class StoredTheorem(StoredSpecialStmt):
         if all(Theory.get_stored_theorem(used_theorem).is_complete() for
                used_theorem in self.read_used_theorems()):
             # An empty 'complete' file marks the completion.
-            open(os.path.join(self.path, 'complete'), 'w')
+            with open(os.path.join(self.path, 'complete'), 'w'):
+                pass
 
     def remove_proof(self):
         '''

@@ -571,7 +571,7 @@ class ProveItMagicCommands:
             if count == 0:
                 display(HTML('This sub-theory contains no theorems.'))
 
-    def prepare_notebook(self, kind):
+    def prepare_theory_notebook(self, kind):
         import proveit
         proveit.defaults.automation = False
         #proveit.defaults.use_consistent_styles = False
@@ -586,6 +586,18 @@ class ProveItMagicCommands:
             proveit.defaults.import_failure_filename = \
                 import_failure_filename
         proveit.defaults._running_theory_notebook = (theory, kind)
+
+    def prepare_thm_proof_notebook(self, theory, active_folder):
+        import proveit
+        literal_generalization_failure_filename = os.path.join(
+            theory._theory_folder_storage(active_folder).path,
+            'literal_generalization_failure.txt')
+        if os.path.isfile(literal_generalization_failure_filename):
+            # Start with a clean slate
+            os.remove(literal_generalization_failure_filename)
+        proveit.defaults.literal_generalization_failure_filename = \
+            literal_generalization_failure_filename
+        proveit.defaults._running_theorem_proof_notebook = (theory, active_folder)
 
     def begin_axioms(self):
         # theory based upon current working directory
@@ -687,7 +699,9 @@ class ProveItMagicCommands:
                 hash_id).proven_truth.expr
         else:
             stored_expr = theory.get_stored_expr(hash_id)
-        theory.set_active_folder(None)
+        # turn on ownership to allow expression notebooks to generate
+        # sub-expression notebooks.
+        theory.set_active_folder(active_folder=folder, owns_active_folder=True)
         self.shell.user_ns['stored_expr'] = stored_expr
 
     def show_proof(self):
@@ -695,14 +709,16 @@ class ProveItMagicCommands:
         _, folder = os.path.split(theory_and_folder)
         theory = Theory(active_folder=folder)
         show_proof = theory.get_show_proof(hash_id)
-        theory.set_active_folder(None)
+        # turn on ownership to allow proof notebooks to generate
+        # sub-proof notebooks.
+        theory.set_active_folder(active_folder=folder, owns_active_folder=True)
         return show_proof
 
     def proving(self, theorem_name):
         # the theory should be up a directory from the _proofs_ directory
         import proveit
         active_folder = '_proof_' + theorem_name
-        self.theory = Theory(
+        self.theory = theory = Theory(
             '..',
             active_folder=active_folder,
             owns_active_folder=True)
@@ -711,8 +727,9 @@ class ProveItMagicCommands:
             # Disable automation when we are getting this theorem
             # to be proven.
             tmp_defaults.automation = False
-            proving_theorem = self.theory.get_theorem(theorem_name)
+            proving_theorem = theory.get_theorem(theorem_name)
         proving_theorem_truth = proving_theorem.proven_truth
+        self.prepare_thm_proof_notebook(theory, active_folder)
         return proving_theorem_truth.begin_proof(proving_theorem)
 
     def existence_proving(self, theorem_name):
@@ -762,6 +779,7 @@ class ProveItMagicCommands:
         if proveit.defaults.display_latex:
             self.theory.clean_active_folder()
         self.theory = None
+        proveit.defaults._running_theorem_proof_notebook = None
         return proof
     
     def play_game(self):
@@ -1088,14 +1106,14 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         Prepare for defining common expressions of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'common')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'common')
 
     @line_magic
     def axioms_notebook(self, line):
         '''
         Prepare for defining axioms of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'axioms')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'axioms')
 
     @line_magic
     def definitions_notebook(self, line):
@@ -1109,7 +1127,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         Prepare for defining theorems of a theory.
         '''
-        ProveItMagicCommands.prepare_notebook(self, 'theorems')
+        ProveItMagicCommands.prepare_theory_notebook(self, 'theorems')
 
     def _extract_folder(self, line):
         split_line = line.strip().split()
@@ -1139,9 +1157,10 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         if kind in ('axiom', 'defining_property', 'theorem', 'common'):
             from proveit import defaults
             # Unload anything previously loaded from this folder
-            # to force it to regenerate expression notebooks,
-            # etc.
-            self.theory._theory_folder_storage(kind=kind).unload()
+            # to force it to regenerate expression notebooks, etc.
+            # Also, for kind=='common', put _operator_ literals
+            # in the database.
+            self.theory._theory_folder_storage(kind).unload_and_prep()
             if defaults.incidental_automation or defaults.conclude_automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "

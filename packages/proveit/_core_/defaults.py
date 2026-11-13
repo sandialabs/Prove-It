@@ -104,13 +104,22 @@ class Defaults:
         # Will be set to a (theory, kind) object when a common
         # expressions, axioms, or theorms notebook is being executed.
         self._running_theory_notebook = None
+        # Will be set to a (theory, active_folder) object when a
+        # thm_proof.ipynb notebook is being executed.
+        self._running_theorem_proof_notebook = None
+
         # When running a common expressions notebook, this will be
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
         self.import_failure_filename = None
+        # When running a theorem proof notebook, this will be
+        # set to the appropriate file to send information about failed
+        # literal generalization (e.g., an unproven required theorem)
+        self.literal_generalization_failure_filename = None
         
         # Set to true when processing notebooks using build.py.
         self._executing_auto_build = False
+        self._auto_build_start_time = float('inf')
 
     @property
     def running_theory_notebook(self):
@@ -419,8 +428,8 @@ class TemporarySetter(object):
                 val = [_assumption for _assumption in val
                        if _assumption not in to_remove]
                 val += to_add
-                val = self._obj.checked_assumptions(val)
-
+                val = OrderedSet(
+                    self._obj.checked_assumptions(val), mutable=False)
             self._obj.__dict__[attr] = val
         
 

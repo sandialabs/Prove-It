@@ -23,6 +23,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 import os
 import json
 from collections import OrderedDict
+from pathlib import Path
 from ._theory_storage import TheoryStorage, TheoryFolderStorage, relurl
 from types import ModuleType
 
@@ -64,12 +65,15 @@ class Theory:
         Clear all references to Prove-It information in
         the Theory jurisdiction.
         '''
+        for storage in Theory.storages.values():
+            # close database connections
+            storage.close_all_connections()
         Theory._rootTheoryPaths.clear()
         Theory.default = None
         Theory.storages.clear()
         TheoryFolderStorage.active_theory_folder_storage = None
         TheoryFolderStorage.proveit_object_to_storage.clear()
-        TheoryFolderStorage.owned_hash_folders.clear()
+        TheoryFolderStorage.owned_content_hashes.clear()
 
     # externals.txt at top level to track relative path to external
     # theories.
@@ -79,7 +83,8 @@ class Theory:
         use the path of the containing directory.  If no path
         is provided, base the theory on the current working directory.
         '''
-        if not os.path.exists(path):
+        p = Path(path).expanduser()
+        if not p.exists():
             raise TheoryException(
                 "%s is not a valid path; unable to create Theory." %
                 path)
@@ -88,29 +93,24 @@ class Theory:
         # expression or as an _operator_ of an Operation.)
         self._literals = set()
 
-        path = os.path.abspath(path)
-        # If in a __pv_it_ directory, go to the containing theory
-        # directory.
-        splitpath = path.split(os.path.sep)
-        if '__pv_it' in splitpath:
-            pv_it_idx = splitpath.index('__pv_it')
-            num_up_levels = (len(splitpath) - pv_it_idx)
-            # if num_up_levels > 1:
-            #    active_folder = splitpath[pv_it_idx+1]
-            path = os.path.abspath(os.path.join(
-                *([path] + ['..'] * num_up_levels)))
-        # If in a _theory_nbs_ directory, go to the 
-        # containing theory directory.
-        splitpath = path.split(os.path.sep)
-        if '_theory_nbs_' in splitpath:
-            nbs_idx = splitpath.index('_theory_nbs_')
-            num_up_levels = (len(splitpath) - nbs_idx)
-            path = os.path.abspath(os.path.join(
-                *([path] + ['..'] * num_up_levels)))
+        # If the path is a file, use its containing directory first.
+        if p.is_file():
+            p = p.parent
 
-        # move the path up to the directory level, not script file level
-        if path[-3:] == '.py' or path[-4:] == '.pyc':
-            path, _ = os.path.split(path)
+        # Resolve to an absolute path for reliable comparison.
+        p = p.resolve()
+        
+        # If inside a __pv_it or _theory_nbs_ directory, strip everything
+        # from that marker downward.
+        parts = p.parts
+        for marker in ('__pv_it', '_theory_nbs_'):
+            if marker in parts:
+                marker_idx = parts.index(marker)
+                p = Path(*parts[:marker_idx])
+                break
+        
+        # Convert back to a string for the existing string-based storage code.
+        path = str(p.resolve())
 
         # Makes the case be consistent in operating systems (i.e. Windows)
         # with a case insensitive filesystem:
@@ -124,25 +124,12 @@ class Theory:
                 self.set_active_folder(active_folder, owns_active_folder)
             return
 
-        if os.path.isfile(
-                path):  # just in case checking for '.py' or '.pyc' wasn't sufficient
-            path, _ = os.path.split(path)
-            normpath = os.path.normcase(path)
-
-        if normpath in Theory.storages:
-            # got the storage - we're good
-            self._storage = Theory.storages[normpath]
-            self.name = self._storage.name
-            if active_folder is not None:
-                self.set_active_folder(active_folder, owns_active_folder)
-            return
-
         # the name of the theory is based upon the directory, going
         # up the tree as long as there is an __init__.py file.
         name = ''
-        remaining_path = path
-        while os.path.isfile(os.path.join(remaining_path, '__init__.py')):
-            remaining_path, tail = os.path.split(remaining_path)
+        remaining_path = Path(path)
+        while (remaining_path / '__init__.py').is_file():
+            remaining_path, tail = remaining_path.parent, remaining_path.name
             name = tail if name == '' else (tail + '.' + name)
         # the root theory tracks paths to external packages
         if name == '':
@@ -152,7 +139,7 @@ class Theory:
                 path)
         root_directory = None
         if '.' in name:
-            root_directory = os.path.join(remaining_path, name.split('.')[0])
+            root_directory = str(remaining_path / name.split('.')[0])
         # Create the Storage object for this Theory
         if normpath not in Theory.storages:
             Theory.storages[normpath] = TheoryStorage(
@@ -675,13 +662,13 @@ class Theory:
         '''
         return self._storage.get_common_expr(name)
 
-    def get_stored_expr(self, expr_id, folder=None):
+    def get_stored_expr(self, expr_storage_id, folder=None):
         '''
         Return the stored Expression with the given id (hash string).
         Use the "active folder" as the default folder.
         '''
         theory_folder_storage = self._theory_folder_storage(folder)
-        return theory_folder_storage.make_expression(expr_id)
+        return theory_folder_storage.make_expression(expr_storage_id)
 
     def get_stored_judgment_or_proof(self, storage_id, folder=None):
         '''
@@ -701,14 +688,14 @@ class Theory:
         return theory_folder_storage.make_show_proof(proof_id)
 
     @staticmethod
-    def _stored_png(expr, latex, config_latex_tool_fn):
+    def _stored_png(expr, latex, config_latex_tool_fn, just_need_link=False):
         '''
         Find the .png file for the stored Expression.
         Create it if it did not previously exist.
         Return the png data and path where the png is stored as a tuple.
         '''
         return TheoryFolderStorage.retrieve_png(
-            expr, latex, config_latex_tool_fn)
+            expr, latex, config_latex_tool_fn, just_need_link=just_need_link)
 
     def _theory_folder_storage(self, folder=None, kind=None):
         '''

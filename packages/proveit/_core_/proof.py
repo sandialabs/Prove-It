@@ -883,8 +883,6 @@ class Proof:
         return requirements
 
     def _repr_html_(self):
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
         proof_steps = self.enumerated_proof_steps()
         html = '<table><tr><th>&nbsp;</th><th>step type</th><th>requirements</th><th>statement</th></tr>\n'
         first_requirements = None
@@ -2332,6 +2330,12 @@ class Instantiation(Proof):
                     # even though the param is an ExprRange.
                     new_param = param_var
                     new_operands = (param_var_repl,)
+                elif (isinstance(param_var_repl, Lambda)
+                      and isinstance(param, ExprRange)):
+                    # Instantiate a variable with a Lambda
+                    # even though the param is an ExprRange.
+                    new_param = param_var
+                    new_operands = (param_var_repl,)
                 elif (isinstance(param, ExprRange) 
                          or isinstance(param, IndexedVar)):
                     subbed_param = instantiate(param)
@@ -2677,12 +2681,7 @@ class Generalization(Proof):
                 # generalize: NO BUENO!
                 raise LiteralGeneralizationFailure(
                     generalized_expr, defaults.assumptions,
-                    "%s: %s is an an Axiom or unproven Theorem, "
-                    "not eliminated via a condition, yet "
-                    "contains one or more of the literals we "
-                    "are attempting to generalize: %s"
-                    %(str(proof), proof.proven_truth, 
-                      generalized_literals))
+                    proof, generalized_literals)
 
         # First, use a breadth-first search through proof requirements
         # to determine all of the eliminated requirements and direct
@@ -2872,8 +2871,6 @@ class _ShowProof:
             self.eliminated_theorems = proof_obj._eliminated_theorems
 
     def _repr_html_(self):
-        if not defaults.display_latex:
-            return None  # No LaTeX display at this time.
         return Proof._repr_html_(self)
 
     def step_type(self):
@@ -2961,8 +2958,25 @@ class GeneralizationFailure(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 class LiteralGeneralizationFailure(GeneralizationFailure):
-    def __init__(self, expr, assumptions, message):
+    def __init__(self, expr, assumptions, problem_dependency, generalized_literals):
+        import proveit
+        if proveit.defaults._running_theorem_proof_notebook is not None:
+            if isinstance(problem_dependency, Theorem):
+                # Store the unproven required theorem so build.py will
+                # know what must be executed before retrying.
+                literal_generalization_failure_filename = (
+                    proveit.defaults.literal_generalization_failure_filename)
+                with open(literal_generalization_failure_filename, 'w') as f:
+                    f.write(str(problem_dependency) + '\n')
+        message = ("%s: %s is an an Axiom or unproven Theorem, "
+                   "not eliminated via a condition, yet "
+                   "contains one or more of the literals we "
+                   "are attempting to generalize: %s"
+                   %(str(problem_dependency), problem_dependency.proven_truth,
+                     generalized_literals))
         GeneralizationFailure.__init__(self, expr, assumptions, message)
+        self.problem_dependency = problem_dependency # axiom or unproven theorem
+        self.generalized_literals = generalized_literals
 
 
 class UnusableProof(ProofFailure):
