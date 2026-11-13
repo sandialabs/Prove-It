@@ -905,16 +905,8 @@ class TheoryStorage:
                 # that is currently being generated.
                 raise KeyError("Self importing is not allowed")
 
-<<<<<<< HEAD
             # make and return common expression, axiom, defining property,
             # or theorem
-=======
-            expr_id = self._kindname_to_exprhash[(kind, name)]
-            expr, force_storage_fn = theory_folder_storage.make_expression(
-                expr_id, _return_force_storage_fn=True)
-
-            # make and return common expression, axiom, or theorem
->>>>>>> 020ab0c7d1c8cf1ba3c7a7a059cf87e9537bd50c
             if kind == 'common':
                 expr_id = self._kindname_to_exprhash[(kind, name)]
                 expr = theory_folder_storage.make_expression(expr_id)
@@ -949,16 +941,6 @@ class TheoryStorage:
                         obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
-            if obj.proven_truth.proof() == obj:
-                # As long as obj is its own actual proof, let's force
-                # recording the storage of the expression.  That way,
-                # we will be sure to locally store an axiom/theorem
-                # expression that happens to also be part of a common
-                # or axiom expression, but we won't overwrite something
-                # that has already been proven (e.g., if the same
-                # theorem expression appears in multiple theories).
-                if force_storage_fn is not None:
-                    force_storage_fn()
         finally:
             # reset the default Theory
             Theory.default = prev_theory_default
@@ -2888,7 +2870,7 @@ class TheoryFolderStorage:
             copy_if_missing(template_filename, filename)
         return relurl(filename)
 
-    def make_expression(self, expr_storage_id, _return_force_storage_fn=False):
+    def make_expression(self, expr_storage_id):
         '''
         Return the Expression object that is represented in storage by
         the given expression id.  Also return a function that may be
@@ -2902,8 +2884,7 @@ class TheoryFolderStorage:
         theory_folder_storage, content_hash = self._split(expr_storage_id)
         if theory_folder_storage != self:
             return theory_folder_storage.make_expression(
-                expr_storage_id,
-                _return_force_storage_fn=_return_force_storage_fn)
+                expr_storage_id)
         expr_id = self._get_object_id(content_hash)
         if expr_id is None:
             raise TheoryDatabaseError("Expression not found in database by "
@@ -2940,9 +2921,7 @@ class TheoryFolderStorage:
             # by in the process of rebuilding.
             pass
 
-        expr, force_storage_fn = self._make_expression(
-            expr_id, import_fn, expr_builder_fn)
-        if _return_force_storage_fn: return expr, force_storage_fn
+        expr = self._make_expression(expr_id, import_fn, expr_builder_fn)
         return expr
 
     def _make_expression(self, expr_id, import_fn, expr_builder_fn):
@@ -3086,19 +3065,7 @@ class TheoryFolderStorage:
             theory_folder_storage.exprid_to_expression[expr_id] = expr
 
         assert expr_node == master_expr_node
-        if expr_node in exprnode_to_content_hash:
-            # Possibly force the top-level storage; this is done for
-            # axiom or theorem expressions, but only if they are their
-            # own proof (to avoid inconsistency if two theorems of
-            # different theories have the same expression).
-            expr_style_id = expr._style_id
-            content_hash = exprnode_to_content_hash[expr_node]
-            force_storage_fn = lambda : theory_folder_storage._record_storage(
-                expr_style_id, content_hash, expr_id)
-        else:
-            force_storage_fn = None
-
-        return built_expr_map[master_expr_node], force_storage_fn
+        return built_expr_map[master_expr_node]
 
     def make_judgment_or_proof(self, storage_id):
         '''
