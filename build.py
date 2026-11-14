@@ -294,9 +294,9 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
 import sys
 from proveit import *
 from proveit import defaults
-defaults.display_latex=float(%s)
+defaults.display_latex=%s
 defaults._executing_auto_build=True
-defaults._auto_build_start_time=%s
+defaults._auto_build_start_time=float(%s)
 import proveit.magics
 __init_modules = list(sys.modules.keys())
 __init_modules # avoid Prove-It magic assignment
