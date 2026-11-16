@@ -1406,15 +1406,16 @@ class TheoryFolderStorage:
                 pass # presume another process beat us to it
 
         # generate, store and return the png file
-        if just_need_link:
-            png = None # just return the link
-        else:
-            png = self._generate_png(latex, config_latex_tool_fn)
-            try:
-                with open(png_path, 'xb') as png_file:
-                    png_file.write(png)
-            except FileExistsError:
-                pass # presume another process beat us to it
+        png = self._generate_png(latex, config_latex_tool_fn)
+        try:
+            with open(png_path, 'xb') as png_file:
+                png_file.write(png)
+        except FileExistsError:
+            # presume another process beat us to it
+            if not just_need_link:
+                with open(png_path, 'rb') as png_file:
+                    return png_file.read(), relurl(png_path)
+            png = None
         return png, relurl(png_path)
 
     def _generate_png(self, latex, config_latex_tool_fn):
