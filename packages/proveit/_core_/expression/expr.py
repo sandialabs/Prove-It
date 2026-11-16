@@ -1926,11 +1926,13 @@ class Expression(metaclass=ExprType):
         '''
         # Let's create an expression notebook, with or without display_latex
         do_inline_pngs = defaults.inline_pngs
-        if not hasattr(self._style_data, 'png'):
-            just_need_link = defaults.display_latex or not do_inline_pngs
-            self._style_data.png, png_url = Theory._stored_png(
+        just_need_link = defaults.display_latex and not do_inline_pngs
+        if not hasattr(self._style_data, 'png_url') or (
+                not just_need_link and not hasattr(self._style_data, 'png')):
+            png, png_url = Theory._stored_png(
                 self, self.latex(), self._config_latex_tool,
                 just_need_link = just_need_link)
+            if not just_need_link: self._style_data.png = png
             self._style_data.png_url = png_url
         expr_notebook_rel_url = Theory.expression_notebook(
             self, unofficial_name_kind_theory)
@@ -1939,10 +1941,11 @@ class Expression(metaclass=ExprType):
             # not just, for example, the special Axiom/Theorem Proof object.
             Theory.expression_notebook(self)
         html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
-        png = self._style_data.png
-        if png is None:
+        png_url = self._style_data.png_url
+        if not defaults.display_latex:
             html += self.string() # show the string version
         elif do_inline_pngs:
+            png = self._style_data.png
             encoded_png = encodebytes(png).decode("utf-8")
             html += '<img src="data:image/png;base64,' + encoded_png + \
                 r'" style="display:inline;vertical-align:middle;" />'

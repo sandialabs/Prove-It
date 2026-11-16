@@ -14,6 +14,7 @@ import lxml  # Comment in for Python 3
 from lxml import etree  # Comment in for Python 3
 import shutil
 import argparse
+import traceback
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
 #from nbconvert.preprocessors.execute import executenb
@@ -899,7 +900,8 @@ def mpi_build(
                             export_to_html=export_to_html)
                         comm.send(rank, dest=0)
                     except Exception as e:
-                        comm.send((rank, str(e)), dest=0)
+                        lines = traceback.format_exception(e)
+                        comm.send((rank, ''.join(lines)), dest=0)
         except KernelStart_failure:
             # Occassionally there is an error getting a Jupyter notebook
             # engine started.  If that happens, just this this one out
