@@ -40,7 +40,7 @@ class Theory:
     '''
 
     # maps root theory names to their directories.  A root theory
-    # is one use containing directory has no __init__.py.  All theory
+    # is one whose containing directory has no __init__.py.  All theory
     # directories should have an __init__.py file.
     _rootTheoryPaths = dict()
 
@@ -128,17 +128,17 @@ class Theory:
             name = tail if name == '' else (tail + '.' + name)
         # the root theory tracks paths to external packages
         if name == '':
-            name = path
             raise TheoryException(
                 '%s theory directory must have an __init__.py file' %
                 path)
-        root_directory = None
         if '.' in name:
             root_directory = str(remaining_path / name.split('.')[0])
+        else:
+            root_directory = remaining_path / name
         # Create the Storage object for this Theory
         if normpath not in Theory.storages:
             Theory.storages[normpath] = TheoryStorage(
-                self, name, path, root_directory)
+                self, root_directory, name)
         self._storage = Theory.storages[normpath]
         if active_folder is not None:
             self.set_active_folder(active_folder, owns_active_folder)

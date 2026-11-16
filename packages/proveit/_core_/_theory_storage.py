@@ -98,7 +98,7 @@ class TheoryStorage:
     directory which can all be re-generated).
     '''
 
-    def __init__(self, theory, name, directory, root_directory):
+    def __init__(self, theory, root_directory, name):
         from .theory import Theory, TheoryException
 
         if not isinstance(theory, Theory):
@@ -106,20 +106,20 @@ class TheoryStorage:
         self.theory = theory
         self.name = name
 
-        # Normalize incoming paths once, but keep the rest of this module
-        # mostly string-based for now.
-        self.directory = str(Path(directory).expanduser().resolve())
-        self.pv_it_dir = os.path.join(self.directory, "__pv_it")
+        root_directory = Path(root_directory).expanduser().resolve()
+        self.pv_it_dir = (root_directory / "__pv_it" /
+                          os.path.sep.join(name.split('.')[1:]) / "__pv_it")
+        self.directory = root_directory / os.path.sep.join(name.split('.')[1:])
 
-        if root_directory is None:
-            self.root_theory_storage = self
-        else:
+        if '.' in name:
             self.root_theory_storage = Theory(str(root_directory))._storage
+        else:
+            self.root_theory_storage = self
         os.makedirs(self.pv_it_dir, exist_ok=True)
 
         if self.is_root():
-            # If this is a root theory, let's add the directory above
-            # the root to sys.path if it is needed.
+            # If this is a root theory, let's add the root_directory
+            # to sys.path if it is needed.
             # try to import the root theory; if it fails, we
             # need to add the path
             add_path = True  # may set to False below
@@ -134,7 +134,7 @@ class TheoryStorage:
                 pass  # keep add_path as True
             if add_path:  # add the path to sys.path
                 root_package_path = os.path.abspath(
-                    os.path.join(self.directory, '..'))
+                    root_directory.parent)
                 sys.path.insert(1, root_package_path)
             # indicate whether or not we needed to add the path to sys.path
             self.added_path = add_path
@@ -142,16 +142,16 @@ class TheoryStorage:
             # set of theory root names that are referenced
             self.referenced_theory_roots = set()
             # associate the theory name with the directory
-            Theory._setRootTheoryPath(name, self.directory)
+            Theory._setRootTheoryPath(name, root_directory)
             # map theory names to paths for other known root theories
             # in paths.txt
-            self.paths_filename = os.path.join(self.pv_it_dir, 'paths.txt')
+            self.paths_filename = self.pv_it_dir / 'paths.txt'
             if os.path.isfile(self.paths_filename):
                 with open(self.paths_filename) as paths_file:
                     for path_line in paths_file.readlines():
                         theory_name, path = path_line.split()
                         if theory_name == '.':
-                            if path != self.directory:
+                            if path != str(root_directory):
                                 # the directory of the theory associated with
                                 # this storage object has changed.
                                 self._updatePath()
@@ -161,10 +161,10 @@ class TheoryStorage:
             else:
                 with open(self.paths_filename, 'w') as paths_file:
                     # the first entry indicates the directory of this path
-                    paths_file.write('. ' + self.directory + '\n')
+                    paths_file.write('. ' + str(root_directory) + '\n')
 
         # create the _sub_theories_.txt file if it does not already exist
-        sub_theories_path = os.path.join(self.directory, '_sub_theories_.txt')
+        sub_theories_path = root_directory / '_sub_theories_.txt'
         if not os.path.isfile(sub_theories_path):
             open(sub_theories_path, 'wt').close()
 
@@ -235,7 +235,7 @@ class TheoryStorage:
         Set the sub-theory names listed in the _sub_theories_.txt files.
         '''
         self.sub_theory_names = sub_theory_names
-        with open(os.path.join(self.directory, '_sub_theories_.txt'), 'wt') as f:
+        with open(self.directory / '_sub_theories_.txt', 'wt') as f:
             for sub_theory_name in self.sub_theory_names:
                 f.write(sub_theory_name + '\n')
 
@@ -243,7 +243,7 @@ class TheoryStorage:
         '''
         Append the sub-theory name to the _sub_theories_.txt list.
         '''
-        with open(os.path.join(self.directory, '_sub_theories_.txt'), 'a') as f:
+        with open(self.directory / '_sub_theories_.txt', 'a') as f:
             f.write(sub_theory_name + '\n')
             self.sub_theory_names.append(sub_theory_name)
 
@@ -264,7 +264,7 @@ class TheoryStorage:
         '''
         if folder is None:
             return None
-        return Path(self.pv_it_dir) / f"{folder}.db"
+        return self.pv_it_dir / f"{folder}.db"
 
     def close_all_connections(self):
         '''
@@ -290,7 +290,7 @@ class TheoryStorage:
         # update the local paths.txt
         self._changePath('.', self.directory)
         # update the paths.txt wherever there is a mutual reference
-        self.paths_filename = os.path.join(self.pv_it_dir, 'paths.txt')
+        self.paths_filename = self.pv_it_dir / 'paths.txt'
         with open(self.paths_filename) as paths_file:
             for path_line in paths_file.readlines():
                 theory_name, path = path_line.split()
@@ -435,8 +435,8 @@ class TheoryStorage:
         renaming and definition of objects.
         '''
         folder = TheoryStorage._kind_to_folder(kind)
-        name_to_expr_and_obj_hashes_file = os.path.join(
-                self.pv_it_dir, folder, 'name_to_expr_and_obj_hashes.txt')
+        name_to_expr_and_obj_hashes_file = (
+                self.pv_it_dir / folder / 'name_to_expr_and_obj_hashes.txt')
 
         theory_name = self.name
 
@@ -512,8 +512,7 @@ class TheoryStorage:
                     modified_expr_hash_ids.add(old_name_to_expr_hash_id[name])
 
                 # Also make sure there is a "used_by" sub-folder.
-                used_by_folder = os.path.join(self.pv_it_dir, folder,
-                                              hash_id, 'used_by')
+                used_by_folder = (self.pv_it_dir / folder / hash_id /'used_by')
                 if not os.path.isdir(used_by_folder):
                     try:
                         os.mkdir(used_by_folder)
@@ -620,8 +619,8 @@ class TheoryStorage:
         '''
         folder = TheoryStorage._kind_to_folder(kind)
         theory_folder_storage = self.theory_folder_storage(folder)
-        name_to_expr_and_obj_hashes_filename = os.path.join(
-                self.pv_it_dir, folder, 'name_to_expr_and_obj_hashes.txt')
+        name_to_expr_and_obj_hashes_filename = (
+                self.pv_it_dir / folder / 'name_to_expr_and_obj_hashes.txt')
 
         special_expr_hash_ids = self._special_expr_hash_ids[kind] = dict()
         special_obj_hash_ids  = self._special_obj_hash_ids[kind]  = dict()
@@ -829,8 +828,8 @@ class TheoryStorage:
         of the expression that we have encountered.
         '''
         from proveit._core_.theory import Theory
-        proofs_path = os.path.join(self.directory, '_theory_nbs_', 'proofs')
-        proof_path = os.path.join(proofs_path, theorem_name)
+        proofs_path = self.directory / '_theory_nbs_' / 'proofs'
+        proof_path = proofs_path / theorem_name
         # Let's first check if the same expression existed
         # in the previous version -- then we can simply
         # move the proof.
@@ -898,8 +897,7 @@ class TheoryStorage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
-                os.path.join(self.directory, '_theory_nbs_',
-                             'proofs', theorem_name))
+                self.directory / '_theory_nbs_' / 'proofs' / theorem_name)
             nb = nb.replace('#THEORY#', theory_links)
         return nb
 
@@ -923,8 +921,7 @@ class TheoryStorage:
         generic notebooks.
         '''
         import shutil
-        proofs_path = os.path.join(self.directory, '_theory_nbs_',
-                                   'proofs')
+        proofs_path = self.directory / '_theory_nbs_' / 'proofs'
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
         for proof_folder in os.listdir(proofs_path):
@@ -2924,8 +2921,8 @@ class TheoryFolderStorage:
         Return the stored set of theory names of common expressions
         referenced by the common expression notebook of this theory.
         '''
-        referenced_commons_filename = os.path.join(self.pv_it_dir, 'commons',
-                                                   'package_dependencies.txt')
+        referenced_commons_filename = (self.pv_it_dir / 'commons' /
+                                       'package_dependencies.txt')
         if os.path.isfile(referenced_commons_filename):
             with open(referenced_commons_filename, 'r') as f:
                 return {line.strip() for line in f.readlines()}
@@ -3022,11 +3019,10 @@ class TheoryFolderStorage:
             thm_names = set(self.theory.get_theorem_names())
             for _folder in os.listdir(self.pv_it_dir):
                 if _folder[:7] == '_proof_' and os.path.isdir(
-                        os.path.join(self.pv_it_dir, _folder)):
+                        self.pv_it_dir / _folder):
                     thm_name = _folder[7:]
                     if thm_name not in thm_names:
-                        paths_to_remove.append(os.path.join(
-                            self.pv_it_dir, _folder))
+                        paths_to_remove.append(self.pv_it_dir / _folder)
 
         def unable_to_remove_warning(name):
             print("Unable to remove %s.\n  Skipping clean step "
