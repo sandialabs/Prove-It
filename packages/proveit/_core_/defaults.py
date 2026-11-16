@@ -97,7 +97,7 @@ class Defaults:
         """
 
         # Put expression pngs inline versus using links.
-        self.inline_pngs = True
+        self.inline_pngs = False
 
         # Will be set to a (theory, kind) object when a common
         # expressions, axioms, or theorms notebook is being executed.
